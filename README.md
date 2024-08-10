@@ -1,2 +1,4 @@
-# ClassNameHere
-A template for a REDCap External Module
+# Clinical Coach - MVP
+
+* REACT front end (vite)
+* Basic functionality for Recording + Silence Detection

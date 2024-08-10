@@ -1,36 +1,58 @@
 {
-	"name": "ClassNameHere",
+	"name": "ClinicalCoach",
 
-	"namespace": "Stanford\\ClassNameHere",
+	"namespace": "Stanford\\ClinicalCoach",
 
-	"description": "A template for a REDCap External Module",
+	"description": "ClinicalCoach - MVP",
 
 	"documentation": "README.md",
 
 	"authors": [
+        {
+            "name": "Jordan Schultz",
+            "email": "jmschult@stanford.edu",
+            "institution": "Stanford University"
+        },
 		{
-			"name": "Andrew Martin",
-			"email": "andy123@stanford.edu",
+			"name": "Irvin Szeto",
+			"email": "irvins@stanford.edu",
 			"institution": "Stanford University"
 		}
 	],
+
+    "framework-version": 14,
 
 	"permissions": [
 		"redcap_module_system_enable",
 		"redcap_module_project_enable",
 		"redcap_module_save_configuration"
 	],
-	
-	"enable-every-page-hooks-on-system-pages": false,	
+
+	"enable-every-page-hooks-on-system-pages": false,
 
 	"links": {
-		"project": [
-
-		],
+        "project": [
+            {
+                "name": "Clincial Coach Recorder",
+                "icon": "gear",
+                "url" : "pages/recorder.php",
+                "show-header-and-footer": false
+            }
+        ],
 		"control-center": [
 
 		]
 	},
+
+    "auth-ajax-actions": [
+        "callAI",
+        "transcribeAudio"
+    ],
+
+    "no-auth-ajax-actions": [
+        "callAI",
+        "transcribeAudio"
+    ],
 
 	"no-auth-pages": [
 
@@ -42,8 +64,173 @@
 			"name": "<b>Enable Debug Logging</b><br><i>(optional)</i> Requires installation and configuration of emLogger",
 			"required": false,
 			"type": "checkbox"
-		}
-	],
+		},
+        {
+            "key": "system_context_summarize",
+            "name": "Raw text to inject into system context for summarization",
+            "required": true,
+            "type": "textarea"
+        },
+        {
+            "key": "system_context_reflection_1",
+            "name": "Raw text to inject into system context for reflection 1",
+            "required": true,
+            "type": "textarea"
+        },
+        {
+            "key": "system_context_reflection_2",
+            "name": "Raw text to inject into system context for reflection 2",
+            "required": true,
+            "type": "textarea"
+        },
+        {
+            "key": "system_context_reflection_3",
+            "name": "Raw text to inject into system context for reflection 3",
+            "required": true,
+            "type": "textarea"
+        },
+        {
+            "key": "system_context_reflection_4",
+            "name": "Raw text to inject into system context for reflection 4",
+            "required": true,
+            "type": "textarea"
+        },
+        {
+            "key": "system_context_reflection_5",
+            "name": "Raw text to inject into system context for reflection 5",
+            "required": true,
+            "type": "textarea"
+        },
+        {
+            "key": "system_context_reflection_6",
+            "name": "Raw text to inject into system context for reflection 6",
+            "required": true,
+            "type": "textarea"
+        },
+        {
+            "key": "gpt-model",
+            "name": "GPT Model",
+            "required": false,
+            "type": "text",
+            "default": "gpt-4o"
+        },
+        {
+            "key": "gpt-temperature",
+            "name": "GPT Temperature",
+            "required": false,
+            "type": "number",
+            "default": 0.7
+        },
+        {
+            "key": "gpt-top-p",
+            "name": "GPT Top P",
+            "required": false,
+            "type": "number",
+            "default": 0.9
+        },
+        {
+            "key": "gpt-frequency-penalty",
+            "name": "GPT Frequency Penalty",
+            "required": false,
+            "type": "number",
+            "default": 0.5
+        },
+        {
+            "key": "gpt-presence-penalty",
+            "name": "GPT Presence Penalty",
+            "required": false,
+            "type": "number",
+            "default": 0
+        },
+        {
+            "key": "gpt-max-tokens",
+            "name": "GPT Max Tokens",
+            "required": false,
+            "type": "number",
+            "default": 800
+        },
+        {
+            "key": "secure-chat-whisper-system-context",
+            "name": "<b>Whisper System Context</b> Sets the initial prompt used before any audio is transcribed",
+            "required": false,
+            "type": "text"
+        },
+        {
+            "key": "secure-chat-whisper-prompt",
+            "name": "<b>Whisper Prompt</b> Provides a text prompt to influence the transcription",
+            "required": false,
+            "type": "text"
+        },
+        {
+            "key": "whisper-language",
+            "name": "<b>Whisper Language</b> default: <i>English</i><br>(Language spoken in the audio)",
+            "required": false,
+            "type": "text",
+            "default": "en"
+        },
+        {
+            "key": "whisper-temperature",
+            "name": "<b>Whisper Temperature</b> default: <i>0</i><br>(Temperature for the Whisper model)",
+            "required": false,
+            "type": "number",
+            "min": 0,
+            "max": 1,
+            "default": 0.0
+        },
+        {
+            "key": "whisper-top-p",
+            "name": "<b>Whisper Top P</b> default: <i>1.0</i><br>(Top P for the Whisper model)",
+            "required": false,
+            "type": "number",
+            "min": 0,
+            "max": 1,
+            "default": 1.0
+        },
+        {
+            "key": "whisper-n",
+            "name": "<b>Whisper N</b> default: <i>1</i><br>(Number of candidates to generate)",
+            "required": false,
+            "type": "number",
+            "default": 1
+        },
+        {
+            "key": "whisper-logprobs",
+            "name": "<b>Whisper Logprobs</b> default: <i>null</i><br>(Log probabilities for the top n tokens)",
+            "required": false,
+            "type": "number",
+            "default": null
+        },
+        {
+            "key": "whisper-max-alternate-transcriptions",
+            "name": "<b>Whisper Max Alternate Transcriptions</b> default: <i>1</i><br>(Maximum number of alternate transcriptions)",
+            "required": false,
+            "type": "number",
+            "default": 1
+        },
+        {
+            "key": "whisper-compression-rate",
+            "name": "<b>Whisper Compression Rate</b> default: <i>1.0</i><br>(Compression rate for audio processing)",
+            "required": false,
+            "type": "number",
+            "min": 0.0,
+            "max": 1.0,
+            "default": 1.0
+        },
+        {
+            "key": "whisper-sample-rate",
+            "name": "<b>Whisper Sample Rate</b> default: <i>16000</i><br>(Sample rate for audio processing in Hz)",
+            "required": false,
+            "type": "number",
+            "default": 16000
+        },
+        {
+            "key": "whisper-condition-on-previous-text",
+            "name": "<b>Whisper Condition on Previous Text</b> default: <i>true</i><br>(Condition on previous text when generating next segment)",
+            "required": false,
+            "type": "checkbox",
+            "default": true
+        }
+    ],
 
 
 	"system-settings": [
