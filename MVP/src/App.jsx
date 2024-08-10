@@ -3,6 +3,7 @@ import reactLogo from './assets/react.svg';
 import viteLogo from '/vite.svg';
 import './App.css';
 import VoiceRecorder from './VoiceRecorder';
+import './assets/mvp.css';
 
 function App() {
     const [isRecording, setIsRecording] = useState(false);
@@ -43,7 +44,7 @@ function App() {
     };
 
     return (
-        <>
+        <div id="clinicalcoachmvp_container">
             <h1>Clinical Coach - MVP</h1>
             <div className="card">
                 <VoiceRecorder
@@ -56,7 +57,7 @@ function App() {
                     </div>
                 )}
             </div>
-        </>
+        </div>
     );
 }
 

@@ -153,13 +153,13 @@
             "key": "secure-chat-whisper-system-context",
             "name": "<b>Whisper System Context</b> Sets the initial prompt used before any audio is transcribed",
             "required": false,
-            "type": "text"
+            "type": "textarea"
         },
         {
             "key": "secure-chat-whisper-prompt",
             "name": "<b>Whisper Prompt</b> Provides a text prompt to influence the transcription",
             "required": false,
-            "type": "text"
+            "type": "textarea"
         },
         {
             "key": "whisper-language",
