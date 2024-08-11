@@ -33,7 +33,7 @@ $build_files = $module->generateAssetFiles();
         "window.clicnical_coach_jsmo_module = " . $module->getJavascriptModuleObjectName()
     ];
 
-    $initial_system_context = $module->initSystemContexts();
+    $initial_system_context = null;
 
     $data = !empty($initial_system_context) ? $initial_system_context : null;
     if ($data !== null) {

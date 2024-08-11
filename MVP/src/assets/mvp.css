@@ -45,3 +45,28 @@ button {
 button:hover {
     background-color: #218838;
 }
+
+.controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.controls button {
+    margin:0;
+    padding:0;
+    vertical-align: middle;
+}
+
+.controls .attachment-button {
+    background-color: transparent;
+    margin:0 10px 10px;
+    cursor: pointer;
+    font-size: 1.5rem;
+    color: #555;
+
+}
+.controls .attachment-button:hover{
+    background-color:initial;
+    border: initial;
+}

@@ -16,19 +16,6 @@ class ClinicalCoach extends \ExternalModules\AbstractExternalModule {
 		// Other code to run when object is instantiated
 	}
 
-    public function initSystemContexts(){
-        //TODO CLEAN THIS UP
-        $this->system_context_persona = $this->getProjectSetting('chatbot_system_context_persona');
-        $this->system_context_steps = $this->getProjectSetting('chatbot_system_context_steps');
-        $this->system_context_rules = $this->getProjectSetting('chatbot_system_context_rules');
-
-        $initial_system_context = $this->appendSystemContext([], $this->system_context_persona);
-        $initial_system_context = $this->appendSystemContext($initial_system_context, $this->system_context_steps);
-        $initial_system_context = $this->appendSystemContext($initial_system_context, $this->system_context_rules);
-
-        return $initial_system_context;
-    }
-
     public function generateAssetFiles(): array {
         $cwd = $this->getModulePath();
         $assets = [];
@@ -104,25 +91,12 @@ class ClinicalCoach extends \ExternalModules\AbstractExternalModule {
             switch ($action) {
                 case "callAI":
                     $messages = $payload;
-                    $systemMessageFound = false;
 
-                    // Iterate through the messages to check if a 'system' role exists
+                    // Retrieve the system context reflection from project settings
                     $reflection_context = $this->getProjectSetting("system_context_reflection_1");
-                    foreach ($messages as &$message) {
-                        if (isset($message['role']) && $message['role'] === 'system') {
-                            $message['content'] .= "\n\n" . $reflection_context;
-                            $systemMessageFound = true;
-                            break;
-                        }
-                    }
 
-                    // If no 'system' role was found, prepend a new system message
-                    if (!$systemMessageFound) {
-                        array_unshift($messages, [
-                            'role' => 'system',
-                            'content' => $reflection_context
-                        ]);
-                    }
+                    // Use the appendSystemContext function to handle system context
+                    $messages = $this->appendSystemContext($messages, $reflection_context);
 
                     $this->emDebug("chatml Messages array to API", $messages);
 
@@ -215,14 +189,6 @@ class ClinicalCoach extends \ExternalModules\AbstractExternalModule {
                         $this->emDebug("No Base64-encoded file received.");
                         return json_encode(["error" => "No Base64-encoded file received."]);
                     }
-
-
-                case "login":
-                    $data = $this->sanitizeInput($payload);
-                    return json_encode($this->loginUser($data));
-                case "verifyPhone":
-                    $data = $this->sanitizeInput($payload);
-                    return json_encode($this->verifyPhone($data));
 
                 default:
                     throw new Exception("Action $action is not defined");

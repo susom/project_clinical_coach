@@ -18,9 +18,6 @@
 
         transcribeAudio: async (formData, callback, errorCallback) => {
             try {
-                // TODO I DOUBT THIS IS THE BEST WORKFLOW
-                // TODO I THINK MAYBE BETTER TO TEMPORARILY UPLOAD THE FILE TO A tmp FOLDER, THEN PASS THE tmp file path as payload to JSMO AJAX
-
                 // Extract the file from FormData
                 let file;
                 for (let pair of formData.entries()) {
@@ -85,37 +82,5 @@
                 errorCallback(err);
             }
         },
-
-
-
-
-
-
-
-
-        //SAVE FOR LATER?
-        login: async (payload, callback, errorCallback) => {
-            const res = await module.ajax('login', payload);
-            let parsed = JSON.parse(res)
-
-            if('error' in parsed) {
-                console.error(parsed['error'])
-                errorCallback(parsed['error'])
-            } else {
-                console.log('resolving!')
-                callback(parsed)
-            }
-        },
-        verifyPhone: async (payload, callback, errorCallback) => {
-            const res = await module.ajax('verifyPhone', payload);
-            let parsed = JSON.parse(res)
-
-            if('error' in parsed) {
-                console.error(parsed['error'])
-                errorCallback(parsed['error'])
-            } else {
-                callback(parsed)
-            }
-        }
     });
 }
