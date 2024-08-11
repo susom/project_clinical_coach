@@ -45,13 +45,20 @@
                     fileType: file.type
                 };
 
-                console.log("Base64 encoded file:", payload.file_base64);
-
                 // Send the payload via AJAX
                 const res = await module.ajax('transcribeAudio', payload);
                 let parsedRes = JSON.parse(res);
-                if (parsedRes?.transcription) {
-                    callback(parsedRes);
+
+                if (parsedRes?.response?.content) {
+                    // Extract the text from the content field
+                    const content = JSON.parse(parsedRes.response.content);
+
+                    // Create a new structure with transcription
+                    const transcriptionResult = {
+                        transcription: content.text
+                    };
+
+                    callback(transcriptionResult);
                 } else {
                     console.error("Failed to parse transcription response:", res);
                     errorCallback(res);
@@ -66,8 +73,9 @@
             try {
                 const res = await module.ajax('callAI', payload);
                 let parsedRes = JSON.parse(res);
-                if (parsedRes?.response) {
-                    callback(parsedRes);
+                if (parsedRes?.response?.content) {
+                    // Extract the content directly and pass it to the callback
+                    callback(parsedRes.response.content);
                 } else {
                     console.error("Failed to parse response:", res);
                     errorCallback(res);

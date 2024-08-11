@@ -1,6 +1,4 @@
 import { useState, useRef } from 'react';
-import reactLogo from './assets/react.svg';
-import viteLogo from '/vite.svg';
 import './App.css';
 import VoiceRecorder from './VoiceRecorder';
 import './assets/mvp.css';
@@ -8,37 +6,59 @@ import './assets/mvp.css';
 function App() {
     const [isRecording, setIsRecording] = useState(false);
     const [audioUrl, setAudioUrl] = useState(null);
-    const apiContextRef = useRef([]);
-
-    // Function to handle stopping the recording and processing the audio blob
+    const [transcription, setTranscription] = useState('');
+    const [aiResponse, setAiResponse] = useState('');
     const handleStopRecording = async (blob) => {
-        // Create FormData and append the recorded audio blob
         const formData = new FormData();
         formData.append('file', blob.blob, 'recording.mp3');
 
-        // Call the backend with the recorded audio blob
         callAjax(formData, (response) => {
             if (response && response.transcription) {
-                console.log("Transcription:", response.transcription);
-                setAudioUrl(URL.createObjectURL(blob.blob));  // Display the recorded audio
-                // Further processing of the transcription if needed...
+                setTranscription(response.transcription);
+                setAudioUrl(URL.createObjectURL(blob.blob));
             } else {
                 console.error("Failed to get a transcription from the server.");
             }
         });
     };
 
-    // Function to call the backend API
     const callAjax = (formData, callback) => {
         window.clicnical_coach_jsmo_module.transcribeAudio(formData, (res) => {
             if (res && res.transcription) {
-                console.log("Transcription from API:", res.transcription);
                 if (callback) callback(res);
             } else {
                 console.log("Unexpected response format:", res);
             }
         }, (err) => {
             console.log("transcribeAudio error:", err);
+            if (callback) callback();
+        });
+    };
+
+    const handleSubmitToAI = () => {
+        const chatmlPayload = [
+            { role: "system", content: "You are a helpful assistant." },
+            { role: "user", content: transcription }
+        ];
+
+        callAI(chatmlPayload, (aiContent) => {
+            if (aiContent) {
+                setAiResponse(aiContent);
+            } else {
+                console.error("Failed to get a response from the AI.");
+            }
+        });
+    };
+
+    const callAI = (chatmlPayload, callback) => {
+        window.clicnical_coach_jsmo_module.callAI(chatmlPayload, (res) => {
+            if (res) {
+                if (callback) callback(res);
+            } else {
+                console.log("Unexpected AI response format:", res);
+            }
+        }, (err) => {
+            console.log("callAI error:", err);
             if (callback) callback();
         });
     };
@@ -54,6 +74,23 @@ function App() {
                 {audioUrl && (
                     <div style={{ marginTop: '20px' }}>
                         <audio controls src={audioUrl} style={{ width: '100%', maxWidth: '400px' }} />
+                    </div>
+                )}
+                {transcription && (
+                    <div style={{ marginTop: '20px' }}>
+                        <blockquote style={{ fontStyle: 'italic' }}>
+                            "{transcription}"
+                        </blockquote>
+                        <button onClick={handleSubmitToAI} style={{ marginTop: '10px' }}>
+                            Submit to AI
+                        </button>
+                    </div>
+                )}
+                {aiResponse && (
+                    <div style={{ marginTop: '20px' }}>
+                        <blockquote style={{ fontStyle: 'italic' }}>
+                            "{aiResponse}"
+                        </blockquote>
                     </div>
                 )}
             </div>

@@ -104,63 +104,59 @@ class ClinicalCoach extends \ExternalModules\AbstractExternalModule {
             switch ($action) {
                 case "callAI":
                     $messages = $payload;
+                    $systemMessageFound = false;
+
+                    // Iterate through the messages to check if a 'system' role exists
+                    $reflection_context = $this->getProjectSetting("system_context_reflection_1");
+                    foreach ($messages as &$message) {
+                        if (isset($message['role']) && $message['role'] === 'system') {
+                            $message['content'] .= "\n\n" . $reflection_context;
+                            $systemMessageFound = true;
+                            break;
+                        }
+                    }
+
+                    // If no 'system' role was found, prepend a new system message
+                    if (!$systemMessageFound) {
+                        array_unshift($messages, [
+                            'role' => 'system',
+                            'content' => $reflection_context
+                        ]);
+                    }
+
                     $this->emDebug("chatml Messages array to API", $messages);
 
-                    //CALL API ENDPOINT WITH AUGMENTED CHATML
+                    // CALL API ENDPOINT WITH AUGMENTED CHATML
                     $model  = "gpt-4o";
-                    $params = array("messages" =>$messages);
-                    if($this->getProjectSetting("gpt-temperature")){
+                    $params = array("messages" => $messages);
+
+                    if ($this->getProjectSetting("gpt-temperature")) {
                         $params["temperature"] = floatval($this->getProjectSetting("gpt-temperature"));
                     }
-                    if($this->getProjectSetting("gpt-top-p")){
+                    if ($this->getProjectSetting("gpt-top-p")) {
                         $params["top_p"] = floatval($this->getProjectSetting("gpt-top-p"));
                     }
-                    if($this->getProjectSetting("gpt-frequency-penalty")){
+                    if ($this->getProjectSetting("gpt-frequency-penalty")) {
                         $params["frequency_penalty"] = floatval($this->getProjectSetting("gpt-frequency-penalty"));
                     }
-                    if($this->getProjectSetting("presence_penalty")){
+                    if ($this->getProjectSetting("presence_penalty")) {
                         $params["presence_penalty"] = floatval($this->getProjectSetting("presence_penalty"));
                     }
-                    if($this->getProjectSetting("gpt-max-tokens")){
+                    if ($this->getProjectSetting("gpt-max-tokens")) {
                         $params["max_tokens"] = intval($this->getProjectSetting("gpt-max-tokens"));
                     }
 
-                    $response = $this->getSecureChatInstance()->callAI($model, $params, PROJECT_ID );
+                    $response = $this->getSecureChatInstance()->callAI($model, $params, PROJECT_ID);
                     $result = $this->formatResponse($response);
 
                     $this->emDebug("calling SecureChatAI.callAI()", $result);
                     return json_encode($result);
 
                 case "transcribeAudio":
-
-                    // Replace the usual payload with a test message
-//                    $messages = [
-//                        [
-//                            "role" => "user",
-//                            "content" => "Test Message to GPT-4o, how is the weather in st petersberg  florida in early september?  hot humid?"
-//                        ]
-//                    ];
-//
-//                    $this->emDebug("Sending test message to GPT-4o endpoint", $messages);
-//
-//                    // CALL API ENDPOINT WITH AUGMENTED CHATML
-//                    $model  = "gpt-4o";
-//                    $params = array("messages" => $messages);
-//
-//                    // Make the API call
-//                    $response = $this->getSecureChatInstance()->callAI($model, $params, PROJECT_ID);
-//                    $result = $this->formatResponse($response);
-//
-//                    $this->emDebug("Response from GPT-4o", $result);
-//                    return json_encode($result);
-//break;
-
                     $messages = $payload;
-
-                    $this->emDebug("Received payload for transcribeAudio:", $messages);
+                    $this->emDebug("Received payload for transcribeAudio, unpack base64 and pass along to callAI");
 
                     // TODO I THINK MAY BE BETTER TO UPLOAD FILE POST TO tmp FOLDER , then PASS THE PATH IN AND PULL AND PREP THE FILE HERE TO PASS TO WHISPER
-
                     if (isset($messages['file_base64'])) {
                         // Extract and decode the Base64 data
                         $base64String = $messages['file_base64'];
@@ -179,8 +175,8 @@ class ClinicalCoach extends \ExternalModules\AbstractExternalModule {
                             if ($this->getProjectSetting("secure-chat-whisper-system-context")) {
                                 $params["initial_prompt"] = $this->getProjectSetting("secure-chat-whisper-system-context");
                             }
-                            if ($this->getProjectSetting("whisper-prompt")) {
-                                $params["prompt"] = $this->getProjectSetting("whisper-prompt");
+                            if ($this->getProjectSetting("secure-chat-whisper-prompt")) {
+                                $params["prompt"] = $this->getProjectSetting("secure-chat-whisper-prompt");
                             }
 
                             if ($this->getProjectSetting("whisper-language")) {
@@ -204,7 +200,7 @@ class ClinicalCoach extends \ExternalModules\AbstractExternalModule {
                             if ($this->getProjectSetting("whisper-condition-on-previous-text") !== null) {
                                 $params["condition_on_previous_text"] = (bool) $this->getProjectSetting("whisper-condition-on-previous-text");
                             }
-                            
+
                             $this->emDebug("Whisper file path sent to API:", $params);
                             $response = $this->getSecureChatInstance()->callAI($model, $params, PROJECT_ID);
                             $result = $this->formatResponse($response);
