@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ReactMic } from 'react-mic';
+import { FaMicrophone, FaStop } from 'react-icons/fa';
 
 const VoiceRecorder = ({ setIsRecording, handleStopRecording }) => {
     const [record, setRecord] = useState(false);
@@ -92,8 +93,6 @@ const VoiceRecorder = ({ setIsRecording, handleStopRecording }) => {
                 const rms = Math.sqrt(sum / bufferLength);
                 const db = 20 * Math.log10(rms);
 
-                // console.log(`Current dB level: ${db.toFixed(2)} (Threshold: ${silenceThreshold})`);
-
                 if (db < silenceThreshold) {
                     if (silenceStartRef.current === null) {
                         silenceStartRef.current = Date.now();
@@ -102,7 +101,7 @@ const VoiceRecorder = ({ setIsRecording, handleStopRecording }) => {
                     } else {
                         const silenceDurationElapsed = Date.now() - silenceStartRef.current;
                         silenceDurationRef.current += 100;
-                        console.log(`Silence duration elapsed: ${silenceDurationRef.current}ms`);
+                        // console.log(`Silence duration elapsed: ${silenceDurationRef.current}ms`);
                         if (silenceDurationRef.current >= silenceDurationMs) {
                             console.log('Silence threshold reached, stopping recording');
                             stopRecording(); // Stop the recording when silence is detected
@@ -136,40 +135,36 @@ const VoiceRecorder = ({ setIsRecording, handleStopRecording }) => {
     }, []);
 
     return (
-        <div style={{ textAlign: 'center' }}>
+        <div style={{textAlign: 'center'}}>
             <button
                 onClick={record ? stopRecording : startRecording}
-                style={{
-                    backgroundColor: record ? 'red' : isProcessing ? 'gray' : 'green',
-                    color: 'white',
-                    cursor: isProcessing ? 'not-allowed' : 'pointer',
-                    marginBottom: '10px',
-                    padding: '10px 20px',
-                    borderRadius: '5px',
-                }}
+                className={`circle-recording-btn ${record ? 'recording' : ''} ${isProcessing ? 'processing' : ''}`}
                 disabled={isProcessing}
             >
-                {record ? 'Stop Recording...' : isProcessing ? 'Processing...' : 'Start Recording'}
+                {record ? <FaStop size={50}/> : <FaMicrophone size={50}/>}
             </button>
 
-            <div style={{ margin: '20px auto', width: '300px', height: '100px', display: record ? 'block' : 'none' }} className="react_mic_container">
+            <div className="react_mic_container">
                 <ReactMic
                     className="react_mic"
                     record={record}
                     onStop={onStop}
                     strokeColor="#FF4081"
                     backgroundColor="#000000"
-                    style={{ width: '100%', height: 'auto', borderRadius: '5px' }}
+                    style={{width: '100%', height: 'auto', borderRadius: '5px'}}
                 />
             </div>
 
-            {audioUrl && (
-                <div style={{ marginTop: '20px' }}>
-                    <audio controls src={audioUrl} style={{ width: '100%', maxWidth: '400px' }} />
-                </div>
-            )}
+            {/*{audioUrl && (*/}
+            {/*    <div style={{marginTop: '20px'}}>*/}
+            {/*        <audio controls src={audioUrl} style={{width: '100%', maxWidth: '400px'}}/>*/}
+            {/*    </div>*/}
+            {/*)}*/}
         </div>
     );
 };
 
 export default VoiceRecorder;
+
+
+
