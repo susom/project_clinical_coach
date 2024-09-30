@@ -1,4 +1,5 @@
 import React from 'react';
+import StatusIndicator from './StatusIndicator';
 import { useStudents } from '../contexts/Students';
 import { FaUserCircle } from 'react-icons/fa';
 
@@ -16,30 +17,57 @@ function Home() {
             { role: "user", content: selectedStudent.transcription }
         ];
 
-        console.log("chatmlPayload", chatmlPayload);
-
+        // Call AI function and handle the callback
         callAI(chatmlPayload, (aiContent) => {
-            console.log("aiContent callback", aiContent);
-            if (aiContent) {
-                updateAIResponse(aiContent); // Store AI response in context
+            if (aiContent && Array.isArray(aiContent)) {
+                const updatedStudent = {
+                    ...selectedStudent,
+                    aiResponse: aiContent // Store the AI response in the student data
+                };
+
+                console.log("HOME handleSubmitToAI Updating student with AI response:", updatedStudent);
+
+                // Instead of using updateStudentData, use updateAIResponse
+                updateAIResponse(selectedStudent.id, aiContent);
             } else {
-                console.error("Failed to get a response from the AI.");
+                console.error("HOME handleSubmitToAI No content received from AI or invalid format");
             }
         });
     };
+
 
     const callAI = (chatmlPayload, callback) => {
-        window.clicnical_coach_jsmo_module.callAI(chatmlPayload, (res) => {
-            if (res) {
-                if (callback) callback(res);
-            } else {
-                console.log("Unexpected AI response format:", res);
+        window.clicnical_coach_jsmo_module.callAI(
+            chatmlPayload,
+            (res) => {
+                if (!res) {
+                    console.error("HOME callAI Response is null or undefined");
+                    callback(undefined);  // Pass undefined to indicate failure
+                    return;
+                }
+
+                try {
+                    const parsedRes = Array.isArray(res) ? res : typeof res === 'object' ? res : JSON.parse(res);
+
+                    if (Array.isArray(parsedRes)) {
+                        console.log("HOME callAI Parsed response before callback:", parsedRes);
+                        callback(parsedRes);
+                    } else {
+                        console.error("HOME callAI Unexpected response format:", parsedRes);
+                        callback(undefined);  // Call with undefined for failure
+                    }
+                } catch (error) {
+                    console.error("HOME callAI Error parsing response:", error);
+                    callback(undefined);  // Call with undefined for failure
+                }
+            },
+            (err) => {
+                console.error("HOME callAI AI call failed:", err);
+                callback(undefined);  // Ensure callback is called on error
             }
-        }, (err) => {
-            console.log("callAI error:", err);
-            if (callback) callback();
-        });
+        );
     };
+
 
     return (
         <div className="home-content">
@@ -59,13 +87,14 @@ function Home() {
                             <h4>Session Completed</h4>
                         </div>
 
+                        <StatusIndicator />
+
                         {selectedStudent.transcription && (
                             <div className="session-summary">
                                 <blockquote>{selectedStudent.transcription}</blockquote>
+                                <button onClick={handleSubmitToAI}>Submit to AI</button>
                             </div>
                         )}
-
-                        <button onClick={handleSubmitToAI}>Submit to AI</button>
                     </div>
                 </div>
             ) : (

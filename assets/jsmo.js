@@ -69,18 +69,31 @@
         callAI: async (payload, callback, errorCallback) => {
             try {
                 const res = await module.ajax('callAI', payload);
+
+                // Log the full response for debugging
+                // console.log("JSMO Raw response from backend:", res);
+
+                // Try parsing the response
                 let parsedRes = JSON.parse(res);
-                if (parsedRes?.response?.content) {
-                    // Extract the content directly and pass it to the callback
+
+                // Log the parsed response to inspect its structure
+                // console.log("JSMO Parsed AI response:", parsedRes);
+
+                // Adjust the structure checks based on the actual response format
+                if (Array.isArray(parsedRes)) {
+                    // Pass the whole parsed response to the callback for further processing
+                    callback(parsedRes);
+                } else if (parsedRes?.response?.content) {
+                    // If it's a singular response with content
                     callback(parsedRes.response.content);
                 } else {
-                    console.error("Failed to parse response:", res);
+                    console.error("JSMO Unexpected response format:", parsedRes);
                     errorCallback(res);
                 }
             } catch (err) {
-                console.error("Error in callAI: ", err);
+                console.error("JSMO rror in callAI:", err);
                 errorCallback(err);
             }
-        },
+        }
     });
 }

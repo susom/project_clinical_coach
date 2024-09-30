@@ -272,3 +272,24 @@ button:hover {
     font-style: italic;
 }
 
+.status-indicator {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+}
+
+.status-bar {
+    flex:1;
+    min-width: 60px;
+    height: 10px;
+    margin-bottom: 5px;
+    margin-right: 1px;
+}
+
+.status-label {
+    width: 100%;
+    font-size: 65%;
+    color: black;
+    text-align: center;
+}

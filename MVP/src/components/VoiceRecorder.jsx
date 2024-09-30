@@ -97,19 +97,19 @@ const VoiceRecorder = ({ setIsRecording, handleStopRecording }) => {
                     if (silenceStartRef.current === null) {
                         silenceStartRef.current = Date.now();
                         silenceDurationRef.current = 0;
-                        console.log(`Silence started at: ${silenceStartRef.current}`);
+                        // console.log(`Silence started at: ${silenceStartRef.current}`);
                     } else {
                         const silenceDurationElapsed = Date.now() - silenceStartRef.current;
                         silenceDurationRef.current += 100;
                         // console.log(`Silence duration elapsed: ${silenceDurationRef.current}ms`);
                         if (silenceDurationRef.current >= silenceDurationMs) {
-                            console.log('Silence threshold reached, stopping recording');
+                            // console.log('Silence threshold reached, stopping recording');
                             stopRecording(); // Stop the recording when silence is detected
                         }
                     }
                 } else {
                     if (silenceStartRef.current !== null) {
-                        console.log('Silence ended, resetting silenceStartRef');
+                        // console.log('Silence ended, resetting silenceStartRef');
                         silenceStartRef.current = null;
                         silenceDurationRef.current = 0;
                     }

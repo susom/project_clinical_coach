@@ -92,39 +92,88 @@ class ClinicalCoach extends \ExternalModules\AbstractExternalModule {
                 case "callAI":
                     $messages = $payload;
 
-                    // Retrieve the system context reflection from project settings
-                    $reflection_context = $this->getProjectSetting("system_context_reflection_1");
+                    // Retrieve the main system context reflection from project settings
+                    $main_system_context = $this->getProjectSetting("system_context_summarize");
 
-                    // Use the appendSystemContext function to handle system context
-                    $messages = $this->appendSystemContext($messages, $reflection_context);
+                    // Reflection contexts (could be null, so we check them before appending)
+                    $reflection_contexts = [
+                        $this->getProjectSetting("system_context_reflection_1"),
+                        $this->getProjectSetting("system_context_reflection_2"),
+                        $this->getProjectSetting("system_context_reflection_3"),
+                        $this->getProjectSetting("system_context_reflection_4"),
+                        $this->getProjectSetting("system_context_reflection_5"),
+                        $this->getProjectSetting("system_context_reflection_6")
+                    ];
 
-                    $this->emDebug("chatml Messages array to API", $messages);
+                    // Array to hold results from all API calls
+                    $allResults = [];
 
-                    // CALL API ENDPOINT WITH AUGMENTED CHATML
-                    $model  = "gpt-4o";
-                    $params = array("messages" => $messages);
-
-                    if ($this->getProjectSetting("gpt-temperature")) {
-                        $params["temperature"] = floatval($this->getProjectSetting("gpt-temperature"));
+                    // TODO NEED TO ENGIENEER PROMPT TO GIVE RELATIVE SCORE?
+                    function assignScore($responseContent) {
+                        // Example logic: scoring based on the length of the content
+                        $length = strlen($responseContent);
+                        if ($length < 100) {
+                            return 1; // Bad response
+                        } elseif ($length < 300) {
+                            return 2; // Average response
+                        } else {
+                            return 3; // Good response
+                        }
                     }
-                    if ($this->getProjectSetting("gpt-top-p")) {
-                        $params["top_p"] = floatval($this->getProjectSetting("gpt-top-p"));
-                    }
-                    if ($this->getProjectSetting("gpt-frequency-penalty")) {
-                        $params["frequency_penalty"] = floatval($this->getProjectSetting("gpt-frequency-penalty"));
-                    }
-                    if ($this->getProjectSetting("presence_penalty")) {
-                        $params["presence_penalty"] = floatval($this->getProjectSetting("presence_penalty"));
-                    }
-                    if ($this->getProjectSetting("gpt-max-tokens")) {
-                        $params["max_tokens"] = intval($this->getProjectSetting("gpt-max-tokens"));
+
+                    // Loop through each reflection context
+                    foreach ($reflection_contexts as $index => $reflection_context) {
+                        if (!empty($reflection_context)) {
+                            // Append main system context and current reflection context
+                            $currentMessages = $this->appendSystemContext($messages, $main_system_context);
+                            $currentMessages = $this->appendSystemContext($currentMessages, $reflection_context);
+
+                            $this->emDebug("chatml Messages array to API for reflection context " . ($index + 1), $currentMessages);
+
+                            // Prepare parameters for the API call
+                            $model  = "gpt-4o";
+                            $params = array("messages" => $currentMessages);
+
+                            if ($this->getProjectSetting("gpt-temperature")) {
+                                $params["temperature"] = floatval($this->getProjectSetting("gpt-temperature"));
+                            }
+                            if ($this->getProjectSetting("gpt-top-p")) {
+                                $params["top_p"] = floatval($this->getProjectSetting("gpt-top-p"));
+                            }
+                            if ($this->getProjectSetting("gpt-frequency-penalty")) {
+                                $params["frequency_penalty"] = floatval($this->getProjectSetting("gpt-frequency-penalty"));
+                            }
+                            if ($this->getProjectSetting("presence_penalty")) {
+                                $params["presence_penalty"] = floatval($this->getProjectSetting("presence_penalty"));
+                            }
+                            if ($this->getProjectSetting("gpt-max-tokens")) {
+                                $params["max_tokens"] = intval($this->getProjectSetting("gpt-max-tokens"));
+                            }
+
+                            // Make the API call for the current context
+                            $response = $this->getSecureChatInstance()->callAI($model, $params, PROJECT_ID);
+                            $result = $this->formatResponse($response);
+
+                            // Extract the response content for scoring
+                            $responseContent = $result['response']['content'] ?? '';
+                            $score = assignScore($responseContent);
+
+                            // Add the result to the allResults array, including the score
+                            $allResults[] = [
+                                "reflection_context" => "Reflection " . ($index + 1),
+                                "response" => $result,
+                                "score" => $score
+                            ];
+
+                            $this->emDebug("API result for reflection context " . ($index + 1), $result);
+                        }
                     }
 
-                    $response = $this->getSecureChatInstance()->callAI($model, $params, PROJECT_ID);
-                    $result = $this->formatResponse($response);
+                // Return all results as a JSON array
+                $this->emDebug("All API results", $allResults);
+                return json_encode($allResults);
 
-                    $this->emDebug("calling SecureChatAI.callAI()", $result);
-                    return json_encode($result);
+
 
                 case "transcribeAudio":
                     $messages = $payload;
