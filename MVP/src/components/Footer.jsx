@@ -1,87 +1,64 @@
-import React, { useState, useEffect, useRef } from 'react';
-import VoiceRecorder from './VoiceRecorder';
-import { useStudents } from '../contexts/Students';
+import React from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import RecordingFooter from './RecordingFooter';
+import './Footer.css';
+import thmIcon from '../assets/images/thm_icon.png';
 
-function Footer() {
-    const [isRecording, setIsRecording] = useState(false);
-    const [isUploading, setIsUploading] = useState(false);
-    const { students, selectedStudent, selectStudent, updateTranscription } = useStudents();
+function Footer({ stage = 1, setStage }) {
+    const location = useLocation();
+    const currentPath = location.pathname;
 
-    const clinicianId = 1234; // Placeholder for clinician ID
-    const selectedStudentRef = useRef(null); // Create a ref to store selectedStudent
-
-    // Keep the ref updated with the latest selectedStudent value
-    useEffect(() => {
-        selectedStudentRef.current = selectedStudent;
-    }, [selectedStudent]);
-
-    const handleStudentChange = (event) => {
-        selectStudent(Number(event.target.value));
-    };
-
-    const handleStopRecording = async (blob) => {
-        const currentSelectedStudent = selectedStudentRef.current; // Access the current ref value
-        if (!currentSelectedStudent) {
-            alert("Please select a student before recording.");
-            return;
-        }
-
-        const formData = new FormData();
-        formData.append('file', blob.blob, 'recording.mp3');
-        formData.append('studentId', currentSelectedStudent.id); // Use the ref value
-        formData.append('clinicianId', clinicianId);
-
-        setIsUploading(true);
-        callAjax(formData, (response) => {
-            setIsUploading(false);
-
-            //TODO just for show for now
-            if (response && response.transcription) {
-                // Update transcription in the context
-                updateTranscription(currentSelectedStudent.id, response.transcription);
-            }
-        });
-    };
-
-    const callAjax = (formData, callback) => {
-        window.clicnical_coach_jsmo_module.transcribeAudio(formData, (res) => {
-            if (res) {
-                if (callback) callback(res);
-            } else {
-                console.log("Unexpected response format:", res);
-            }
-        }, (err) => {
-            console.log("transcribeAudio error:", err);
-            if (callback) callback();
-        });
-    };
+    const isExpanded = stage > 1; // Keep expanded state driven by `stage`
 
     return (
-        <footer className="footer-container">
-            <div className="footer-content">
-                <h3>Start a Coaching Session</h3>
-
-                <div className="footer-controls">
-                    <VoiceRecorder
-                        setIsRecording={setIsRecording}
-                        handleStopRecording={handleStopRecording}
-                        disabled={isUploading || !selectedStudent}
-                    />
-
-                    <select
-                        className="student-dropdown"
-                        value={selectedStudent ? selectedStudent.id : ''}
-                        onChange={handleStudentChange}
-                    >
-                        <option value="">Select A Student</option>
-                        {students.map((student) => (
-                            <option key={student.id} value={student.id}>
-                                {student.name}
-                            </option>
-                        ))}
-                    </select>
+        <footer className={`footer-container ${isExpanded ? 'expanded' : ''}`}>
+            {isExpanded && (
+                <div className="expanded-content">
+                    <RecordingFooter stage={stage} setStage={setStage} />
                 </div>
-            </div>
+            )}
+            <nav className="global-nav">
+                <Link
+                    to="/Home"
+                    className={`footer-item ${currentPath === '/Home' && stage === 1 ? 'active' : ''}`}
+                    onClick={() => setStage(1)} // Reset stage when navigating
+                >
+                    <i className="fas fa-home footer-icon"></i>
+                    <span>Home</span>
+                </Link>
+                <Link
+                    to="/recording"
+                    className={`footer-item ${currentPath === '/recording' ? 'active' : ''}`}
+                    onClick={() => setStage(2)} // Set stage to 2 for recording
+                >
+                    <i className="fas fa-microphone footer-icon"></i>
+                    <span>Recording</span>
+                </Link>
+                <Link
+                    to="/thinking-habits"
+                    className={`footer-item ${currentPath === '/thinking-habits' ? 'active' : ''}`}
+                    onClick={() => setStage(1)} // Reset stage when navigating
+                >
+                    <img src={thmIcon} alt="THM" className="footer-icon thm" />
+                    <span>THM</span>
+                </Link>
+                <Link
+                    to="/notifications"
+                    className={`footer-item ${currentPath === '/notifications' ? 'active' : ''}`}
+                    onClick={() => setStage(1)} // Reset stage when navigating
+                >
+                    <i className="fas fa-bell footer-icon"></i>
+                    <span>Notifications</span>
+                </Link>
+                <Link
+                    to="/coach-profile"
+                    className={`footer-item ${currentPath === '/coach-profile' ? 'active' : ''}`}
+                    onClick={() => setStage(1)} // Reset stage when navigating
+                >
+                    <i className="fas fa-user footer-icon"></i>
+                    <span>Profile</span>
+                </Link>
+            </nav>
         </footer>
     );
 }

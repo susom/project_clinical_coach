@@ -9,24 +9,18 @@
 
 	"authors": [
         {
+            "name": "Irvin Szeto",
+            "email": "irvins@stanford.edu",
+            "institution": "Stanford University"
+        },
+        {
             "name": "Jordan Schultz",
             "email": "jmschult@stanford.edu",
             "institution": "Stanford University"
-        },
-		{
-			"name": "Irvin Szeto",
-			"email": "irvins@stanford.edu",
-			"institution": "Stanford University"
-		}
+        }
 	],
 
     "framework-version": 14,
-
-	"permissions": [
-		"redcap_module_system_enable",
-		"redcap_module_project_enable",
-		"redcap_module_save_configuration"
-	],
 
 	"enable-every-page-hooks-on-system-pages": false,
 
@@ -36,6 +30,12 @@
                 "name": "Clincial Coach Recorder",
                 "icon": "gear",
                 "url" : "pages/recorder.php",
+                "show-header-and-footer": false
+            },
+            {
+                "name": "Clincial Coach test",
+                "icon": "gear",
+                "url" : "pages/test.php",
                 "show-header-and-footer": false
             }
         ],
@@ -108,10 +108,20 @@
             "type": "textarea"
         },
         {
-            "key": "gpt-model",
-            "name": "GPT Model",
+            "key": "llm-model",
+            "name": "LLM Model",
             "required": false,
-            "type": "text",
+            "type": "dropdown",
+            "choices": [
+                {
+                    "value": "gpt-4o",
+                    "name": "GPT-4o"
+                },
+                {
+                    "value": "claude",
+                    "name": "Claude 3.5 Sonnet"
+                }
+            ],
             "default": "gpt-4o"
         },
         {

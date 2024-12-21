@@ -87,6 +87,8 @@ class ClinicalCoach extends \ExternalModules\AbstractExternalModule {
     public function redcap_module_ajax($action, $payload, $project_id, $record, $instrument, $event_id, $repeat_instance,
                                        $survey_hash, $response_id, $survey_queue_hash, $page, $page_full, $user_id, $group_id) {
 
+        $this->emDebug("hi im in clinical coach call AI");
+
         try {
             switch ($action) {
                 case "callAI":
@@ -131,7 +133,7 @@ class ClinicalCoach extends \ExternalModules\AbstractExternalModule {
                             $this->emDebug("chatml Messages array to API for reflection context " . ($index + 1), $currentMessages);
 
                             // Prepare parameters for the API call
-                            $model  = "gpt-4o";
+                            $model = $this->getProject("llm-model");
                             $params = array("messages" => $currentMessages);
 
                             if ($this->getProjectSetting("gpt-temperature")) {

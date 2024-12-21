@@ -33,66 +33,6 @@ body, html {
     overflow: hidden; /* Ensure the footer stays in place */
 }
 
-/* Header and Footer Styling */
-header {
-    background-color: transparent;
-    padding: 1rem;
-    text-align: center;
-    border: none;
-    flex-shrink: 0; /* Prevents shrinking */
-}
-
-/* Footer Styling */
-footer {
-    position: relative;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background-color: #979DC0; /* Your desired footer color */
-    color: white;
-    padding: 1rem;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    border-top: 1px solid #ccc;
-    width: 100%;
-    max-width: 600px;
-    margin: 0 auto;
-    z-index: 1;
-    flex-shrink: 0; /* Prevents shrinking */
-    overflow: visible;
-}
-
-/* Left concave curve */
-footer::before {
-    content: "";
-    position: absolute;
-    top: -30px;
-    left: 0;
-    width: 40px;
-    height: 20px;
-    background-color: transparent;
-    box-shadow: none;
-    border-right: 50px solid transparent;
-    border-top: 50px solid transparent;
-    border-bottom: 0px solid transparent;
-    border-lefT: 90px solid #979dc0;
-}
-
-/* Right concave curve */
-footer::after {
-    content: "";
-    position: absolute;
-    top: -30px;
-    right: 0;
-    width: 40px;
-    height: 20px;
-    box-shadow: none;
-    border-left: 50px solid transparent;
-    border-top: 50px solid transparent;
-    border-bottom: 0px solid transparent;
-    border-right: 90px solid #979dc0;
-}
 
 /* Adjust the content area */
 .scrollable-content {
@@ -130,13 +70,6 @@ footer::after {
     margin-bottom: 10px; /* Slight spacing below heading */
 }
 
-/* Dropdown styling */
-.student-dropdown {
-    padding: 10px;
-    font-size: 1rem;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-}
 
 /* Circular button styling */
 .circle-recording-btn {
@@ -221,12 +154,6 @@ footer::after {
 
 .student-icon {
     color: #666;
-}
-
-.student-name {
-    margin-top: 10px;
-    font-size: 1.5rem;
-    text-align: center;
 }
 
 .session-details {
