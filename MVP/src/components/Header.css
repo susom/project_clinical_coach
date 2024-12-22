@@ -1,0 +1,42 @@
+.header {
+    height: 3rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 1rem;
+    background-color: #fff;
+}
+
+/* Back Button */
+.back-button {
+    font-size: 0.9rem;
+    color: #333;
+    border: none;
+    background: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    margin-right: auto; /* Pushes back button to the left */
+    gap: 0.5rem; /* Adds consistent spacing between arrow and text */
+}
+
+.back-button .arrow {
+    font-size: 1.2rem; /* Proper size for the arrow */
+}
+
+/* Filter Button */
+.filter-button {
+    font-size: 0.9rem;
+    color: #333;
+    border: none;
+    background: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    margin-left: auto; /* Ensures filter button stays on the right */
+    gap: 0.5rem; /* Adds consistent spacing between icon and text */
+}
+
+.filter-button i {
+    font-size: 1rem; /* Optional adjustment for icon size */
+}

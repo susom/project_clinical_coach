@@ -1,0 +1,106 @@
+/* Main container */
+#thm {
+    padding: 1rem;
+    text-align: center;
+    overflow-y: auto; /* Enable scrolling */
+    height: calc(100vh - 3rem); /* Full height minus header/footer */
+    display: flex;
+    flex-direction: column;
+}
+
+/* Header */
+.thm-header {
+    text-align: center;
+    margin-bottom: 1.5rem; /* Reduced spacing */
+}
+
+.thm-graphic {
+    max-width: 90%;
+    height: auto;
+    margin: 0 auto 1rem;
+}
+
+.thm-header h1 {
+    text-transform: uppercase; /* Make title all caps */
+    font-size: 2rem; /* 3/4 the original size */
+    font-weight: bold;
+    color: #333;
+    margin: 0.5rem 0; /* Adjusted spacing */
+}
+
+.thm-subtitle {
+    background-color: #900; /* Red background */
+    color: #fff; /* White text */
+    font-size: 1rem;
+    margin-top: 1rem;
+    font-weight: bold;
+    padding: 0.5rem;
+    border-radius: 5px;
+}
+
+/* Cards Section */
+.thm-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    flex-grow: 1; /* Allow cards to grow and scroll */
+    overflow-y: auto; /* Enable scrolling for cards */
+}
+
+/* Card Styles */
+.thm-card {
+    background-color: #f3f3f3;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 0 1rem 1rem;
+    text-align: left;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    margin-bottom: 0.5rem; /* Reduced spacing between cards */
+}
+
+.thm-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.thm-more-button {
+    background: #ccc;
+    border: none;
+    border-radius: 5px;
+    padding: 0.5rem;
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+.thm-more-button:hover {
+    background: #aaa;
+}
+
+.thm-card ul {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 0.5rem; /* Reduced margin below list */
+}
+
+.thm-card ul li {
+    margin: 0.4rem 0; /* Reduced line spacing */
+}
+
+/* Tags */
+.thm-tags {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.thm-tag {
+    background-color: #ddd;
+    color: #333;
+    padding: 0.3rem 0.6rem;
+    border-radius: 15px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    white-space: nowrap;
+}

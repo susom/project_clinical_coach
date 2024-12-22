@@ -1,0 +1,33 @@
+/* Minimal footer for the Title Screen */
+
+.title-footer {
+    text-align: center;
+    padding: 1rem 0;
+    font-size: 0.9rem;
+    color: #666;
+}
+
+/* Navigation Links */
+.title-footer-links {
+    display: flex;
+    justify-content: space-between; /* Spread links apart */
+    padding: 0 10rem; /* Align links with the edges of the "Enter" button */
+    margin-bottom: 2rem; /* Increase vertical spacing from copyright */
+}
+
+.title-footer-links a {
+    text-decoration: none;
+    color: #999;
+    font-size: 0.9rem;
+}
+
+.title-footer-links a:hover {
+    text-decoration: underline;
+}
+
+/* Copyright Text */
+.title-footer-copyright {
+    color: #999;
+    font-size: 0.8rem;
+    margin-top: 1rem; /* Optional for extra spacing */
+}

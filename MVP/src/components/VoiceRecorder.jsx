@@ -110,12 +110,6 @@ const VoiceRecorder = () => {
             // Set state to 'recording' and wait for rendering
             setState('recording');
             await new Promise((resolve) => setTimeout(resolve, 100));
-            console.log('Canvas Ref:', canvasRef.current);
-
-            // Check if canvas is ready
-            if (!canvasRef.current) {
-                throw new Error('Canvas element is not available.');
-            }
 
             // Request microphone access
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -147,20 +141,18 @@ const VoiceRecorder = () => {
             mediaRecorderRef.current.start();
 
             // Start the timer
+            clearTimer(); // Ensure no previous timer is running
             timerRef.current = setInterval(() => {
-                setElapsedTime((prevElapsedTime) => {
-                    if (prevElapsedTime + 1 >= MAX_RECORDING_TIME) {
-                        stopRecording();
-                        return MAX_RECORDING_TIME;
-                    }
-                    return prevElapsedTime + 1;
-                });
+                setElapsedTime((prev) => prev + 1);
             }, 1000);
+
+            console.log('Recording started with visualization.');
         } catch (error) {
-            console.error('Error accessing microphone or initializing Audio API:', error);
+            console.error('Error accessing microphone:', error);
             alert('Unable to access your microphone. Please check your permissions.');
         }
     };
+
 
     const submitRecording = async () => {
         const formData = new FormData();
@@ -178,6 +170,23 @@ const VoiceRecorder = () => {
         }
     };
 
+    const clearTimer = () => {
+        if (timerRef.current) {
+            clearInterval(timerRef.current);
+            timerRef.current = null;
+        }
+        setElapsedTime(0); // Reset elapsed time
+    };
+
+    useEffect(() => {
+        const audioElement = document.querySelector('audio');
+        if (audioElement) {
+            audioElement.onerror = () => {
+                console.error('Error loading audio preview.');
+            };
+        }
+    }, [previewUrl]);
+
     const stopRecording = () => {
         if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
             mediaRecorderRef.current.stop();
@@ -187,21 +196,22 @@ const VoiceRecorder = () => {
         // Stop waveform animation
         if (animationFrameRef.current) {
             cancelAnimationFrame(animationFrameRef.current);
+            animationFrameRef.current = null;
         }
 
-        // Reset state values
-        setElapsedTime(0); // Reset elapsed time
-        setState('finalized'); // Move to finalized state
+        // Clear timer and reset elapsed time
+        clearTimer();
 
-        // Reset MediaRecorder data when recording stops
+        setState('finalized');
+
+        // Package the recorded audio
         if (mediaRecorderRef.current) {
             mediaRecorderRef.current.onstop = () => {
                 const blob = new Blob(audioChunks.current, { type: 'audio/wav' });
                 setRecordedBlob(blob);
                 setPreviewUrl(URL.createObjectURL(blob));
-
-                // Reset progress and countdown
-                audioChunks.current = []; // Clear audio chunks
+                console.log('Preview URL:', previewUrl);
+                audioChunks.current = [];
             };
         }
     };
@@ -210,48 +220,42 @@ const VoiceRecorder = () => {
         if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
             mediaRecorderRef.current.pause();
             console.log('Recording paused.');
+
             setState('paused');
-            clearInterval(timerRef.current);
-        } else {
-            console.warn('Cannot pause. MediaRecorder is not in a recording state.');
-        }
-    };
-
-
-    const resumeRecording = () => {
-        try {
-            if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'paused') {
-                mediaRecorderRef.current.resume();
-                console.log('Recording resumed.');
-            } else {
-                console.warn('Cannot resume. MediaRecorder is not in a paused state.');
+            // Stop waveform animation
+            if (animationFrameRef.current) {
+                cancelAnimationFrame(animationFrameRef.current);
             }
 
-            setState('recording');
-            timerRef.current = setInterval(() => {
-                setElapsedTime((prevElapsedTime) => prevElapsedTime + 1);
-            }, 1000);
-        } catch (error) {
-            console.error('Error resuming recording:', error);
+            clearInterval(timerRef.current); // Stop the timer
+        } else {
+            console.warn('MediaRecorder is not active. Cannot pause.');
         }
     };
 
+    const resumeRecording = () => {
+        mediaRecorderRef.current.resume();
+        setState('recording');
+        timerRef.current = setInterval(() => {
+            setElapsedTime((prevElapsedTime) => prevElapsedTime + 1);
+        }, 1000);
+    };
 
     const restartRecording = () => {
-        // Stop any ongoing recording
         if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
             mediaRecorderRef.current.stop();
         }
 
-        // Clear intervals and reset all states
+        // Clear timer and reset all states
         clearInterval(timerRef.current);
         timerRef.current = null;
         audioChunks.current = [];
-        setElapsedTime(0); // Reset timer
+        setElapsedTime(0); // Reset timer and progress bar
         setRecordedBlob(null); // Clear recorded blob
         setPreviewUrl(''); // Clear preview URL
-        setState('pre-record'); // Reset to stage_1
+        setState('pre-record'); // Reset to stage 1
     };
+
 
     // Run the recorder
     useEffect(() => {
@@ -328,13 +332,26 @@ const VoiceRecorder = () => {
             {state === 'finalized' && (
                 <div className="vr stage_4">
                     <div className="vr_previews">
-                    <h4>Recordings in this Session</h4>
-                        <audio controls>
-                            <source src={previewUrl} type="audio/wav"/>
-                        </audio>
-                        <audio controls>
-                            <source src={previewUrl} type="audio/wav"/>
-                        </audio>
+                        <h4>Recording Preview</h4>
+                        {previewUrl && (
+                            <div className="vr_audio-container">
+                                <audio controls key={previewUrl} className="vr_audio-preview">
+                                    <source src={previewUrl} type="audio/wav"/>
+                                    Your browser does not support the audio element.
+                                </audio>
+                                <button
+                                    className="vr_delete-button"
+                                    onClick={() => {
+                                        clearTimer(); // Reset the timer
+                                        setPreviewUrl('');
+                                        setRecordedBlob(null);
+                                        setState('pre-record');
+                                    }}
+                                >
+                                    <i className="fas fa-trash-alt vr_record-icon"></i>
+                                </button>
+                            </div>
+                            )}
                     </div>
 
                     <div className="vr_buttons finalize">

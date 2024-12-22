@@ -1,0 +1,91 @@
+/* Footer container */
+.footer-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    height: 100%;
+    background-color: #d6d6f0; /* Darker purple background */
+    border-top: 5px solid #8589A6; /* Thicker top border */
+}
+
+/* Global navigation */
+.global-nav {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 1.5rem 0;
+}
+
+.footer-item {
+    text-align: center;
+    font-size: 0.8rem;
+    color: #999;
+    text-decoration: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.footer-item .footer-icon {
+    font-size: 1.5rem;
+    color: #999;
+}
+
+/* Highlight state for the active link */
+.footer-item.active .footer-icon {
+    color: #333; /* Solid color for active icon */
+    font-weight: bold;
+}
+
+.footer-item.active span {
+    color: #333; /* Solid color for active label */
+}
+
+.footer-item:hover {
+    color: #333; /* Optional hover effect */
+    text-decoration: none;
+}
+
+/* THM icon adjustment */
+.footer-icon.thm {
+    width: 1.5rem;
+    height: auto;
+}
+
+/* Footer links */
+.global-nav a {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-decoration: none;
+    font-size: 0.9rem;
+    line-height: 1.2; /* Keeps text consistent */
+}
+
+.global-nav a:hover {
+    color: #555;
+}
+
+/* Footer icons */
+.global-nav .footer-icon {
+    font-size: 1.2rem; /* Icon size */
+    margin-bottom: 0.25rem; /* Space between icon and label */
+}
+
+/* Custom THM icon alignment */
+.global-nav .footer-icon.thm {
+    width: 2rem; /* Match size to FAS icons */
+    height: 1.2rem;
+    margin-bottom: 0.25rem; /* Consistent spacing */
+    object-fit: contain;
+}
+
+.expanded-content {
+    flex-grow: 1;
+    background-color: #d6d6f0;
+    padding: 1rem 1rem 0;
+}
+
+
+

@@ -1,0 +1,160 @@
+/* Notifications Container */
+/* Notifications Container */
+#notifications {
+    display: flex; /* Use flexbox for layout */
+    flex-direction: column; /* Stack items vertically */
+    align-items: stretch; /* Ensure children take full width */
+    justify-content: flex-start; /* Align items to the top */
+    padding: 1rem 0 0; /* Top padding to align directly below header */
+    font-family: Arial, sans-serif;
+    background-color: transparent;
+    overflow-y: auto;
+    height: calc(100vh - 3rem); /* Subtract header height */
+}
+
+
+/* Notifications List */
+.notifications-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin: 0 1rem; /* Restore padding on the sides */
+    padding-top: 1rem; /* Add spacing at the top */
+}
+
+/* Individual Notification */
+.notification {
+    display: flex;
+    align-items: flex-start; /* Align items to the top */
+    padding: 1rem;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    background-color: #fff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    position: relative;
+    background:#E3E4ED;
+}
+
+/* Red Dot for New Notifications */
+.notification.new::before {
+    content: '';
+    position: absolute;
+    top: -0.5rem;
+    left: -0.5rem;
+    width: 1rem;
+    height: 1rem;
+    background-color: red;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Profile Icon */
+.profile-icon {
+    font-size: 6rem;
+    color: #666;
+    margin-right: 1rem;
+}
+
+/* Notification Details */
+.notification-details {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start; /* Align text to the top */
+    text-align: left;
+}
+
+.notification-name {
+    font-size: 1rem;
+    font-weight: bold;
+    color: #333;
+}
+
+.notification-time {
+    font-size: 0.8rem;
+    color: #333;
+}
+
+.notification-time-ago {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    font-size: 0.8rem;
+    color: #666;
+}
+
+
+.processing-description{
+    color:red;
+    font-size:.8rem;
+    margin-top:.5rem;
+    font-style:italic;
+}
+
+
+/* Button with Icon Container */
+.button-with-icon {
+    display: inline-flex; /* Horizontally align the button and icon */
+    align-items: center; /* Vertically align content */
+    gap: 0.5rem; /* Space between button and icon */
+    margin-top: 0.5rem; /* Add space above */
+}
+
+/* Buttons */
+.processing-button,
+.view-report-button {
+    min-width:200px;
+    padding: .6rem 1.5rem;
+    font-size: 1.2rem;
+    border-radius: 10px;
+    border-bottom:5px solid #333;
+    cursor: pointer;
+    align-items: center; /* Align button text vertically */
+    vertical-align: middle;
+    text-align:center;
+    margin-top:0;
+    font-weight:bold;
+}
+
+/* Processing Button */
+.processing-button {
+    background-color: Yellow; /* Yellow background */
+    color: #333; /* Dark text for contrast */
+    cursor: not-allowed;
+    border-color:#C1C700;
+}
+
+/* View Report Button */
+.view-report-button {
+    background-color: #5cb85c; /* Green background */
+    color: #fff;
+    border-color:#51763A;
+}
+
+/* Icons */
+.spin-icon,
+.fa-check-circle {
+    font-size: 2.5rem; /* Match size to the button */
+    vertical-align: middle; /* Align icon to middle */
+}
+
+/* Spinning Icon Animation */
+.spin-icon {
+    color: Yellow; /* Match yellow for processing */
+    animation: spin 1s linear infinite; /* Spinning effect */
+}
+
+.fa-check-circle {
+    color: #5cb85c; /* Match green for view report */
+}
+
+/* Spinning Icon Animation */
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}

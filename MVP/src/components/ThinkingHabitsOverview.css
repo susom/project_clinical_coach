@@ -1,0 +1,40 @@
+/* Thinking Habits Overview */
+.thinking-habits-overview {
+    display: flex;
+    justify-content: stretch; /* Allow items to grow and touch */
+    align-items: flex-start; /* Align rectangles properly */
+    gap: 0; /* Remove gaps between items */
+}
+
+/* Individual Habit Item */
+.habit-item {
+    flex-grow: 1; /* Allow items to stretch to fill container */
+    min-width: 70px; /* Minimum width for each item */
+    height: 10px; /* Slim down the rectangle */
+    background-color: gray; /* Default color */
+    clip-path: polygon(5% 0, 100% 0, 95% 100%, 0% 100%); /* Reverse the slant */
+}
+
+/* Dynamic Colors */
+.habit-item.green {
+    background-color: #5cb85c; /* Green */
+}
+.habit-item.yellow {
+    background-color: #f0ad4e; /* Yellow */
+}
+.habit-item.red {
+    background-color: #d9534f; /* Red */
+}
+.habit-item.gray {
+    background-color: #ccc; /* Gray */
+}
+
+/* Habit Labels */
+.habit-label {
+    font-size: 0.5rem; /* Adjust text size */
+    font-weight: bold;
+    text-transform: uppercase;
+    color: #333;
+    margin-top: 0.3rem;
+    text-align: center; /* Center-align labels */
+}

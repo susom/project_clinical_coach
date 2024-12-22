@@ -1,0 +1,339 @@
+/* Report Wrapper */
+#report {
+    display: flex;
+    flex-direction: column; /* Stack header, main, and footer vertically */
+    height: 100vh; /* Full viewport height */
+    overflow: hidden; /* Prevent content overflow */
+}
+
+/* Main Content */
+main#report {
+    flex: 1; /* Allow the main content to grow and shrink */
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto; /* Enable vertical scrolling for content */
+    padding: 1rem; /* Add some padding for better spacing */
+    box-sizing: border-box; /* Include padding in width/height calculations */
+}
+
+
+/* Coaching Prompts Section Adjustments */
+.report-analysis {
+    flex: 1; /* Allow this section to grow to fill the available space */
+    display: flex;
+    flex-direction: column;
+}
+
+.habit {
+    margin-bottom: 2rem; /* Add spacing between habits */
+}
+
+
+/* Report Header */
+.report-header {
+    display: flex;
+    align-items: flex-start; /* Align entire content to the top */
+    gap: 1rem;
+    padding: 0 1rem; /* Add padding within the block */
+    background-color: #fff; /* Background for better visibility */
+}
+
+.profile-picture {
+    font-size: 6rem;
+    color: #666;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #ccc; /* Add border for styling */
+    border-radius: 50%; /* Circular profile picture */
+    overflow: hidden;
+    width: 6rem; /* Explicit size to avoid flex shrink/grow */
+    height: 6rem;
+}
+
+.profile-details {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start; /* Align content to the top */
+    text-align: left; /* Left-align text */
+}
+
+.student-name {
+    font-size: 1.4rem;
+    font-weight: bold;
+    background-color: #f5f5ff; /* Light blue background */
+    padding: 0.3rem 0.5rem 0;
+    border-radius: 8px; /* Rounded corners for highlight */
+    display: inline-block;
+    margin-bottom: 0rem;
+}
+
+.conversation-time {
+    font-size: 0.9rem;
+    color: #666;
+    margin-bottom: 0rem;
+}
+
+.report-description {
+    font-size: 1rem;
+    color: #333;
+    line-height: 1.4;
+    margin-top: 0.5rem;
+}
+
+
+/* Thinking Habits Overview Section */
+.thinking-habits-container {
+    display: flex;
+    flex-direction: column; /* Stack elements */
+    align-items: flex-start;
+    width: 100%;
+    padding: 1rem 1.5rem; /* Padding for alignment */
+    box-sizing: border-box; /* Include padding in width calculation */
+    background-color: #fff;
+}
+
+.thinking-habits-container h3 {
+    font-size: 1.2rem;
+    font-weight: bold;
+    margin-bottom: 0;
+}
+
+.at-a-glance {
+    font-size: 0.8rem;
+    font-weight: bold;
+    margin-bottom: 0.1rem;
+    color: #333;
+}
+
+.report-summary {
+    position: relative; /* For absolute positioning of +More button */
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    max-width: 100%; /* Prevent text from overflowing */
+}
+
+.summary-text {
+    font-size: 0.9rem;
+    color: #333;
+    text-align: left;
+    line-height: 1.4;
+    max-height: 4rem; /* Limit visible height */
+    overflow: hidden; /* Hide overflow */
+    margin-bottom: 0.5rem;
+    position: relative;
+}
+
+.small-more {
+    position: absolute; /* Place button within summary */
+    bottom: 0;
+    right: 0;
+    font-size: 0.7rem;
+    padding: 0.3rem 0.6rem;
+    background-color: #f5f5f5;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    color: #333;
+    cursor: pointer;
+    z-index: 1; /* Ensure button is above text */
+}
+
+.small-more:hover {
+    background-color: #e8e8e8;
+}
+
+.summary-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    width: 100%; /* Ensure full-width buttons */
+}
+
+.expandable-button {
+    padding: 0.8rem;
+    font-size: 0.9rem;
+    text-align: left;
+    border: 1px solid #ccc;
+    border-bottom: 5px solid #666; /* Add thick bottom border */
+    border-radius: 5px;
+    background-color: #f5f5f5;
+    cursor: pointer;
+    color: #333;
+    width: 100%; /* Full width */
+}
+
+.expandable-button:hover {
+    background-color: #e8e8e8;
+}
+
+
+/* Learner Strengths */
+.report-strengths {
+    padding: 1rem 1.5rem;
+}
+
+.report-strengths h3 {
+    font-size: 1.2rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    text-align: left;
+}
+
+.strength-tags {
+    display: flex;
+    flex-direction: column; /* Stack each item vertically */
+    gap: 1rem; /* Add space between rows */
+}
+
+.strength-item {
+    display: flex;
+    align-items: center; /* Align pills and text */
+    gap: 1rem; /* Space between pill and text */
+}
+
+.strength-category {
+    padding: 0.3rem 1rem;
+    background-color: #5cb85c; /* Green color */
+    border-radius: 5px;
+    font-size: 0.5rem; /* Smaller font size */
+    color: white;
+    font-weight: bold;
+    text-transform: uppercase;
+    width: 50px; /* Equal width for all pills */
+    text-align: center;
+    border-bottom: 5px solid #3c8c3c; /* Thick border under the pill */
+}
+
+.strength-description {
+    font-size: 0.9rem;
+    color: #333;
+    text-align: left;
+    line-height: 1.5;
+}
+
+
+
+
+/* Coaching Prompts Section */
+.report-analysis {
+    margin: 2rem 0;
+}
+
+/* Title Styling */
+.analysis-title {
+    background-color: #f7f7f7;
+    text-align: center;
+    font-size: 1.2rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.habit {
+    padding:1rem 0;
+}
+
+/* Carousel */
+.carousel {
+    display: flex;
+    gap: 1rem;
+    overflow-x: auto;
+    padding: 0rem 1.5rem;
+}
+
+.carousel-item {
+    flex: 0 0 90%;
+    padding: 1rem;
+    border-radius: 10px;
+    text-align: left;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    position: relative;
+    color: white;
+}
+
+.carousel-item:nth-child(1) {
+    background-color: #6C7CD7; /* Purple for the first bubble */
+}
+
+.carousel-item:nth-child(n+2) {
+    background-color: #8DAFDF; /* Light blue for remaining bubbles */
+}
+
+
+.carousel-item.highlighted {
+    background-color: #6C7CD7;
+}
+
+.prompt-text {
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin-bottom: 1.5rem;
+}
+
+/* Feedback Buttons */
+.feedback-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+}
+
+.feedback-buttons button {
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+}
+
+.feedback-buttons .thumb-up {
+    color: #4cae4c;
+}
+
+.feedback-buttons .thumb-down {
+    color: #d9534f;
+}
+
+/* Action Buttons */
+.action-buttons {
+    display: flex;
+    justify-content: space-between;
+    align-items: stretch; /* Ensure children stretch to match height */
+    margin: 1rem;
+    background: #f7f7f7;
+    border-radius: 5px;
+    padding: 0; /* Remove padding for flush alignment */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border-bottom: 3px solid #ccc;
+    overflow: hidden; /* Ensure content stays within the rounded corners */
+}
+
+.action-left {
+    font-size: 0.9rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    color: #333;
+    padding: 0.5rem 1rem; /* Add padding only for the left content */
+    display: flex;
+    align-items: center;
+}
+
+.detailed-analysis-btn {
+    background-color: #d9534f;
+    color: white;
+    border: none;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    font-weight: bold;
+    padding: 0.5rem 1rem;
+    height: 100%; /* Match the height of the parent container */
+    border-radius: 0; /* Ensure no rounding */
+    margin: 0; /* Remove margins to align flush */
+}
+
+.detailed-analysis-btn:hover {
+    background-color: #e74c3c;
+}
+

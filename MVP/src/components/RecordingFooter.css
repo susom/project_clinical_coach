@@ -1,0 +1,147 @@
+.recording-footer {
+    display: flex;
+    flex-direction: row; /* Horizontal layout */
+    align-items: flex-start; /* Align to the top */
+    gap: 1rem; /* Minimal gap between mic and content */
+    background: #d6d6f0;
+    padding: 0.5rem;
+    border-radius: 8px;
+}
+
+/* Stage 3-specific layout */
+.recording-footer.stage-3-layout {
+    flex-direction: column; /* Stacks items for Stage 3 */
+    align-items: center;
+}
+
+/*Shared across both layouts*/
+.record-button {
+    background-color: #95D470;
+    width: 6rem;
+    height: 6rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border-bottom:5px solid #51763A;
+    margin-top:1rem;
+}
+
+.record-icon {
+    color: white;
+    font-size: 3rem;
+}
+
+.recording-title {
+    font-size: 1rem;
+    font-weight: bold;
+    margin: 0;
+    padding:0;
+}
+
+.student-dropdown {
+    font-size: 1rem;
+    padding: 0.5rem;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    width: 100%; /* Full width for readability */
+    max-width: 300px; /* Limit width for dropdown */
+    text-align: center;
+}
+
+/* Thinking Habits Overview alignment */
+.thinking-habits-overview {
+    margin: 0.5rem 0; /* Add some vertical spacing */
+}
+
+
+
+/* Stage 2 specific styles */
+.stage-2-container {
+    display: flex;
+    flex-direction: row; /* Side-by-side layout */
+    align-items: flex-start; /* Align elements to the top */
+    gap: .5rem; /* Add spacing between mic and setup */
+    width: 100%; /* Full width of the container */
+    border: 1px solid #333;
+    border-radius: 10px;
+    background: #D8D8D8;
+    padding: .5rem; /* Padding for internal spacing */
+}
+
+.recording-setup {
+    display: flex;
+    flex-direction: column; /* Stack elements vertically */
+    align-items: flex-start; /* Align to the left */
+    gap: 0.5rem; /* Minimal spacing between elements */
+}
+
+
+
+.recording-helper-text {
+    font-size: 0.7rem;
+    color: #666;
+    margin: 0;
+    text-align:left
+}
+
+
+/* Stage 3 specific styles */
+.stage-3-container {
+    display: flex;
+    flex-direction: column;
+    align-items: middle;
+    width: 100%; /* Full width of the container */
+    border: 1px solid #333;
+    border-radius: 10px;
+    background: #D8D8D8;
+    padding: 3rem 0 1rem 0; /* Padding for internal spacing */
+
+}
+
+/* Profile picture and dropdown */
+.recording-student-info {
+    display: flex;
+    flex-direction: column; /* Stack profile and details */
+    align-items: center;
+
+}
+
+.recording-profile-picture {
+    margin:1rem;
+}
+
+.recording-current-time {
+    font-size: 0.9rem;
+    color: #666;
+}
+
+/* Controls section */
+.stage-3-controls {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+.stage-3-container .thinking-habits-overview {
+    margin: 1rem 0; /* Add some vertical spacing */
+}
+
+.recording-instructions {
+    width:60%;
+    font-size: 1.6rem;
+    text-align: center;
+}
+
+.record-timer {
+    font-size: 2rem;
+    color: #333;
+    margin:0; padding:0;
+}
+
+.record-meta {
+    font-size: 0.9rem;
+    color: #666;
+}
