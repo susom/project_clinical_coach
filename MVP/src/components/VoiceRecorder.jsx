@@ -1,9 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
+
 import './VoiceRecorder.css';
+import { useConfirmModal } from '../contexts/ConfirmModal';
+import { useStudents } from '../contexts/Students';
 
 const MAX_RECORDING_TIME = 15 * 60; // 15 minutes in seconds
 
-const VoiceRecorder = () => {
+const VoiceRecorder = ({ navigate }) => {
     const [state, setState] = useState('pre-record'); // pre-record, recording, paused, finalized
     const [elapsedTime, setElapsedTime] = useState(0);
     const [recordedBlob, setRecordedBlob] = useState(null);
@@ -17,17 +20,77 @@ const VoiceRecorder = () => {
     const dataArrayRef = useRef(null); // For waveform data
     const canvasRef = useRef(null); // To draw the waveform
     const animationFrameRef = useRef(null); // To manage the animation frame
+    const [isUploading, setIsUploading] = useState(false); // Tracks the uploading state
+    const [sessionTranscriptions, setSessionTranscriptions] = useState([]); // Stores transcriptions in memory
+    const { showConfirmModal } = useConfirmModal();
+    const { selectedStudent, updateTranscription } = useStudents();
 
+    // Function to clear the timer and reset elapsed time
+    const clearTimer = () => {
+        if (timerRef.current) {
+            clearInterval(timerRef.current); // Stops the interval running for the timer
+            timerRef.current = null; // Ensures the timer reference is cleared
+        }
+        setElapsedTime(0); // Resets the elapsed time to zero
+    };
+
+    // Effect to handle audio element errors for the preview
+    useEffect(() => {
+        const audioElement = document.querySelector('audio'); // Selects the audio element in the DOM
+        if (audioElement) {
+            audioElement.onerror = () => {
+                console.error('Error loading audio preview.'); // Logs an error if the audio preview fails to load
+            };
+        }
+    }, [previewUrl]); // Runs whenever the `previewUrl` changes
+
+    // Effect to clean up Web Audio API resources and animations
     useEffect(() => {
         return () => {
             if (audioContextRef.current) {
-                audioContextRef.current.close();
+                audioContextRef.current.close(); // Closes the AudioContext to release resources
             }
             if (animationFrameRef.current) {
-                cancelAnimationFrame(animationFrameRef.current);
+                cancelAnimationFrame(animationFrameRef.current); // Cancels any active animation frames for the waveform
             }
         };
+    }, []); // Runs once when the component unmounts
+
+    // Effect to start recording when the state is set to 'recording'
+    useEffect(() => {
+        if (state === 'recording') {
+            console.log('Starting MediaRecorder and timer...');
+            if (mediaRecorderRef.current) {
+                mediaRecorderRef.current.start(); // Starts the MediaRecorder for audio recording
+                console.log('MediaRecorder started.');
+
+                // Starts a timer to track elapsed time
+                timerRef.current = setInterval(() => {
+                    setElapsedTime((prevElapsedTime) => {
+                        if (prevElapsedTime + 1 >= MAX_RECORDING_TIME) {
+                            stopRecording(); // Stops recording if the max time is reached
+                            return MAX_RECORDING_TIME; // Ensures the time doesn't exceed the max limit
+                        }
+                        return prevElapsedTime + 1; // Increments the elapsed time
+                    });
+                }, 1000);
+            }
+        }
+    }, [state]); // Runs whenever the `state` changes
+
+    // Effect to clean up the timer interval when the component unmounts
+    useEffect(() => {
+        return () => clearInterval(timerRef.current); // Clears the interval to avoid memory leaks
     }, []);
+
+
+    // Calculates the remaining recording time
+    const remainingTime = MAX_RECORDING_TIME - elapsedTime; // Subtracts elapsed time from the max recording time
+    const minutesRemaining = Math.floor(remainingTime / 60); // Converts the remaining time to minutes
+    const secondsRemaining = remainingTime % 60; // Calculates the remaining seconds
+
+    // Calculates the progress percentage for the progress bar
+    const progressPercentage = (elapsedTime / MAX_RECORDING_TIME) * 100; // Converts elapsed time into a percentage
 
     const drawWaveform = () => {
         const canvas = canvasRef.current;
@@ -99,6 +162,104 @@ const VoiceRecorder = () => {
         draw();
     };
 
+    const callAjax = (formData, callback) => {
+        if (!window.clinical_coach_jsmo_module?.transcribeAudio) {
+            console.error("transcribeAudio is undefined in JSMO module!");
+            return;
+        }
+
+        window.clinical_coach_jsmo_module.transcribeAudio(
+            formData,
+            (res) => {
+                console.log("Response received:", res);
+                if (callback) callback(res);
+            },
+            (err) => {
+                console.error("transcribeAudio error:", err);
+                if (callback) callback();
+            }
+        );
+    };
+
+    const submitRecording = async () => {
+        // Show confirmation modal before submission
+        const confirmed = await showConfirmModal({
+            title: 'Submit Recording?',
+            message: 'Are you sure you want to submit this recording?',
+            showConfirm: true,
+            showCancel: true,
+            confirmText: 'Yes',
+            cancelText: 'No',
+        });
+
+        if (!confirmed) {
+            console.log('User canceled submission.');
+            return;
+        }
+
+        if (!recordedBlob) {
+            console.error("No recording available to submit.");
+            return;
+        }
+
+        try {
+            console.log("Submitting recording...");
+
+            const formData = new FormData();
+            formData.append("file", recordedBlob, "recording.wav");
+
+            // Add metadata for student
+            formData.append("metadata", JSON.stringify({
+                studentId: selectedStudent.id, // Use dynamic student ID
+                clinicianId: "exampleClinicianId", // Replace with dynamic value
+            }));
+
+            // Use callAjax for backend communication
+            callAjax(formData, async (rawResponse) => {
+                try {
+                    console.log("[DEBUG RAW RESPONSE FROM MODULE.AJAX]:", rawResponse);
+
+                    // Parse the raw response to extract the text
+                    const parsedResponse = JSON.parse(rawResponse);
+                    const transcription = parsedResponse?.text;
+
+                    if (transcription) {
+                        console.log("[SUCCESS TRANSCRIPTION RECEIVED]:", transcription);
+
+                        // Update transcription in Students context
+                        updateTranscription(selectedStudent.id, transcription);
+
+                        // Add transcription to session or UI
+                        setSessionTranscriptions((prev) => [
+                            ...prev,
+                            { id: Date.now(), transcription },
+                        ]);
+
+                        // Show confirmation modal and redirect
+                        const postSubmitConfirm = await showConfirmModal({
+                            title: 'Recording Submitted!',
+                            message: "Your recording has been submitted for Clinical Coach analysis. Redirecting you to the Student Report page now.",
+                            showConfirm: true,
+                            confirmText: 'OK',
+                        });
+
+                        if (postSubmitConfirm) {
+                            navigate('/report');
+                        }
+                    } else {
+                        console.error("[ERROR NO TRANSCRIPTION RECEIVED]:", rawResponse);
+                    }
+                } catch (error) {
+                    console.error("[ERROR HANDLING TRANSCRIPTION RESPONSE]:", error);
+                }
+            });
+
+        } catch (error) {
+            console.error("Error submitting recording:", error);
+        }
+    };
+
+
     const startRecording = async () => {
         try {
             console.log('Starting recording process...');
@@ -152,40 +313,6 @@ const VoiceRecorder = () => {
             alert('Unable to access your microphone. Please check your permissions.');
         }
     };
-
-
-    const submitRecording = async () => {
-        const formData = new FormData();
-        formData.append('file', recordedBlob);
-
-        try {
-            const response = await fetch('/your-backend-endpoint', {
-                method: 'POST',
-                body: formData,
-            });
-            const data = await response.json();
-            console.log('Transcription:', data);
-        } catch (error) {
-            console.error('Error:', error);
-        }
-    };
-
-    const clearTimer = () => {
-        if (timerRef.current) {
-            clearInterval(timerRef.current);
-            timerRef.current = null;
-        }
-        setElapsedTime(0); // Reset elapsed time
-    };
-
-    useEffect(() => {
-        const audioElement = document.querySelector('audio');
-        if (audioElement) {
-            audioElement.onerror = () => {
-                console.error('Error loading audio preview.');
-            };
-        }
-    }, [previewUrl]);
 
     const stopRecording = () => {
         if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
@@ -256,46 +383,10 @@ const VoiceRecorder = () => {
         setState('pre-record'); // Reset to stage 1
     };
 
-
-    // Run the recorder
-    useEffect(() => {
-        if (state === 'recording') {
-            console.log('Starting MediaRecorder and timer...');
-            if (mediaRecorderRef.current) {
-                mediaRecorderRef.current.start(); // Start recording
-                console.log('MediaRecorder started.');
-
-                // Start the timer
-                timerRef.current = setInterval(() => {
-                    setElapsedTime((prevElapsedTime) => {
-                        if (prevElapsedTime + 1 >= MAX_RECORDING_TIME) {
-                            stopRecording();
-                            return MAX_RECORDING_TIME;
-                        }
-                        return prevElapsedTime + 1;
-                    });
-                }, 1000);
-            }
-        }
-    }, [state]);
-
-    useEffect(() => {
-        // Cleanup interval on unmount
-        return () => clearInterval(timerRef.current);
-    }, []);
-
-    // Calculate remaining time
-    const remainingTime = MAX_RECORDING_TIME - elapsedTime;
-    const minutesRemaining = Math.floor(remainingTime / 60);
-    const secondsRemaining = remainingTime % 60;
-
-    // Calculate progress percentage
-    const progressPercentage = (elapsedTime / MAX_RECORDING_TIME) * 100;
-
     return (
         <div className="vr_recording-controls">
             {state === 'pre-record' && (
-                <div className="vr stage_1">
+                <div className="veear stage_1">
                     <p>Confirm information and press record to start</p>
                     <button className="vr_record-button" onClick={startRecording}>
                         <i className="fas fa-microphone vr_record-icon"></i>
@@ -304,7 +395,7 @@ const VoiceRecorder = () => {
             )}
 
             {state === 'recording' && (
-                <div className="vr stage_2">
+                <div className="veear stage_2">
                     <canvas id="waveform" ref={canvasRef} className="vr_waveform-container"></canvas>
                     <button className="vr_record-button active" onClick={pauseRecording}>
                         <i className="fas fa-pause vr_record-icon"></i>
@@ -313,7 +404,7 @@ const VoiceRecorder = () => {
             )}
 
             {state === 'paused' && (
-                <div className="vr stage_3">
+                <div className="veear stage_3">
                     <div id="waveform" className="vr_waveform-container paused"></div>
                     <div className="vr_buttons">
                         <button className="vr_stop-button" onClick={stopRecording}>
@@ -330,7 +421,7 @@ const VoiceRecorder = () => {
             )}
 
             {state === 'finalized' && (
-                <div className="vr stage_4">
+                <div className="veear stage_4">
                     <div className="vr_previews">
                         <h4>Recording Preview</h4>
                         {previewUrl && (

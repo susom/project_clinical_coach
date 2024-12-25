@@ -77,14 +77,15 @@
 }
 
 .report-status.processing {
-    color: #333; /* Change text to black for "conversation_processing" */
+    color: #333;
 }
+
 
 .report-status.new::before {
     content: '';
     position: absolute;
-    top: -0.5rem;
-    left: -0.5rem;
+    top: 0;
+    left: 0;
     width: 1rem;
     height: 1rem;
     background-color: red;

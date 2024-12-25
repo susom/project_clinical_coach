@@ -198,11 +198,11 @@ main#report {
     padding: 0.3rem 1rem;
     background-color: #5cb85c; /* Green color */
     border-radius: 5px;
-    font-size: 0.5rem; /* Smaller font size */
+    font-size: 0.6rem; /* Smaller font size */
     color: white;
     font-weight: bold;
     text-transform: uppercase;
-    width: 50px; /* Equal width for all pills */
+    min-width:70px;
     text-align: center;
     border-bottom: 5px solid #3c8c3c; /* Thick border under the pill */
 }
@@ -211,16 +211,9 @@ main#report {
     font-size: 0.9rem;
     color: #333;
     text-align: left;
-    line-height: 1.5;
+    line-height: 1;
 }
 
-
-
-
-/* Coaching Prompts Section */
-.report-analysis {
-    margin: 2rem 0;
-}
 
 /* Title Styling */
 .analysis-title {
@@ -233,46 +226,90 @@ main#report {
     margin-bottom: 1rem;
 }
 
-.habit {
-    padding:1rem 0;
+.report-analysis {
+    margin:2rem 0;
 }
+
+.habit {
+    padding:1rem 3rem;
+}
+
+
 
 /* Carousel */
-.carousel {
+/* Report Carousel */
+.report-carousel {
     display: flex;
-    gap: 1rem;
-    overflow-x: auto;
-    padding: 0rem 1.5rem;
+    gap: 2rem; /* Space between carousel items */
+    overflow-x: auto; /* Enable horizontal scrolling */
+    padding: 0; /* Padding for the carousel */
+    scroll-snap-type: x mandatory; /* Smooth scrolling with snapping */
+    scrollbar-width: thin; /* Thin scrollbar for Firefox */
+    -webkit-overflow-scrolling: touch; /* Mobile smooth scrolling */
+    border: none; /* Remove debugging border */
 }
 
-.carousel-item {
-    flex: 0 0 90%;
-    padding: 1rem;
-    border-radius: 10px;
-    text-align: left;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    position: relative;
-    color: white;
+.report-carousel-item {
+    flex: 0 0 auto; /* Items shouldn't resize, but occupy space based on content */
+    min-width: 80%;
+    max-width: 90%;
+    padding: 1rem 1.5rem;
+    border-radius: 10px; /* Rounded corners for the bubble effect */
+    text-align: left; /* Left-align the text */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow for bubble depth */
+    position: relative; /* For better positioning of content */
+    color: white; /* Ensure contrast with background colors */
+    scroll-snap-align: start; /* Align bubbles at the start when scrolling */
+    background-color: #6C7CD7; /* Default bubble color */
 }
 
-.carousel-item:nth-child(1) {
-    background-color: #6C7CD7; /* Purple for the first bubble */
+/* Alternate bubble colors for variety */
+.report-carousel-item:nth-child(odd) {
+    background-color: #6C7CD7; /* Purple for odd items */
 }
 
-.carousel-item:nth-child(n+2) {
-    background-color: #8DAFDF; /* Light blue for remaining bubbles */
+.report-carousel-item:nth-child(even) {
+    background-color: #8DAFDF; /* Light blue for even items */
 }
 
-
-.carousel-item.highlighted {
-    background-color: #6C7CD7;
+/* Optional: Hover effect for interactivity */
+.report-carousel-item:hover {
+    transform: scale(1.02); /* Slight zoom on hover */
+    transition: transform 0.2s ease-in-out; /* Smooth transition */
 }
 
+/* Ensure prompt text displays properly */
 .prompt-text {
     font-size: 0.9rem;
     line-height: 1.5;
-    margin-bottom: 1.5rem;
+    margin-bottom: 0; /* Adjust margin for consistent spacing */
+    color: inherit; /* Inherit text color from parent */
 }
+
+/* Action Buttons */
+.action-buttons {
+    display: flex;
+    justify-content: space-between;
+    align-items: stretch; /* Stretch to match height */
+    margin: 1rem 0; /* Adjust margin for proper spacing */
+    background: #f7f7f7;
+    border-radius: 5px;
+    padding: 0; /* No padding for clean alignment */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+    border-bottom: 3px solid #ccc; /* Bottom border for emphasis */
+    overflow: hidden; /* Keep content within rounded corners */
+}
+
+.action-left {
+    font-size: 0.9rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    color: #333;
+    padding: 0.5rem 1rem; /* Padding for the left text */
+    display: flex;
+    align-items: center;
+}
+
 
 /* Feedback Buttons */
 .feedback-buttons {
@@ -294,30 +331,6 @@ main#report {
 
 .feedback-buttons .thumb-down {
     color: #d9534f;
-}
-
-/* Action Buttons */
-.action-buttons {
-    display: flex;
-    justify-content: space-between;
-    align-items: stretch; /* Ensure children stretch to match height */
-    margin: 1rem;
-    background: #f7f7f7;
-    border-radius: 5px;
-    padding: 0; /* Remove padding for flush alignment */
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    border-bottom: 3px solid #ccc;
-    overflow: hidden; /* Ensure content stays within the rounded corners */
-}
-
-.action-left {
-    font-size: 0.9rem;
-    font-weight: bold;
-    text-transform: uppercase;
-    color: #333;
-    padding: 0.5rem 1rem; /* Add padding only for the left content */
-    display: flex;
-    align-items: center;
 }
 
 .detailed-analysis-btn {

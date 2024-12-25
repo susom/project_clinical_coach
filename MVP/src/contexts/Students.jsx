@@ -8,6 +8,8 @@ export const useStudents = () => useContext(StudentsContext);
 
 // Provider component to wrap the app
 export const StudentsProvider = ({ children }) => {
+    const [selectedStudent, setSelectedStudent] = useState(null);
+
     const defaultReflections = {
         strategy: { score: 'N/A', content: 'No data' },
         solution: { score: 'N/A', content: 'No data' },
@@ -15,14 +17,6 @@ export const StudentsProvider = ({ children }) => {
         problem: { score: 'N/A', content: 'No data' },
         data: { score: 'N/A', content: 'No data' },
         mind: { score: 'N/A', content: 'No data' },
-    };
-
-// Ensure every student has default reflections
-    const ensureDefaultReflections = (students) => {
-        return students.map(student => ({
-            ...student,
-            reflections: student.reflections || { ...defaultReflections },
-        }));
     };
 
     const [students, setStudents] = useState([
@@ -65,9 +59,9 @@ export const StudentsProvider = ({ children }) => {
             ],
             habitsData: [
                 { label: 'Strategy', color: 'green' },
-                { label: 'Solution', color: 'green' },
+                { label: 'Solution', color: 'yellow' },
                 { label: 'Knowledge', color: 'green' },
-                { label: 'Problem', color: 'yellow' },
+                { label: 'Problem', color: 'red' },
                 { label: 'Data', color: 'yellow' },
                 { label: 'Mind', color: 'red' },
             ],
@@ -85,35 +79,6 @@ export const StudentsProvider = ({ children }) => {
                     color: 'green',
                     prompts: ['How could you approach prioritizing between chronic and acute issues?'],
                 },
-                {
-                    category: 'Knowledge',
-                    color: 'green',
-                    prompts: [
-                        'What methods could help you systematically evaluate whether a case requires simple or complex intervention?',
-                    ],
-                },
-                {
-                    category: 'Problem',
-                    color: 'yellow',
-                    prompts: [
-                        'How might you reflect on the diagnostic considerations that were missed?',
-                        'What additional signs or symptoms could you have considered?',
-                    ],
-                },
-                {
-                    category: 'Data',
-                    color: 'yellow',
-                    prompts: [
-                        'How effectively did you leverage available lab data in your presentation?',
-                    ],
-                },
-                {
-                    category: 'Mind',
-                    color: 'red',
-                    prompts: [
-                        'What techniques could improve your engagement with reflective thinking?',
-                    ],
-                },
             ],
             notifications: [
                 { id: 2, time: '1:21PM Thursday, December 12, 2024', timeAgo: '1 Hr Ago', status: 'complete', isNew: true },
@@ -124,7 +89,7 @@ export const StudentsProvider = ({ children }) => {
             name: "Dennis Johnson",
             reflections: {},
             profilePicture: null,
-            transcription: "",
+            transcription: "The patient is a 45-year-old male with a history of Type 2 diabetes and hypertension, presenting with worsening left-sided ear pain and discharge over the past two weeks...",
             description: '8-minute case presentation patient with mastoiditis and complications.',
             time: '12:00 PM',
             thm_summary: "No summary available.",
@@ -142,81 +107,32 @@ export const StudentsProvider = ({ children }) => {
         },
     ]);
 
-
-
-    const [selectedStudent, setSelectedStudent] = useState(students[1]);
-
-    // Function to select a student
     const selectStudent = (studentId) => {
         const student = students.find((s) => s.id === studentId);
-
-        // If student has no reflections, populate with dummy data
-        if (!student.reflections || Object.keys(student.reflections).length === 0) {
-            student.reflections = {
-                strategy: { score: 'N/A', content: 'No data' },
-                solution: { score: 'N/A', content: 'No data' },
-                knowledge: { score: 'N/A', content: 'No data' },
-                problem: { score: 'N/A', content: 'No data' },
-                data: { score: 'N/A', content: 'No data' },
-                mind: { score: 'N/A', content: 'No data' },
-            };
-        }
-
-        setSelectedStudent(student);
+        setSelectedStudent({ ...student }); // Create a new object to avoid mutating state
     };
 
-    const updateTranscription = (studentId, transcription) => {
-        setStudents((prevStudents) =>
-            prevStudents.map((student) =>
-                student.id === studentId ? { ...student, transcription } : student
-            )
-        );
-    };
-
-    // Function to update AI reflections for the student
-    const updateAIResponse = (studentId, reflectionResults) => {
+    const updateStudent = (studentId, updatedData) => {
         setStudents((prevStudents) =>
             prevStudents.map((student) =>
                 student.id === studentId
-                    ? {
-                        ...student,
-                        reflections: {
-                            strategy: {
-                                content: reflectionResults.find((r) => r.reflection_context === "Reflection 1")?.response.response.content || "No strategy content",
-                                score: reflectionResults.find((r) => r.reflection_context === "Reflection 1")?.score || "No strategy score",
-                            },
-                            solution: {
-                                content: reflectionResults.find((r) => r.reflection_context === "Reflection 2")?.response.response.content || "No solution content",
-                                score: reflectionResults.find((r) => r.reflection_context === "Reflection 2")?.score || "No solution score",
-                            },
-                            knowledge: {
-                                content: reflectionResults.find((r) => r.reflection_context === "Reflection 3")?.response.response.content || "No knowledge content",
-                                score: reflectionResults.find((r) => r.reflection_context === "Reflection 3")?.score || "No knowledge score",
-                            },
-                            problem: {
-                                content: reflectionResults.find((r) => r.reflection_context === "Reflection 4")?.response.response.content || "No problem content",
-                                score: reflectionResults.find((r) => r.reflection_context === "Reflection 4")?.score || "No problem score",
-                            },
-                            data: {
-                                content: reflectionResults.find((r) => r.reflection_context === "Reflection 5")?.response.response.content || "No data content",
-                                score: reflectionResults.find((r) => r.reflection_context === "Reflection 5")?.score || "No data score",
-                            },
-                            mind: {
-                                content: reflectionResults.find((r) => r.reflection_context === "Reflection 6")?.response.response.content || "No mind content",
-                                score: reflectionResults.find((r) => r.reflection_context === "Reflection 6")?.score || "No mind score",
-                            },
-                        },
-                    }
+                    ? { ...student, ...updatedData }
                     : student
             )
         );
+
+        if (selectedStudent?.id === studentId) {
+            setSelectedStudent((prevSelected) => ({
+                ...prevSelected,
+                ...updatedData,
+            }));
+        }
     };
 
-    // Sync selectedStudent with updated reflection data
     useEffect(() => {
         if (selectedStudent) {
             const updatedStudent = students.find((s) => s.id === selectedStudent.id);
-            setSelectedStudent(updatedStudent);
+            setSelectedStudent({ ...updatedStudent }); // Update selectedStudent from the updated array
         }
     }, [students]);
 
@@ -226,8 +142,7 @@ export const StudentsProvider = ({ children }) => {
                 students,
                 selectedStudent,
                 selectStudent,
-                updateTranscription,
-                updateAIResponse,
+                updateStudent,
             }}
         >
             {children}

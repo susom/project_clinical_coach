@@ -6,7 +6,7 @@ import thmIcon from '../assets/images/thm_icon.png';
 
 function Footer({ stage = 1, setStage }) {
     const location = useLocation();
-    const currentPath = location.pathname;
+    const currentPath = location.pathname.toLowerCase();
 
     const isExpanded = stage > 1; // Keep expanded state driven by `stage`
 
@@ -19,9 +19,9 @@ function Footer({ stage = 1, setStage }) {
             )}
             <nav className="global-nav">
                 <Link
-                    to="/Home"
-                    className={`footer-item ${currentPath === '/Home' && stage === 1 ? 'active' : ''}`}
-                    onClick={() => setStage(1)} // Reset stage when navigating
+                    to="/home"
+                    className={`footer-item ${currentPath === '/home' ? 'active' : ''}`} // Remove stage check here
+                    onClick={() => setStage(2)} // Retain stage reset logic
                 >
                     <i className="fas fa-home footer-icon"></i>
                     <span>Home</span>

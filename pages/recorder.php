@@ -22,6 +22,10 @@ $build_files = $module->generateAssetFiles();
         integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM"
         crossorigin="anonymous"
     />
+    <link
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
+        rel="stylesheet"
+    >
 
     <!-- Source Sans Pro Font -->
     <link href="https://fonts.cdnfonts.com/css/source-sans-pro" rel="stylesheet">
@@ -30,18 +34,18 @@ $build_files = $module->generateAssetFiles();
     echo $module->initializeJavascriptModuleObject();
 
     $cmds = [
-        "window.clicnical_coach_jsmo_module = " . $module->getJavascriptModuleObjectName()
+        "window.clinical_coach_jsmo_module = " . $module->getJavascriptModuleObjectName()
     ];
 
     $initial_system_context = null;
 
     $data = !empty($initial_system_context) ? $initial_system_context : null;
     if ($data !== null) {
-        $cmds[] = "window.clicnical_coach_jsmo_module.data = " . json_encode($data);
+        $cmds[] = "window.clinical_coach_jsmo_module.data = " . json_encode($data);
     }
 
     if (!empty($init_method)) {
-        $cmds[] = "window.clicnical_coach_jsmo_module.afterRender(clicnical_coach_jsmo_module." . $init_method . ")";
+        $cmds[] = "window.clinical_coach_jsmo_module.afterRender(clinical_coach_jsmo_module." . $init_method . ")";
     }
     ?>
 

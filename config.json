@@ -67,43 +67,49 @@
 		},
         {
             "key": "system_context_summarize",
-            "name": "Raw text to inject into system context for summarization",
+            "name": "Raw text to inject into system context for Overall summarization",
             "required": true,
             "type": "textarea"
         },
         {
             "key": "system_context_reflection_1",
-            "name": "Raw text to inject into system context for reflection 1",
+            "name": "Raw text to inject into system context for reflection (Mind)",
             "required": true,
             "type": "textarea"
         },
         {
             "key": "system_context_reflection_2",
-            "name": "Raw text to inject into system context for reflection 2",
+            "name": "Raw text to inject into system context for reflection (Knowledge)",
             "required": true,
             "type": "textarea"
         },
         {
             "key": "system_context_reflection_3",
-            "name": "Raw text to inject into system context for reflection 3",
+            "name": "Raw text to inject into system context for reflection (Problem)",
             "required": true,
             "type": "textarea"
         },
         {
             "key": "system_context_reflection_4",
-            "name": "Raw text to inject into system context for reflection 4",
+            "name": "Raw text to inject into system context for reflection (Strategy)",
             "required": true,
             "type": "textarea"
         },
         {
             "key": "system_context_reflection_5",
-            "name": "Raw text to inject into system context for reflection 5",
+            "name": "Raw text to inject into system context for reflection (Solution)",
             "required": true,
             "type": "textarea"
         },
         {
             "key": "system_context_reflection_6",
-            "name": "Raw text to inject into system context for reflection 6",
+            "name": "Raw text to inject into system context for reflection (Data)",
+            "required": true,
+            "type": "textarea"
+        },
+        {
+            "key": "system_context_final",
+            "name": "Raw text to inject into system context for final THM report",
             "required": true,
             "type": "textarea"
         },

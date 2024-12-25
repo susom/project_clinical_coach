@@ -9,59 +9,56 @@
 
     Object.assign(module, {
         InitFunction: function () {
-            console.log("Calling this InitFunction() after load...", window.clicnical_coach_jsmo_module.data);
+            console.log("Calling this InitFunction() after load...", window.clinical_coach_jsmo_module.data);
         },
 
         getInitialSystemContext: function() {
-            return  window.clicnical_coach_jsmo_module.data;
+            return  window.clinical_coach_jsmo_module.data;
         },
 
         transcribeAudio: async (formData, callback, errorCallback) => {
             try {
-                // Extract the file from FormData
+                console.log("Starting transcribeAudio...");
+
                 let file;
                 for (let pair of formData.entries()) {
-                    if (pair[0] === 'file') {
+                    console.log(pair[0], pair[1]);
+                    if (pair[0] === "file") {
                         file = pair[1];
-                        break;
+                        console.log("File found in FormData:", file);
                     }
                 }
 
                 // Convert the file to Base64
-                const base64File = await new Promise((resolve, reject) => {
+                console.log("Converting file to Base64...");
+                const fileBase64 = await new Promise((resolve, reject) => {
                     const reader = new FileReader();
+                    reader.onload = () => resolve(reader.result.split(",")[1]); // Strip the metadata part
+                    reader.onerror = (err) => reject(err);
                     reader.readAsDataURL(file);
-                    reader.onload = () => resolve(reader.result.split(',')[1]);  // Remove the data URL prefix
-                    reader.onerror = error => reject(error);
                 });
 
-                // Create a new payload with the Base64-encoded file
                 const payload = {
-                    file_base64: base64File,
-                    fileName: file.name,
-                    fileType: file.type
+                    file: fileBase64, // Base64-encoded string
+                    fileName: formData.get("file").name, // File name
+                    fileType: formData.get("file").type, // MIME type
+                    metadata: formData.get("metadata"), // Already JSON string
                 };
+                console.log("Sending payload to module.ajax:", payload);
+                const res = await module.ajax("transcribeAudio", payload);
 
-                // Send the payload via AJAX
-                const res = await module.ajax('transcribeAudio', payload);
-                let parsedRes = JSON.parse(res);
+
+                console.log("Raw response from module.ajax:", res);
+                const parsedRes = JSON.parse(res);
 
                 if (parsedRes?.response?.content) {
-                    // Extract the text from the content field
-                    const content = JSON.parse(parsedRes.response.content);
-
-                    // Create a new structure with transcription
-                    const transcriptionResult = {
-                        transcription: content.text
-                    };
-
-                    callback(transcriptionResult);
+                    callback(parsedRes.response.content);
                 } else {
-                    console.error("Failed to parse transcription response:", res);
-                    errorCallback(res);
+                    console.error("Failed to parse transcription response:", parsedRes);
+                    errorCallback(parsedRes);
                 }
             } catch (err) {
-                console.error("Error in callTranscribe: ", err);
+                console.error("Error in transcribeAudio:", err);
                 errorCallback(err);
             }
         },
@@ -69,31 +66,38 @@
         callAI: async (payload, callback, errorCallback) => {
             try {
                 const res = await module.ajax('callAI', payload);
+                console.log("Raw response from module.ajax:", res, typeof res);
 
-                // Log the full response for debugging
-                // console.log("JSMO Raw response from backend:", res);
-
-                // Try parsing the response
-                let parsedRes = JSON.parse(res);
-
-                // Log the parsed response to inspect its structure
-                // console.log("JSMO Parsed AI response:", parsedRes);
-
-                // Adjust the structure checks based on the actual response format
-                if (Array.isArray(parsedRes)) {
-                    // Pass the whole parsed response to the callback for further processing
-                    callback(parsedRes);
-                } else if (parsedRes?.response?.content) {
-                    // If it's a singular response with content
-                    callback(parsedRes.response.content);
+                let parsedRes;
+                if (typeof res === "string") {
+                    try {
+                        parsedRes = JSON.parse(res);
+                    } catch (parseError) {
+                        console.error("Error parsing response:", parseError);
+                        errorCallback?.("Invalid JSON response");
+                        return;
+                    }
+                } else if (typeof res === "object" && res !== null) {
+                    parsedRes = res; // Already parsed
                 } else {
-                    console.error("JSMO Unexpected response format:", parsedRes);
-                    errorCallback(res);
+                    errorCallback?.("Unexpected response format");
+                    return;
+                }
+
+                console.log("Parsed response:", parsedRes);
+
+                if (parsedRes.summary && Array.isArray(parsedRes.reflections) && parsedRes.final) {
+                    // Fully normalized response
+                    callback?.(parsedRes);
+                } else {
+                    console.error("Unexpected response format:", parsedRes);
+                    errorCallback?.("Unexpected response format");
                 }
             } catch (err) {
-                console.error("JSMO rror in callAI:", err);
-                errorCallback(err);
+                console.error("Error in callAI:", err);
+                errorCallback?.(err);
             }
         }
+
     });
 }

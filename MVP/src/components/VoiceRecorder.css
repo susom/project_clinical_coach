@@ -1,5 +1,5 @@
 
-div.vr{
+div.veear{
     display: flex; /* Enables flexbox */
     flex-direction: column; /* Stack items vertically */
     align-items: center; /* Center items horizontally */
@@ -98,9 +98,9 @@ div.vr{
 }
 
 /* Waveform */
-.vr.stage_2,
-.vr.stage_3,
-.vr.stage_4{
+.veear.stage_2,
+.veear.stage_3,
+.veear.stage_4{
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -174,10 +174,10 @@ div.vr{
 
 
 /*Recording Stage 4*/
-.vr.stage_4 .vr_stop-button{
+.veear.stage_4 .vr_stop-button{
     visibility:hidden;
 }
-.vr.stage_4 .finalize .vr_restart-button{
+.veear.stage_4 .finalize .vr_restart-button{
     border-radius:10px;
 }
 
@@ -204,7 +204,6 @@ div.vr{
 }
 
 .vr_audio-container:first-child{
-    border:1px solid red;
 }
 
 .vr_previews audio{

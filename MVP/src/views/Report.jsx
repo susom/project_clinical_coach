@@ -1,15 +1,115 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useStudents } from '../contexts/Students';
 import ThinkingHabitsOverview from '../components/ThinkingHabitsOverview';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import './Report.css';
 
+const getRandomColor = () => {
+    const colors = ['green', 'yellow', 'red'];
+    return colors[Math.floor(Math.random() * colors.length)];
+};
+
 export default function Report() {
-    const { selectedStudent } = useStudents();
+    const { students, selectStudent, selectedStudent, updateStudent } = useStudents();
     const [expandedAnalysis, setExpandedAnalysis] = useState(false);
 
-    if (!selectedStudent) return <div>Please select a student to view their report.</div>;
+    useEffect(() => {
+        console.log("Selected Student Updated:", selectedStudent);
+    }, [selectedStudent]);
+
+    useEffect(() => {
+        selectStudent(3); // Only on mount
+    }, []);
+
+    useEffect(() => {
+        if (selectedStudent?.transcription) {
+            handleAIAnalysis();
+        }
+    }, []);
+
+    // HandleAIAnalysis updates the correct student and persists changes
+    const handleAIAnalysis = () => {
+        const payload = {
+            transcription: selectedStudent.transcription,
+        };
+
+        console.log("Payload being sent:", payload);
+
+        window.clinical_coach_jsmo_module.callAI(
+            JSON.stringify(payload),
+            (response) => {
+                console.log("AI Analysis Response:", response);
+
+                if (!response?.summary || !response?.final) {
+                    console.error("Invalid response format:", response);
+                    return;
+                }
+
+                const { summary, reflections, final } = response;
+
+                // Map `thm_summary` from summary
+                const thm_summary = summary.long_summary || "No summary available.";
+
+                // Map strengths from `final.positiveFeedback`
+                const strengths = final.positiveFeedback.map((feedback) => {
+                    const [category, description] = feedback.split(': ');
+                    return { category, description };
+                });
+
+                // ** Compute habitsData first **
+                const habitsData = final.thinkingHabitsScore.split('|').map((habitScore) => {
+                    const [label, colorEmoji] = habitScore.split(' ');
+                    const colorMap = { '🔴': 'red', '🟡': 'yellow', '🟢': 'green' };
+                    return {
+                        label: label.trim(),
+                        color: colorMap[colorEmoji.trim()] || 'gray',
+                    };
+                });
+
+                // Map promptsData using reflections and habitsData
+                const promptsData = reflections.map((reflection) => ({
+                    category: reflection.reflection_context.replace("Reflection on ", ""),
+                    color: habitsData.find((habit) => habit.label === reflection.reflection_context)?.color || 'gray',
+                    prompts: [
+                        ...reflection.coaching_insights.positive_feedback,
+                        ...reflection.coaching_insights.coaching_questions,
+                    ],
+                }));
+
+                // Add a new notification
+                const notification = {
+                    id: Date.now(),
+                    time: new Date().toLocaleString(),
+                    timeAgo: "Just Now",
+                    status: 'complete',
+                    isNew: true,
+                };
+
+                // Build the updated student object
+                const updatedStudent = {
+                    ...selectedStudent,
+                    thm_summary,
+                    strengths,
+                    habitsData,
+                    promptsData,
+                    notifications: [...selectedStudent.notifications, notification],
+                };
+
+                updateStudent(updatedStudent); // Update the student in the context
+
+                console.log("Updated Student Data:", updatedStudent);
+            },
+            (error) => {
+                console.error("AI Analysis Error:", error);
+            }
+        );
+    };
+
+
+    if (!selectedStudent) {
+        return <div>Please select a student to view their report.</div>;
+    }
 
     const toggleAnalysis = () => {
         setExpandedAnalysis(!expandedAnalysis);
@@ -19,39 +119,41 @@ export default function Report() {
         <>
             <Header showBack={true} />
             <main id="report">
-                {/* Profile Header */}
+                <button onClick={handleAIAnalysis}>Trigger AI Analysis</button>
                 <section className="report-header">
                     <div className="profile-picture">
                         {selectedStudent.profilePicture ? (
-                            <img src={selectedStudent.profilePicture} alt={selectedStudent.name}/>
+                            <img src={selectedStudent.profilePicture} alt={selectedStudent.name} />
                         ) : (
                             <i className="fas fa-user-circle"></i>
                         )}
                     </div>
                     <div className="profile-details">
                         <h2 className="student-name">{selectedStudent.name}</h2>
-                        <p className="conversation-time">Conversation @ {selectedStudent.time || 'Unknown Time'}</p>
-                        <p className="report-description">{selectedStudent.description || 'No description available.'}</p>
+                        <p className="conversation-time">
+                            Conversation @ {selectedStudent.time || 'Unknown Time'}
+                        </p>
+                        <p className="report-description">
+                            {selectedStudent.description || 'No description available.'}
+                        </p>
                     </div>
                 </section>
-
-                {/* Thinking Habits Overview */}
                 <section className="thinking-habits-container">
                     <h3>Thinking Habits Report</h3>
-                    <p className="at-a-glance">At A Glance:</p>
                     <ThinkingHabitsOverview habits={selectedStudent.habitsData} />
+
                     <div className="report-summary">
                         <p className="summary-text">{selectedStudent.thm_summary || 'No summary available.'}</p>
                         <div className="summary-buttons">
                             <button className="expandable-button" onClick={toggleAnalysis}>
-                                {expandedAnalysis ? '- HIDE SUMMARY' : '+ IN-DEPTH CASE PRESENTATION SUMMARY'}
+                            {expandedAnalysis ? '- HIDE SUMMARY' : '+ IN-DEPTH CASE PRESENTATION SUMMARY'}
                             </button>
                         </div>
                     </div>
                 </section>
 
-                {/* Strengths */}
-                {selectedStudent.strengths && (
+                {/* Strengths Section */}
+                {selectedStudent?.strengths?.length > 0 && (
                     <section className="report-strengths">
                         <h3>{selectedStudent.name}’s Strengths</h3>
                         <div className="strength-tags">
@@ -65,26 +167,28 @@ export default function Report() {
                     </section>
                 )}
 
-                {/* Coaching Prompts */}
-                {selectedStudent.promptsData && (
+                {/* Coaching Prompts Section */}
+                {selectedStudent.promptsData.length > 0 && (
                     <section className="report-analysis">
                         <h3 className="analysis-title">Coaching Prompts & Thinking Habits Analysis</h3>
-                        {selectedStudent.promptsData.map((habit, habitIndex) => (
-                            <div key={habitIndex} className="habit">
-                                <div className="carousel">
-                                    {habit.prompts.map((prompt, promptIndex) => (
-                                        <div key={promptIndex} className="carousel-item">
-                                            <p className="prompt-text">{prompt}</p>
-                                            <div className="feedback-buttons">
-                                                <button className="thumb-up"><i className="fas fa-thumbs-up"></i></button>
-                                                <button className="thumb-down"><i className="fas fa-thumbs-down"></i></button>
+                        {selectedStudent.promptsData.map((habit, index) => (
+                            <div key={index} className="habit">
+                                <div className="report-carousel">
+                                    {habit.prompts && habit.prompts.length > 0 ? (
+                                        habit.prompts.map((prompt, idx) => (
+                                            <div key={idx} className="report-carousel-item">
+                                                <p>{prompt}</p>
                                             </div>
+                                        ))
+                                    ) : (
+                                        <div className="report-carousel-item">
+                                            <p>No prompts available.</p>
                                         </div>
-                                    ))}
+                                    )}
                                 </div>
                                 <div className="action-buttons">
                                     <div className="action-left">
-                                        <span>Reflection On {habit.category}</span>
+                                        <span>Reflection on {habit.category}</span>
                                     </div>
                                     <div className="action-right">
                                         <button
@@ -116,4 +220,5 @@ export default function Report() {
             <Footer />
         </>
     );
+
 }

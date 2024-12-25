@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import ThinkingHabitsOverview from './ThinkingHabitsOverview';
 import { useStudents } from '../contexts/Students';
 import { useConfirmModal } from '../contexts/ConfirmModal';
@@ -6,13 +7,12 @@ import VoiceRecorder from '../components/VoiceRecorder';
 import './RecordingFooter.css';
 
 function RecordingFooter({ stage, setStage }) {
+    const navigate = useNavigate();
     const { showConfirmModal } = useConfirmModal();
     const { students, selectedStudent, selectStudent } = useStudents();
 
     // for audio recording
-    const [isRecording, setIsRecording] = useState(false); // To manage recording state
     const mediaRecorderRef = useRef(null); // To store the MediaRecorder instance
-    const audioChunksRef = useRef([]); // To store recorded audio chunks
 
     useEffect(() => {
         // Cleanup the MediaRecorder and stop any active recording
@@ -52,15 +52,8 @@ function RecordingFooter({ stage, setStage }) {
         }
     };
 
-    const thmLabels = selectedStudent?.reflections
-        ? [
-            { label: 'Strategy', color: selectedStudent.reflections.strategy?.score === 'N/A' ? 'gray' : 'green' },
-            { label: 'Solution', color: selectedStudent.reflections.solution?.score === 'N/A' ? 'gray' : 'green' },
-            { label: 'Knowledge', color: selectedStudent.reflections.knowledge?.score === 'N/A' ? 'gray' : 'green' },
-            { label: 'Problem', color: selectedStudent.reflections.problem?.score === 'N/A' ? 'gray' : 'yellow' },
-            { label: 'Data', color: selectedStudent.reflections.data?.score === 'N/A' ? 'gray' : 'yellow' },
-            { label: 'Mind', color: selectedStudent.reflections.mind?.score === 'N/A' ? 'gray' : 'red' },
-        ]
+    const thmLabels = selectedStudent?.habitsData
+        ? selectedStudent.habitsData
         : [
             { label: 'Strategy', color: 'gray' },
             { label: 'Solution', color: 'gray' },
@@ -69,6 +62,7 @@ function RecordingFooter({ stage, setStage }) {
             { label: 'Data', color: 'gray' },
             { label: 'Mind', color: 'gray' },
         ];
+
 
     return (
         <div className={`recording-footer ${stage === 3 ? 'stage-3-layout' : 'stage-2-layout'}`}>
@@ -135,7 +129,7 @@ function RecordingFooter({ stage, setStage }) {
                             })}</p>
                         </div>
                     </div>
-                    <VoiceRecorder />
+                    <VoiceRecorder navigate={navigate} />
                 </div>
             )}
         </div>

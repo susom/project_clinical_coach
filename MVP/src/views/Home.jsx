@@ -2,74 +2,42 @@ import React, { useState } from 'react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import ThinkingHabitsOverview from '../components/ThinkingHabitsOverview';
+import { useStudents } from '../contexts/Students';
 import './Home.css';
 
 export default function Home() {
+    const { students } = useStudents(); // Pull student data from the context
     const [stage, setStage] = useState(2); // Default to stage 2 for the Home page
 
+    // Group students by "date" for display
+    const groupedStudents = students.reduce((groups, student) => {
+        const dateKey = student.time.split(',')[0] || "Unknown Date"; // Extract date part
+        if (!groups[dateKey]) {
+            groups[dateKey] = [];
+        }
+        groups[dateKey].push(student);
+        return groups;
+    }, {});
 
-    // Grouped Reports Data
-    const reportsData = [
-        {
-            date: "Today, September 10, 2024",
-            reports: [
-                {
-                    studentName: 'Yaseem Amellal',
-                    time: '1:05 PM',
-                    description: '15-minute case presentation regarding 8-year-old patient in ICU.',
-                    profilePicture: null,
-                    status: 'conversation_processing',
-                    statusColor: 'Yellow',
-                    habits: [
-                        { label: 'Strategy', color: 'green' },
-                        { label: 'Solution', color: 'green' },
-                        { label: 'Knowledge', color: 'green' },
-                        { label: 'Problem', color: 'yellow' },
-                        { label: 'Data', color: 'yellow' },
-                        { label: 'Mind', color: 'red' },
-                    ],
-                },
-                {
-                    studentName: 'Jasmine Machado',
-                    time: '12:45 PM',
-                    description: '20-minute case presentation regarding 10-year-old patient with group-A strep.',
-                    profilePicture: null,
-                    status: 'coaching_insights_available',
-                    statusColor: '#6C7CD7',
-                    isNew:true,
-                    habits: [
-                        { label: 'Strategy', color: 'green' },
-                        { label: 'Solution', color: 'green' },
-                        { label: 'Knowledge', color: 'green' },
-                        { label: 'Problem', color: 'yellow' },
-                        { label: 'Data', color: 'yellow' },
-                        { label: 'Mind', color: 'red' },
-                    ],
-                },
-            ],
-        },
-        {
-            date: "Yesterday, September 9, 2024",
-            reports: [
-                {
-                    studentName: 'Dennis Johnson',
-                    time: '12:00 PM',
-                    description: '8-minute case presentation patient with mastoiditis and complications.',
-                    profilePicture: null,
-                    status: 'review_coaching_insights',
-                    statusColor: '#28a745',
-                    habits: [
-                        { label: 'Strategy', color: 'green' },
-                        { label: 'Solution', color: 'green' },
-                        { label: 'Knowledge', color: 'green' },
-                        { label: 'Problem', color: 'yellow' },
-                        { label: 'Data', color: 'yellow' },
-                        { label: 'Mind', color: 'red' },
-                    ],
-                },
-            ],
-        },
-    ];
+    // Convert grouped students into a usable array
+    const reportsData = Object.keys(groupedStudents).map((date) => ({
+        date,
+        reports: groupedStudents[date].map((student) => ({
+            studentName: student.name,
+            time: student.time,
+            description: student.description,
+            profilePicture: student.profilePicture,
+            status: student.notifications?.[0]?.status || "no_status",
+            statusColor:
+                student.notifications?.[0]?.status === "conversation_processing"
+                    ? "Yellow"
+                    : student.notifications?.[0]?.status === "coaching_insights_available"
+                        ? "#6C7CD7"
+                        : "#28a745",
+            isNew: student.notifications?.[0]?.isNew || false,
+            habits: student.habitsData || [],
+        })),
+    }));
 
     return (
         <>
@@ -90,21 +58,21 @@ export default function Home() {
                                     <div className="report-card-header">
                                         <div className="profile-picture">
                                             {report.profilePicture ? (
-                                                <img src={report.profilePicture} alt={report.studentName}/>
+                                                <img src={report.profilePicture} alt={report.studentName} />
                                             ) : (
                                                 <i className="fas fa-user-circle"></i>
                                             )}
                                         </div>
                                         <div className="report-right-content">
                                             <div
-                                                className={`report-status ${report.status === 'conversation_processing' ? 'processing' : ''} ${
+                                                className={`report-status ${report.status === 'processing' ? 'processing' : ''} ${
                                                     report.isNew ? 'new' : ''
                                                 }`}
-                                                style={{backgroundColor: report.statusColor}}
+                                                style={{ backgroundColor: report.statusColor }}
                                             >
                                                 {report.status.replace(/_/g, " ").toUpperCase()}
                                             </div>
-                                            <ThinkingHabitsOverview habits={report.habits}/>
+                                            <ThinkingHabitsOverview habits={report.habits} />
                                         </div>
                                     </div>
                                     <div className="report-details">
@@ -115,7 +83,6 @@ export default function Home() {
                                         </div>
                                     </div>
                                 </div>
-
                             ))}
                         </div>
                     </section>
