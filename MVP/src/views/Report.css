@@ -152,8 +152,8 @@ main#report {
 }
 
 .expandable-button {
-    padding: 0.8rem;
-    font-size: 0.9rem;
+    padding: .3rem .5rem;
+    font-size: 0.8rem;
     text-align: left;
     border: 1px solid #ccc;
     border-bottom: 5px solid #666; /* Add thick bottom border */
@@ -202,7 +202,7 @@ main#report {
     color: white;
     font-weight: bold;
     text-transform: uppercase;
-    min-width:70px;
+    min-width:80px;
     text-align: center;
     border-bottom: 5px solid #3c8c3c; /* Thick border under the pill */
 }
@@ -301,7 +301,7 @@ main#report {
 }
 
 .action-left {
-    font-size: 0.9rem;
+    font-size: 0.7rem;
     font-weight: bold;
     text-transform: uppercase;
     color: #333;
@@ -337,7 +337,7 @@ main#report {
     background-color: #d9534f;
     color: white;
     border: none;
-    font-size: 0.9rem;
+    font-size: 0.8rem;
     text-transform: uppercase;
     font-weight: bold;
     padding: 0.5rem 1rem;

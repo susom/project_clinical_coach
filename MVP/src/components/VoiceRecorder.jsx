@@ -21,9 +21,8 @@ const VoiceRecorder = ({ navigate }) => {
     const canvasRef = useRef(null); // To draw the waveform
     const animationFrameRef = useRef(null); // To manage the animation frame
     const [isUploading, setIsUploading] = useState(false); // Tracks the uploading state
-    const [sessionTranscriptions, setSessionTranscriptions] = useState([]); // Stores transcriptions in memory
     const { showConfirmModal } = useConfirmModal();
-    const { selectedStudent, updateTranscription } = useStudents();
+    const { selectedStudent, updateStudent } = useStudents();
 
     // Function to clear the timer and reset elapsed time
     const clearTimer = () => {
@@ -226,14 +225,8 @@ const VoiceRecorder = ({ navigate }) => {
                     if (transcription) {
                         console.log("[SUCCESS TRANSCRIPTION RECEIVED]:", transcription);
 
-                        // Update transcription in Students context
-                        updateTranscription(selectedStudent.id, transcription);
-
-                        // Add transcription to session or UI
-                        setSessionTranscriptions((prev) => [
-                            ...prev,
-                            { id: Date.now(), transcription },
-                        ]);
+                        // Update transcription in Students context using updateStudent
+                        updateStudent(selectedStudent.id, { transcription: transcription });
 
                         // Show confirmation modal and redirect
                         const postSubmitConfirm = await showConfirmModal({
@@ -253,12 +246,10 @@ const VoiceRecorder = ({ navigate }) => {
                     console.error("[ERROR HANDLING TRANSCRIPTION RESPONSE]:", error);
                 }
             });
-
         } catch (error) {
             console.error("Error submitting recording:", error);
         }
     };
-
 
     const startRecording = async () => {
         try {

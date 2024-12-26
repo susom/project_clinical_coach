@@ -5,13 +5,8 @@ import Header from '../components/Header';
 import Footer from '../components/Footer';
 import './Report.css';
 
-const getRandomColor = () => {
-    const colors = ['green', 'yellow', 'red'];
-    return colors[Math.floor(Math.random() * colors.length)];
-};
-
 export default function Report() {
-    const { students, selectStudent, selectedStudent, updateStudent } = useStudents();
+    const {students,  selectStudent, selectedStudent, updateStudent } = useStudents();
     const [expandedAnalysis, setExpandedAnalysis] = useState(false);
 
     useEffect(() => {
@@ -30,6 +25,11 @@ export default function Report() {
 
     // HandleAIAnalysis updates the correct student and persists changes
     const handleAIAnalysis = () => {
+        if (!selectedStudent?.transcription) {
+            console.warn("No transcription available for analysis.");
+            return;
+        }
+
         const payload = {
             transcription: selectedStudent.transcription,
         };
@@ -57,7 +57,7 @@ export default function Report() {
                     return { category, description };
                 });
 
-                // ** Compute habitsData first **
+                // Compute habitsData
                 const habitsData = final.thinkingHabitsScore.split('|').map((habitScore) => {
                     const [label, colorEmoji] = habitScore.split(' ');
                     const colorMap = { '🔴': 'red', '🟡': 'yellow', '🟢': 'green' };
@@ -86,19 +86,22 @@ export default function Report() {
                     isNew: true,
                 };
 
-                // Build the updated student object
-                const updatedStudent = {
-                    ...selectedStudent,
+                // Use `updateStudent` to update the context
+                updateStudent(selectedStudent.id, {
                     thm_summary,
                     strengths,
                     habitsData,
                     promptsData,
                     notifications: [...selectedStudent.notifications, notification],
-                };
+                });
 
-                updateStudent(updatedStudent); // Update the student in the context
-
-                console.log("Updated Student Data:", updatedStudent);
+                console.log("Updated Student Data:", {
+                    thm_summary,
+                    strengths,
+                    habitsData,
+                    promptsData,
+                    notifications: [...selectedStudent.notifications, notification],
+                });
             },
             (error) => {
                 console.error("AI Analysis Error:", error);

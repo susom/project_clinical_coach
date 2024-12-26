@@ -20,7 +20,7 @@ function App() {
                     <Router>
                         <div id="clinicalcoachmvp_container">
                             <Routes>
-                                <Route path="/" element={<Report />} />
+                                <Route path="/" element={<Title />} />
                                 <Route path="/home" element={<Home />} />
                                 <Route path="/recording" element={<Recording />} />
                                 <Route path="/thinking-habits" element={<THM />} />

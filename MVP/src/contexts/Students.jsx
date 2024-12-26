@@ -89,7 +89,7 @@ export const StudentsProvider = ({ children }) => {
             name: "Dennis Johnson",
             reflections: {},
             profilePicture: null,
-            transcription: "The patient is a 45-year-old male with a history of Type 2 diabetes and hypertension, presenting with worsening left-sided ear pain and discharge over the past two weeks...",
+            transcription: "",
             description: '8-minute case presentation patient with mastoiditis and complications.',
             time: '12:00 PM',
             thm_summary: "No summary available.",
@@ -113,21 +113,32 @@ export const StudentsProvider = ({ children }) => {
     };
 
     const updateStudent = (studentId, updatedData) => {
-        setStudents((prevStudents) =>
-            prevStudents.map((student) =>
-                student.id === studentId
-                    ? { ...student, ...updatedData }
-                    : student
-            )
-        );
+        if (!studentId || !updatedData || typeof updatedData !== "object") {
+            console.error("Invalid arguments passed to updateStudent:", { studentId, updatedData });
+            return;
+        }
 
+        console.log("Updating student:", { studentId, updatedData });
+
+        // Update the main `students` array
+        setStudents((prevStudents) => {
+            const updatedStudents = prevStudents.map((student) =>
+                student.id === studentId
+                    ? { ...student, ...updatedData } // Merge updates for the matched student
+                    : student
+            );
+            console.log("Updated students array:", updatedStudents);
+            return updatedStudents;
+        });
+
+        // Update the currently `selectedStudent` if it matches the updated student
         if (selectedStudent?.id === studentId) {
-            setSelectedStudent((prevSelected) => ({
-                ...prevSelected,
-                ...updatedData,
-            }));
+            const updatedSelected = { ...selectedStudent, ...updatedData };
+            console.log("Updated selectedStudent:", updatedSelected);
+            setSelectedStudent(updatedSelected);
         }
     };
+
 
     useEffect(() => {
         if (selectedStudent) {
