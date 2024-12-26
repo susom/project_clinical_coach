@@ -68,9 +68,11 @@ export default function Home() {
                                                 className={`report-status ${report.status === 'processing' ? 'processing' : ''} ${
                                                     report.isNew ? 'new' : ''
                                                 }`}
-                                                style={{ backgroundColor: report.statusColor }}
                                             >
+                                                <div className="report-status-text">
+                                                {report.status === 'processing' && <i className="fas fa-sync-alt spin-icon"></i>}
                                                 {report.status.replace(/_/g, " ").toUpperCase()}
+                                                </div>
                                             </div>
                                             <ThinkingHabitsOverview habits={report.habits} />
                                         </div>

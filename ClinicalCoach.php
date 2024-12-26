@@ -514,8 +514,6 @@ if(1==2){
                         ]
                     ];
 
-
-
                     return json_encode($normalized_results);
 
 

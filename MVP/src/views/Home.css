@@ -74,13 +74,28 @@
     margin-bottom: 0.5rem; /* Slight spacing from THM */
     align-self: flex-start; /* Ensure it aligns to the left within the column */
     position: relative;
+    background:#5966C8;
 }
 
 .report-status.processing {
     color: #333;
+    background:#FAED62;
 }
 
+.report-status.processing .report-status-text {
+    position:relative;
+    display:inline-block;
+}
+.report-status.processing .fas{
+    color:white;
+    position: absolute;
+    left: -55px;
+    top: -10px;
+}
 
+.report-status.new{
+    background:#569638;
+}
 .report-status.new::before {
     content: '';
     position: absolute;

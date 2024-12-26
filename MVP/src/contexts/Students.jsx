@@ -10,15 +10,6 @@ export const useStudents = () => useContext(StudentsContext);
 export const StudentsProvider = ({ children }) => {
     const [selectedStudent, setSelectedStudent] = useState(null);
 
-    const defaultReflections = {
-        strategy: { score: 'N/A', content: 'No data' },
-        solution: { score: 'N/A', content: 'No data' },
-        knowledge: { score: 'N/A', content: 'No data' },
-        problem: { score: 'N/A', content: 'No data' },
-        data: { score: 'N/A', content: 'No data' },
-        mind: { score: 'N/A', content: 'No data' },
-    };
-
     const [students, setStudents] = useState([
         {
             id: 1,
