@@ -14,6 +14,7 @@ const VoiceRecorder = ({ navigate }) => {
     const timerRef = useRef(null);
     const mediaRecorderRef = useRef(null);
     const audioChunks = useRef([]);
+    const [isResuming, setIsResuming] = useState(false);
 
     const audioContextRef = useRef(null); // To hold the AudioContext
     const analyserRef = useRef(null); // For frequency data
@@ -55,9 +56,10 @@ const VoiceRecorder = ({ navigate }) => {
         };
     }, []); // Runs once when the component unmounts
 
-    // Effect to start recording when the state is set to 'recording'
     useEffect(() => {
-        if (state === 'recording') {
+        console.log('my current state is', mediaRecorderRef.current)
+
+        if (state === 'recording' && !isResuming) {
             console.log('Starting MediaRecorder and timer...');
             if (mediaRecorderRef.current) {
                 mediaRecorderRef.current.start(); // Starts the MediaRecorder for audio recording
@@ -75,7 +77,11 @@ const VoiceRecorder = ({ navigate }) => {
                 }, 1000);
             }
         }
-    }, [state]); // Runs whenever the `state` changes
+        // Temp fix to prevent crash
+        if(isResuming)
+            drawWaveform();
+
+    }, [state, isResuming]); // Adds `isResuming` to the dependency array
 
     // Effect to clean up the timer interval when the component unmounts
     useEffect(() => {
@@ -352,11 +358,14 @@ const VoiceRecorder = ({ navigate }) => {
     };
 
     const resumeRecording = () => {
-        mediaRecorderRef.current.resume();
-        setState('recording');
-        timerRef.current = setInterval(() => {
-            setElapsedTime((prevElapsedTime) => prevElapsedTime + 1);
-        }, 1000);
+        if (mediaRecorderRef.current) {
+            mediaRecorderRef.current.resume(); // Resumes the MediaRecorder
+            setIsResuming(true); // Indicates that the state change to 'recording' is due to a resume action TEMP FIX
+            setState('recording'); // Updates the state
+            timerRef.current = setInterval(() => {
+                setElapsedTime((prevElapsedTime) => prevElapsedTime + 1); // Continues incrementing elapsed time
+            }, 1000);
+        }
     };
 
     const restartRecording = () => {
