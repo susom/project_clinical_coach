@@ -55,7 +55,7 @@
     ],
 
 	"no-auth-pages": [
-
+        "pages/recorder"
 	],
 
 	"project-settings": [
