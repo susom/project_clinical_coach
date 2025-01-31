@@ -33,6 +33,34 @@
     text-transform: uppercase;
 }
 
+
+/* Center the dropdown under the heading and give it a large, playful style */
+.dropdown-wrapper {
+    display: flex;
+    justify-content: center;  /* horizontal center */
+    align-items: center;      /* vertical center if needed within a container */
+    margin-top: 10rem;         /* space below the <h1> */
+}
+
+.dropdown-wrapper select {
+    font-size: 1.5rem;        /* larger text */
+    padding: 1rem 2rem;       /* "big and juicy" spacing */
+    border: 2px solid #ccc;   /* thicker border for a bold look */
+    border-radius: 10px;      /* rounded corners */
+    background-color: #f9f9f9;
+    cursor: pointer;
+    outline: none;
+}
+
+/* Add hover/focus effects (optional) */
+.dropdown-wrapper select:hover,
+.dropdown-wrapper select:focus {
+    border-color: #999;
+    background-color: #fff;
+}
+
+
+
 /* Login button */
 #title .login-button {
     width: 60%; /* Take up 80% of the width */
