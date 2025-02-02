@@ -87,12 +87,10 @@ function RecordingFooter({ stage, setStage }) {
                             {selectedStudent?.profilePicture ? (
                                 <>
                                     <img src={selectedStudent.profilePicture} alt={selectedStudent.name}/>
-                                    {console.log("🖼️ Profile Pic Loaded:", selectedStudent.profilePicture)}
                                 </>
                             ) : (
                                 <>
                                     <i className="fas fa-user-circle profile-icon"></i>
-                                    {console.log("🚨 No Profile Pic for:", selectedStudent?.name)}
                                 </>
                             )}
                         </div>

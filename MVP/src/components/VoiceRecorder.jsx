@@ -23,7 +23,7 @@ const VoiceRecorder = ({ navigate }) => {
     const animationFrameRef = useRef(null); // To manage the animation frame
     const [isUploading, setIsUploading] = useState(false); // Tracks the uploading state
     const { showConfirmModal } = useConfirmModal();
-    const { selectedStudent, updateStudent } = useStudents();
+    const { selectedStudent, updateStudent, createNewSession } = useStudents();
     const { coach } = useCoach();
 
     // Function to clear the timer and reset elapsed time
@@ -172,7 +172,6 @@ const VoiceRecorder = ({ navigate }) => {
         window.clinical_coach_jsmo_module.transcribeAudio(
             formData,
             (res) => {
-                console.log("Response received:", res);
                 if (callback) callback(res);
             },
             (err) => {
@@ -204,25 +203,8 @@ const VoiceRecorder = ({ navigate }) => {
         }
 
         try {
-            console.log("📌 Creating a new session before posting...");
-
             const new_session_time = new Date().toISOString().split('T')[0] + " " + new Date().toLocaleTimeString();
-            // ✅ **Step 1: Append new session to student's session list**
-            const newSession = {
-                session_id: Date.now(), // Generate unique ID
-                session_date: new_session_time,
-                transcript: "",
-                reflections: {},
-                summary: "",
-                status: "incomplete", // Will update when REDCap responds
-            };
-
-            updateStudent(selectedStudent.id, (prevStudent) => ({
-                ...prevStudent,
-                sessions: [...(prevStudent.sessions || []), newSession],
-            }));
-
-            console.log("✅ New session created:", newSession, selectedStudent.id, coach.record_id);
+            const tempSessionId = createNewSession(selectedStudent.id); // Capture the temporary ID
 
             // ✅ **Step 2: Prepare FormData for submission**
             const formData = new FormData();
@@ -230,31 +212,35 @@ const VoiceRecorder = ({ navigate }) => {
             formData.append("metadata", JSON.stringify({
                 studentId: selectedStudent.id,
                 coachId: coach.record_id,
-                session_date:new_session_time,
+                session_date:new_session_time
             }));
 
             // ✅ **Step 3: Send to backend**
             // Ensure the session gets added to the correct student
             callAjax(formData, async (rawResponse) => {
                 try {
-                    console.log("[DEBUG RAW RESPONSE FROM MODULE.AJAX]:", rawResponse);
-
                     const parsedResponse = typeof rawResponse === "string" ? JSON.parse(rawResponse) : rawResponse;
                     const transcription = parsedResponse?.text;
                     const sessionId = parsedResponse?.session_id; // ✅ Extract session_id
 
                     if (transcription && sessionId) {
-                        console.log("[SUCCESS TRANSCRIPTION RECEIVED]:", transcription, "Session ID:", sessionId);
+                        console.log("[callAjax SUCCESS TRANSCRIPTION RECEIVED]:", transcription, "Session ID:", sessionId);
 
-                        updateStudent(selectedStudent.id, (student) => {
-                            return {
-                                sessions: student.sessions.map(session =>
-                                    session.session_id === sessionId
-                                        ? { ...session, transcript: transcription, status: "pending" } // ✅ Update the correct session
-                                        : session
-                                ),
-                            };
+                        updateStudent(selectedStudent.id, (session) => {
+                            if (session.session_id === tempSessionId) {
+
+                                let updatedSession = {
+                                    ...session,
+                                    session_id: sessionId,
+                                    transcript: transcription,
+                                    status: "pending"
+                                };
+                                console.log("✅ Session_id Match , Updating Session:", session, "➡", updatedSession);
+                                return updatedSession;
+                            }
+                            return session;
                         });
+
 
                         // ✅ Show confirmation modal and navigate
                         const postSubmitConfirm = await showConfirmModal({
@@ -282,7 +268,6 @@ const VoiceRecorder = ({ navigate }) => {
 
     const startRecording = async () => {
         try {
-            console.log('Starting recording process...');
             setElapsedTime(0);
             audioChunks.current = [];
             setRecordedBlob(null);
@@ -327,7 +312,6 @@ const VoiceRecorder = ({ navigate }) => {
                 setElapsedTime((prev) => prev + 1);
             }, 1000);
 
-            console.log('Recording started with visualization.');
         } catch (error) {
             console.error('Error accessing microphone:', error);
             alert('Unable to access your microphone. Please check your permissions.');
@@ -337,7 +321,6 @@ const VoiceRecorder = ({ navigate }) => {
     const stopRecording = () => {
         if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
             mediaRecorderRef.current.stop();
-            console.log('Recording stopped.');
         }
 
         // Stop waveform animation
@@ -357,7 +340,6 @@ const VoiceRecorder = ({ navigate }) => {
                 const blob = new Blob(audioChunks.current, { type: 'audio/wav' });
                 setRecordedBlob(blob);
                 setPreviewUrl(URL.createObjectURL(blob));
-                console.log('Preview URL:', previewUrl);
                 audioChunks.current = [];
             };
         }
@@ -366,7 +348,6 @@ const VoiceRecorder = ({ navigate }) => {
     const pauseRecording = () => {
         if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
             mediaRecorderRef.current.pause();
-            console.log('Recording paused.');
 
             setState('paused');
             // Stop waveform animation

@@ -302,7 +302,7 @@ class ClinicalCoach extends \ExternalModules\AbstractExternalModule {
                     $normalized_results = $this->normalizeAIEvalResults($results);
 
                     //TODO USING NORMALIZED RESULTS BLOCK ABOVE, BUT FOR NOW USE STUBBED VERSION TO WORK ON UI DELETE WHEN READY
-                    $normalized_results = [
+                    $normalized_results_stubbed = [
                         "summary" => [
                             "summary_title" => "Conversation Summary and Organization Assessment",
                             "one_sentence_summary" => "A 45-year-old male with diabetes and hypertension diagnosed with mastoiditis with possible intracranial extension treated with IV antibiotics, showing clinical improvement; follow-up for monitoring is planned.",

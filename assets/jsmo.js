@@ -18,8 +18,6 @@
 
         transcribeAudio: async (formData, callback, errorCallback) => {
             try {
-                console.log("Starting transcribeAudio...");
-
                 const payload = {
                     file: await convertFileToBase64(formData.get("file")),
                     fileName: formData.get("file").name,
@@ -27,7 +25,6 @@
                     metadata: formData.get("metadata"),
                 };
 
-                console.log("🚀 Sending payload to module.ajax:", payload);
                 const res = await module.ajax("transcribeAudio", payload);
 
                 if (!res) {
@@ -36,13 +33,10 @@
                     return;
                 }
 
-                console.log("🔍 DEBUG: module.ajax() returned:", res, "TYPE:", typeof res);
-
                 // 🚀 FINAL FIX → Remove extra JSON.parse
                 const parsedRes = typeof res === "string" ? JSON.parse(res) : res;
 
                 if (parsedRes?.session_id && parsedRes?.text) {
-                    console.log("✅ SUCCESS: Session ID:", parsedRes.session_id, "Transcription:", parsedRes.text);
                     callback?.(parsedRes);
                 } else {
                     console.error("❌ Unexpected response format:", parsedRes);

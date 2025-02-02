@@ -52,30 +52,18 @@ export const StudentsProvider = ({ children }) => {
     const updateStudent = (studentId, updateFn) => {
         setStudents((prevStudents) => {
             return prevStudents.map((student) => {
-                if (student.id === studentId) {
-                    const updatedStudent = { ...student };
-                    const sessionUpdate = updateFn(student);
+                if (String(student.id) === String(studentId)) {
+                    console.log("🔍Found student Updating Student:", student);
 
-                    // 🔍 Ensure sessions exist
-                    updatedStudent.sessions = [...(student.sessions || [])];
+                    const updatedSessions = student.sessions.map(session => {
+                        const updatedSession = updateFn(session);
+                        return updatedSession;
+                    });
 
-                    // 🔍 Get the session to update
-                    const updatedSessionId = sessionUpdate?.sessions?.[0]?.session_id;
-                    const existingSessionIndex = updatedStudent.sessions.findIndex(s => s.session_id === updatedSessionId);
-
-                    if (existingSessionIndex !== -1) {
-                        // ✅ Modify existing session
-                        updatedStudent.sessions[existingSessionIndex] = {
-                            ...updatedStudent.sessions[existingSessionIndex],
-                            ...sessionUpdate.sessions[0],
-                        };
-                    } else {
-                        // ✅ Add new session if it doesn’t exist
-                        updatedStudent.sessions.push(sessionUpdate.sessions[0]);
-                    }
-
-                    console.log("✅ Updated Student:", updatedStudent);
-                    return updatedStudent;
+                    return {
+                        ...student,
+                        sessions: updatedSessions
+                    };
                 }
                 return student;
             });
@@ -84,6 +72,7 @@ export const StudentsProvider = ({ children }) => {
 
 
     const createNewSession = (studentId) => {
+        const tempSessionId = `temp-${Date.now()}`; // Generate a unique temporary ID
         setStudents((prevStudents) =>
             prevStudents.map((student) =>
                 student.id === studentId
@@ -92,18 +81,19 @@ export const StudentsProvider = ({ children }) => {
                         sessions: [
                             ...(student.sessions || []),
                             {
-                                session_id: "placeholder",
+                                session_id: tempSessionId, // Use the temporary ID
                                 session_date: new Date().toISOString().split('T')[0] + " 12:30 PM",
                                 transcript: "",
                                 reflections: {},
                                 summary: "",
-                                status: "incomplete", // Ensure it's incomplete initially
-                            }
-                        ]
+                                status: "incomplete",
+                            },
+                        ],
                     }
                     : student
             )
         );
+        return tempSessionId; // Return the temporary ID for later use
     };
 
     return (
