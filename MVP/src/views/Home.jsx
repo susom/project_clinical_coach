@@ -9,31 +9,32 @@ export default function Home() {
     const { students } = useStudents();
     const [stage, setStage] = useState(2);
 
-    // 1) Flatten all sessions from all students
-    const allSessions = students.flatMap((student) => {
-        const sessions = student.sessions?.filter(s => s.status === "complete" || !s.status) || [];
-        return sessions.map((sesh) => {
-            const colorMap = { '1': 'red', '2': 'yellow', '3': 'green' };
-            const habits = [
-                { label: 'Mind', color: colorMap[sesh.reflections?.mind?.score] || 'gray' },
-                { label: 'Knowledge', color: colorMap[sesh.reflections?.knowledge?.score] || 'gray' },
-                { label: 'Problem', color: colorMap[sesh.reflections?.problem?.score] || 'gray' },
-                { label: 'Strategy', color: colorMap[sesh.reflections?.strategy?.score] || 'gray' },
-                { label: 'Solution', color: colorMap[sesh.reflections?.solution?.score] || 'gray' },
-                { label: 'Data', color: colorMap[sesh.reflections?.data?.score] || 'gray' },
-            ];
+    // ✅ Define colorMap at the top
+    const colorMap = { '1': 'red', '2': 'yellow', '3': 'green' };
 
-            return {
+    // 1) Flatten all sessions and sort in descending order
+    const allSessions = students
+        .flatMap(student => {
+            const sessions = student.sessions?.filter(s => s.status === "complete" || !s.status) || [];
+            return sessions.map(sesh => ({
                 learner_id: student.id,
                 studentName: student.name || "Unknown",
                 profilePicture: student.profilePicture || null,
                 sessionDate: sesh.session_date || "",
                 transcript: sesh.transcript || "",
                 summary: sesh.summary || "",
-                habits,
-            };
-        });
-    });
+                habits: [
+                    { label: 'Mind', color: colorMap[sesh.reflections?.mind?.score] || 'gray' },
+                    { label: 'Knowledge', color: colorMap[sesh.reflections?.knowledge?.score] || 'gray' },
+                    { label: 'Problem', color: colorMap[sesh.reflections?.problem?.score] || 'gray' },
+                    { label: 'Strategy', color: colorMap[sesh.reflections?.strategy?.score] || 'gray' },
+                    { label: 'Solution', color: colorMap[sesh.reflections?.solution?.score] || 'gray' },
+                    { label: 'Data', color: colorMap[sesh.reflections?.data?.score] || 'gray' },
+                ],
+            }));
+        })
+        .sort((a, b) => new Date(b.sessionDate) - new Date(a.sessionDate)); // 🔥 Sort descending
+
 
     // If no sessions, show a single "no data" message
     if (allSessions.length === 0) {
@@ -69,11 +70,14 @@ export default function Home() {
         return acc;
     }, {});
 
-    // Convert to array
-    const dateGroups = Object.keys(groupedSessions).map((date) => ({
-        date,
-        sessions: groupedSessions[date],
-    }));
+    // Convert to array and sort in reverse chronological order
+    const dateGroups = Object.keys(groupedSessions)
+        .sort((a, b) => new Date(b) - new Date(a)) // 🔥 Sort newest first
+        .map(date => ({
+            date,
+            sessions: groupedSessions[date],
+        }));
+
 
     // 3) Render grouped sessions, one <section> per date
     return (

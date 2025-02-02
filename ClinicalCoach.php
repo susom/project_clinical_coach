@@ -519,53 +519,59 @@ if(1==2){
                 case "transcribeAudio":
                     $this->emDebug("Entering transcribeAudio case");
 
-                    // Check if the payload contains the required data
+                    // ✅ Extract payload
                     if (!empty($payload['file']) && !empty($payload['fileName'])) {
                         $this->emDebug("Using payload data.");
                         $fileName = $payload['fileName'];
-                        $fileBase64 = $payload['file'];
+                        $fileContent = base64_decode($payload['file']);
                     } else {
-                        // Fallback to raw input for debugging purposes
                         $this->emDebug("Payload is empty. Checking php://input...");
                         $rawInput = file_get_contents('php://input');
                         $this->emDebug("Raw PHP Input:", $rawInput);
 
                         $inputData = json_decode($rawInput, true);
-
                         if (!$inputData || empty($inputData['file']) || empty($inputData['fileName'])) {
                             $this->emDebug("Invalid payload received. Missing required fields.", $inputData);
                             return json_encode(["error" => "Invalid payload. Base64 file data or fileName missing."]);
                         }
 
                         $fileName = $inputData['fileName'];
-                        $fileBase64 = $inputData['file'];
+                        $fileContent = base64_decode($inputData['file']);
                     }
 
-                    // Decode base64 to a temporary file
+                    // ✅ Save the decoded WAV file
                     $tempFilePath = sys_get_temp_dir() . '/' . uniqid('audio_', true) . '_' . $fileName;
-                    $decodedFile = base64_decode($fileBase64);
 
-                    if ($decodedFile === false) {
+                    if ($fileContent === false) {
                         $this->emDebug("Base64 decoding failed.");
                         return json_encode(["error" => "Failed to decode base64 file data."]);
                     }
 
-                    if (file_put_contents($tempFilePath, $decodedFile) === false) {
-                        $this->emDebug("Failed to write decoded file to temp path:", $tempFilePath);
-                        return json_encode(["error" => "Failed to save decoded file to temp path."]);
+                    if (file_put_contents($tempFilePath, $fileContent) === false) {
+                        $this->emDebug("Failed to write WAV file:", $tempFilePath);
+                        return json_encode(["error" => "Failed to save WAV file."]);
                     }
 
-                    $this->emDebug("Base64 file successfully decoded and saved:", $tempFilePath);
+                    $this->emDebug("WAV file successfully saved:", $tempFilePath);
 
-                    // Proceed with Whisper API call
+                    // ✅ Extract Metadata Properly
+                    $metadata = json_decode($payload['metadata'] ?? '{}', true);
+                    $studentId = $metadata['studentId'] ?? null;
+                    $coachId = $metadata['coachId'] ?? null;
+                    $sessionDate = $metadata['session_date'] ?? date("Y-m-d H:i:s");
+
+                    if (!$studentId || !$coachId) {
+                        $this->emDebug("Missing studentId or coachId, cannot save to REDCap.");
+                        unlink($tempFilePath);
+                        return json_encode(["error" => "Missing studentId or coachId."]);
+                    }
+
+                    // ✅ Whisper API Call
                     $model = "whisper";
-
-                    // Pass Base64 or file path to `callAI`
                     $params = [
-                        'fileBase64' => $fileBase64 ?? null,
-                        'fileName' => $fileName ?? null,
-                        'file' => $tempFilePath ?? null, // If a file path is provided
-                        'language' => $language ?? 'en',
+                        'fileName' => $fileName,
+                        'file' => $tempFilePath, // Pass WAV directly
+                        'language' => 'en',
                         'temperature' => '0.0',
                         'format' => 'json'
                     ];
@@ -574,7 +580,7 @@ if(1==2){
                         $params["language"] = $this->getProjectSetting("whisper-language");
                     }
 
-                    $this->emDebug("Whisper API params being sent:", $params);
+                    $this->emDebug("Sending to Whisper API:", $params);
 
                     try {
                         $response = $this->getSecureChatInstance()->callAI($model, $params, PROJECT_ID);
@@ -588,6 +594,41 @@ if(1==2){
                     $result = $this->formatResponse($response);
                     $this->emDebug("Formatted Whisper API result:", $result);
 
+                    // ✅ Step 1: Store WAV file first
+                    $docId = \REDCap::storeFile($tempFilePath, $this->getProjectId());
+
+                    if (!$docId) {
+                        $this->emDebug("❌ Failed to store WAV file in REDCap.");
+                        unlink($tempFilePath);
+                        return json_encode(["error" => "Failed to store WAV file."]);
+                    }
+
+                    $this->emDebug("✅ WAV file stored. File ID:", $docId);
+
+                    // ✅ Save Transcription + Metadata to REDCap
+                    $recordData = [
+                        'record_id' => $coachId,  // ✅ Main REDCap record (coach)
+                        'redcap_repeat_instrument' => 'session_logs', // ✅ Replace with your instrument name
+                        'redcap_repeat_instance' => 'new', // ✅ REDCap will auto-assign the next available instance
+                        'session_learner_id' => $studentId, // ✅ Student associated with the session
+                        'session_date' => $sessionDate,
+                        'session_transcript_raw' => json_decode($result['response']['content'] ?? '{}', true)['text'] ?? '',
+                        'session_audio_raw_1' => $docId, // ✅ Store doc_id in the same request
+                    ];
+
+
+                    $this->emDebug("Saving session to REDCap:", $recordData);
+                    $saveResult = \REDCap::saveData('json', json_encode([$recordData]));
+
+                    if (!empty($saveResult['errors'])) {
+                        $this->emDebug("Failed to save session to REDCap:", $saveResult);
+                        unlink($tempFilePath);
+                        return json_encode(["error" => "Failed to save session."]);
+                    }
+
+                    $this->emDebug("✅ Session + WAV file successfully saved to REDCap!", $saveResult);
+
+                    // ✅ Cleanup temp file
                     unlink($tempFilePath);
 
                     return json_encode($result);
@@ -763,8 +804,6 @@ if(1==2){
         return $sessions;
     }
 
-
-
     // In ClinicalCoach.php
     public function getCoaches(): array
     {
@@ -790,7 +829,6 @@ if(1==2){
 
         return $coachesList;
     }
-
 
 
     /**

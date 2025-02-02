@@ -233,22 +233,26 @@ const VoiceRecorder = ({ navigate }) => {
                 session_date:new_session_time,
             }));
 
-            console.log("📤 Sending recording to backend...");
-
             // ✅ **Step 3: Send to backend**
+            // Ensure the session gets added to the correct student
             callAjax(formData, async (rawResponse) => {
                 try {
                     console.log("[DEBUG RAW RESPONSE FROM MODULE.AJAX]:", rawResponse);
 
-                    // Parse the raw response to extract the text
                     const parsedResponse = JSON.parse(rawResponse);
                     const transcription = parsedResponse?.text;
 
                     if (transcription) {
                         console.log("[SUCCESS TRANSCRIPTION RECEIVED]:", transcription);
 
-                        // Update transcription in Students context using updateStudent
-                        updateStudent(selectedStudent.id, { transcription: transcription });
+                        updateStudent(selectedStudent.id, (student) => {
+                            const updatedSessions = [...(student.sessions || [])];
+                            if (updatedSessions.length > 0) {
+                                updatedSessions[updatedSessions.length - 1].transcript = transcription;
+                            }
+
+                            return { sessions: updatedSessions };
+                        });
 
                         // Show confirmation modal and redirect
                         const postSubmitConfirm = await showConfirmModal({
