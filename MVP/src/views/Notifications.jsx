@@ -8,12 +8,15 @@ import { useStudents } from '../contexts/Students';
 export default function Notifications() {
     const { students } = useStudents();
 
-    //TODO THIS IS STUBBED IN THE Students Context
-    const notifications = students.flatMap((student) =>
-        student.notifications.map((notification) => ({
-            ...notification,
-            studentName: student.name, // Attach the student's name
-        }))
+    // ✅ Extract only "incomplete" sessions (waiting for feedback from REDCap)
+    const pendingNotifications = students.flatMap((student) =>
+        student.sessions?.filter(s => s.status === "incomplete").map(session => ({
+            studentName: student.name,
+            profilePicture: student.profilePicture || null, // Use profile pic if available
+            sessionDate: session.session_date,
+            status: session.status,
+            sessionId: session.session_id,
+        })) || []
     );
 
     return (
@@ -21,41 +24,28 @@ export default function Notifications() {
             <Header showBack={false} showFilter={true} />
             <main id="notifications">
                 <div className="notifications-list">
-                    {notifications.map((notification) => (
-                        <div
-                            key={notification.id}
-                            className={`notification ${notification.isNew ? 'new' : ''}`}
-                        >
-                            <i className="fas fa-user-circle profile-icon"></i>
-                            <div className="notification-details">
-                                <div className="notification-name">{notification.studentName}</div>
-                                <div className="notification-time">{notification.time}</div>
-                                {
-                                    notification.status === 'processing' ? (
-                                        <>
-                                            <div className="button-with-icon">
-                                                <button className="processing-button" disabled>
-                                                    Processing...
-                                                </button>
-                                                <i className="fas fa-sync-alt spin-icon"></i>
-                                            </div>
-                                            <div className="processing-description">
-                                                Processing cannot be clicked
-                                            </div>
-                                        </>
+                    {pendingNotifications.length === 0 ? (
+                        <p className="empty-notifications">No new notifications</p>
+                    ) : (
+                        pendingNotifications.map((notification) => (
+                            <div key={notification.sessionId} className="notification">
+                                <div className="profile-icon">
+                                    {notification.profilePicture ? (
+                                        <img src={notification.profilePicture} alt={notification.studentName} />
                                     ) : (
-                                        <div className="button-with-icon">
-                                            <button className="view-report-button">
-                                                View Report
-                                            </button>
-                                            <i className="fas fa-check-circle"></i>
-                                        </div>
-                                    )
-                                }
+                                        <i className="fas fa-user-circle profile-icon"></i> // ✅ Only if no pic
+                                    )}
+                                </div>
+                                <div className="notification-details">
+                                    <div className="notification-name">{notification.studentName}</div>
+                                    <div className="notification-time">{notification.sessionDate}</div>
+                                    <div className="notification-status">
+                                        ⏳ In Progress (Waiting for REDCap)
+                                    </div>
+                                </div>
                             </div>
-                            <div className="notification-time-ago">{notification.timeAgo}</div>
-                        </div>
-                    ))}
+                        ))
+                    )}
                 </div>
             </main>
             <Footer />

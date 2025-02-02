@@ -97,7 +97,38 @@
                 console.error("Error in callAI:", err);
                 errorCallback?.(err);
             }
-        }
+        },
+
+        fetchCoachData: async (recordId) => {
+            try {
+                // recordId is the selected coach ID
+                const payload = { record_id: recordId };
+                const res = await module.ajax("fetchCoachData", payload);
+                return JSON.parse(res);
+            } catch (err) {
+                console.error("Error in fetchCoachData:", err);
+                throw err;
+            }
+        },
+
+        fetchStudentsData: async (coachRecordId) => {
+            try {
+                const payload = { coach_record_id: coachRecordId };
+                const res = await module.ajax("fetchStudentsData", payload);
+
+                if (typeof res === "string") {
+                    return JSON.parse(res);
+                } else if (Array.isArray(res)) {
+                    return res;
+                } else {
+                    console.error("Unexpected response format:", res);
+                    return [];
+                }
+            } catch (err) {
+                console.error("Error in fetchStudentsData:", err);
+                return [];
+            }
+        },
 
     });
 }

@@ -24,26 +24,33 @@ export default function Title() {
         }
     }, []);
 
-    const handleCoachChange = (event) => {
+    const handleCoachChange = async (event) => {
         const chosenId = event.target.value;
         setSelectedId(chosenId);
 
-        // Find the matching coach
-        const chosenCoach = coaches.find(
-            (c) => c.record_id.toString() === chosenId
-        );
+        const chosenCoach = coaches.find((c) => c.record_id.toString() === chosenId);
         if (!chosenCoach) return;
 
-        // Update context with Coach info
-        updateCoachProfile({
-            record_id: chosenCoach.record_id,
-            name: `${chosenCoach.fname} ${chosenCoach.lname}`,
-            // add any other fields you want to store in context
-        });
+        try {
+            // Fetch full coach data from server
+            const fullCoachData = await window.ExternalModules.Stanford.ClinicalCoach.fetchCoachData(chosenId);
 
-        // Navigate right away
-        navigate("/home");
+            // Update context **only once** after fetching full data
+            updateCoachProfile({
+                record_id: fullCoachData.record_id,
+                name: `${fullCoachData.fname} ${fullCoachData.lname}`,
+                profilePicture: fullCoachData.coach_pic || null,
+                profession: fullCoachData.coach_profession || "",
+                institution: fullCoachData.coach_institution || ""
+            });
+
+            // Navigate after context update
+            navigate("/home");
+        } catch (err) {
+            console.error("Error fetching coach data", err);
+        }
     };
+
 
     return (
         <>

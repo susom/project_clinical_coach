@@ -516,7 +516,6 @@ if(1==2){
 
                     return json_encode($normalized_results);
 
-
                 case "transcribeAudio":
                     $this->emDebug("Entering transcribeAudio case");
 
@@ -593,7 +592,92 @@ if(1==2){
 
                     return json_encode($result);
 
+                case "fetchCoachData":
+                    // 1) Extract record_id from $payload
+                    $recordId = $payload['record_id'] ?? null;
 
+                    // 2) If no record_id, return error
+                    if (empty($recordId)) {
+                        return json_encode([ "error" => "No record_id provided" ]);
+                    }
+
+                    // 3) Use \REDCap::getData or project APIs to fetch Coach fields
+                    $fields = ['record_id','coach_fname','coach_lname','coach_pic', 'coach_profession', 'coach_institution'];
+                    $params = [
+                        'project_id' => $this->getProjectId(),
+                        'records'    => [$recordId],
+                        'fields'     => $fields
+                    ];
+                    $data = \REDCap::getData($params);
+
+                    // 4) Return JSON with relevant details
+                    $returnPayload = [];
+                    if (!empty($data[$recordId])) {
+                        $coachRow = reset($data[$recordId]); // get the first event
+                        $returnPayload = [
+                            'record_id' => $coachRow['record_id'],
+                            'fname'     => $coachRow['coach_fname'] ?? '',
+                            'lname'     => $coachRow['coach_lname'] ?? '',
+                            'coach_profession'=> $coachRow['coach_profession'] ?? '',
+                            'coach_institution'=> $coachRow['coach_institution'] ?? '',
+                            'coach_pic'=> $coachRow['coach_pic'] ?? ''
+                        ];
+                    }
+                    return json_encode($returnPayload);
+
+                case "fetchStudentsData":
+                    $coachRecordId = $payload['coach_record_id'] ?? null;
+                    if (empty($coachRecordId)) {
+                        return json_encode(["error" => "No coach_record_id provided"]);
+                    }
+
+                    // 1) Fetch all learners for this coach (record=2) from the "learners" instrument
+                    $learnerParams = [
+                        'project_id' => $this->getProjectId(),
+                        'records'    => [$coachRecordId],
+                        'fields'     => ['learner_id','learner_fname','learner_lname','learner_pic'],
+                        'forms'      => ['learners'],
+                        'exportRepeatingInstrumentsEvents' => true,
+                        'return_format' => 'array'
+                    ];
+                    $learnerData = \REDCap::getData($learnerParams);
+
+                    $students = [];
+
+                    // Make sure we see repeating_instances
+                    if (!empty($learnerData[$coachRecordId]['repeat_instances'])) {
+                        $repeat = $learnerData[$coachRecordId]['repeat_instances'];
+                        // 'learners' is presumably at $repeat[event_id]['learners']
+                        // We'll assume there's one event => $repeat[$eventId]
+                        foreach ($repeat as $eventId => $instrumentData) {
+                            if (!empty($instrumentData['learners'])) {
+                                foreach ($instrumentData['learners'] as $instanceNum => $row) {
+                                    $learnerId = $row['learner_id'] ?? null;
+                                    if (!$learnerId) continue;
+
+                                    // 2) For each learner, fetch their sessions
+                                    $sessions = [];
+                                    $sessions = $this->fetchSessionsForLearner($coachRecordId, $learnerId);
+
+                                    // Build final structure
+                                    $students[] = [
+                                        'id' => $learnerId,
+                                        'name' => trim(($row['learner_fname'] ?? '') . ' ' . ($row['learner_lname'] ?? '')),
+                                        'profilePicture' => $row['learner_pic'] ?? null,
+                                        'sessions' => $sessions
+                                    ];
+                                }
+                            }
+                        }
+                    }
+
+                    if (empty($students)) {
+                        $this->emDebug("No students found for coach $coachRecordId");
+                    } else {
+                        $this->emDebug("Found students (including sessions) for coach $coachRecordId", $students);
+                    }
+
+                    return json_encode($students);
 
                 default:
                     throw new Exception("Action $action is not defined");
@@ -607,6 +691,107 @@ if(1==2){
             ]);
         }
     }
+
+    private function fetchSessionsForLearner($coachRecordId, $learnerId) {
+        $params = [
+            'project_id' => $this->getProjectId(),
+            'records'    => [$coachRecordId],
+            'fields'     => [
+                'session_learner_id','session_date','session_transcript_raw',
+                'sess_reflect_mind','sess_reflect_mind_score',
+                'sess_reflect_knowledge','sess_reflect_knowledge_score',
+                'sess_reflect_problem','sess_reflect_problem_score',
+                'sess_reflect_strategy','sess_reflect_strategy_score',
+                'sess_reflect_solution','sess_reflect_solution_score',
+                'sess_reflect_data','sess_reflect_data_score','sess_reflect_summary'
+            ],
+            'forms' => ['session_logs'],
+            'filterLogic' => '[session_learner_id] = "' . db_escape($learnerId) . '"',
+            'exportRepeatingInstrumentsEvents' => true,
+            'return_format' => 'array'
+        ];
+
+        $sessionData = \REDCap::getData($params);
+        $this->emDebug("fetchSessionsForLearner > session logs raw", $params, $sessionData);
+
+        $sessions = [];
+
+        if (!empty($sessionData[$coachRecordId]['repeat_instances'])) {
+            foreach ($sessionData[$coachRecordId]['repeat_instances'] as $eventId => $instrumentData) {
+                if (!empty($instrumentData['session_logs'])) {
+                    foreach ($instrumentData['session_logs'] as $instanceNum => $row) {
+                        if (($row['session_learner_id'] ?? '') == $learnerId) {
+                            $sessions[] = [
+                                'learner_id'   => $learnerId,
+                                'session_date' => $row['session_date'] ?? '',
+                                'transcript'   => $row['session_transcript_raw'] ?? '',
+                                'reflections'  => [
+                                    'mind' => [
+                                        'content' => $row['sess_reflect_mind'] ?? '',
+                                        'score'   => $row['sess_reflect_mind_score'] ?? ''
+                                    ],
+                                    'knowledge' => [
+                                        'content' => $row['sess_reflect_knowledge'] ?? '',
+                                        'score'   => $row['sess_reflect_knowledge_score'] ?? ''
+                                    ],
+                                    'problem' => [
+                                        'content' => $row['sess_reflect_problem'] ?? '',
+                                        'score'   => $row['sess_reflect_problem_score'] ?? ''
+                                    ],
+                                    'strategy' => [
+                                        'content' => $row['sess_reflect_strategy'] ?? '',
+                                        'score'   => $row['sess_reflect_strategy_score'] ?? ''
+                                    ],
+                                    'solution' => [
+                                        'content' => $row['sess_reflect_solution'] ?? '',
+                                        'score'   => $row['sess_reflect_solution_score'] ?? ''
+                                    ],
+                                    'data' => [
+                                        'content' => $row['sess_reflect_data'] ?? '',
+                                        'score'   => $row['sess_reflect_data_score'] ?? ''
+                                    ]
+                                ],
+                                // A top-level property for "summary" if you like
+                                'summary' => $row['sess_reflect_summary'] ?? ''
+                            ];
+                        }
+                    }
+                }
+            }
+        }
+
+        return $sessions;
+    }
+
+
+
+    // In ClinicalCoach.php
+    public function getCoaches(): array
+    {
+        $fields = ['record_id', 'coach_fname', 'coach_lname', 'coach_consent_agree'];
+        $params = [
+            'project_id'  => $this->getProjectId(),
+            'fields'      => $fields,
+            'filterLogic' => '[coach_consent_agree(1)] = "1"'
+        ];
+        $allData = \REDCap::getData($params);
+
+        $coachesList = [];
+        foreach ($allData as $recordId => $events) {
+            // $events is an array keyed by event_id
+            foreach ($events as $eventId => $row) {
+                $coachesList[] = [
+                    'record_id' => $row['record_id'],
+                    'fname'     => $row['coach_fname'],
+                    'lname'     => $row['coach_lname']
+                ];
+            }
+        }
+
+        return $coachesList;
+    }
+
+
 
     /**
      * @return \Stanford\SecureChatAI\SecureChatAI

@@ -8,19 +8,7 @@ export const useCoach = () => useContext(CoachContext);
 
 // Provider component to wrap the app
 export const CoachProvider = ({ children }) => {
-    const [coach, setCoach] = useState({
-        record_id: 1,
-        name: "Keanu Reeves",
-        role: "The One at the Hospital",
-        profilePicture: null, // Placeholder for future profile picture
-        email: "judy.hopkins@example.com",
-        phone: "555-123-4567",
-        bio: "Experienced mentor helping young professionals grow their skills.",
-        settings: {
-            notificationsEnabled: true,
-            theme: "light",
-        },
-    });
+    const [coach, setCoach] = useState({});
 
     const updateCoachProfile = (updatedProfile) => {
         setCoach((prevCoach) => ({

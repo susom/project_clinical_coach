@@ -6,82 +6,111 @@ import { useStudents } from '../contexts/Students';
 import './Home.css';
 
 export default function Home() {
-    const { students } = useStudents(); // Pull student data from the context
-    const [stage, setStage] = useState(2); // Default to stage 2 for the Home page
+    const { students } = useStudents();
+    const [stage, setStage] = useState(2);
 
-    // Group students by "date" for display
-    const groupedStudents = students.reduce((groups, student) => {
-        const dateKey = student.time.split(',')[0] || "Unknown Date"; // Extract date part
-        if (!groups[dateKey]) {
-            groups[dateKey] = [];
+    // 1) Flatten all sessions from all students
+    const allSessions = students.flatMap((student) => {
+        const sessions = student.sessions?.filter(s => s.status === "complete" || !s.status) || [];
+        return sessions.map((sesh) => {
+            const colorMap = { '1': 'red', '2': 'yellow', '3': 'green' };
+            const habits = [
+                { label: 'Mind', color: colorMap[sesh.reflections?.mind?.score] || 'gray' },
+                { label: 'Knowledge', color: colorMap[sesh.reflections?.knowledge?.score] || 'gray' },
+                { label: 'Problem', color: colorMap[sesh.reflections?.problem?.score] || 'gray' },
+                { label: 'Strategy', color: colorMap[sesh.reflections?.strategy?.score] || 'gray' },
+                { label: 'Solution', color: colorMap[sesh.reflections?.solution?.score] || 'gray' },
+                { label: 'Data', color: colorMap[sesh.reflections?.data?.score] || 'gray' },
+            ];
+
+            return {
+                learner_id: student.id,
+                studentName: student.name || "Unknown",
+                profilePicture: student.profilePicture || null,
+                sessionDate: sesh.session_date || "",
+                transcript: sesh.transcript || "",
+                summary: sesh.summary || "",
+                habits,
+            };
+        });
+    });
+
+    // If no sessions, show a single "no data" message
+    if (allSessions.length === 0) {
+        return (
+            <>
+                <Header />
+                <main id="home">
+                    <h1 className="center-title">Clinical Coach</h1>
+                    <section className="report-group">
+                        <div className="group-header">
+                            <span className="group-title">Coaching Reports</span>
+                        </div>
+                        <div className="no-data-message" style={{ textAlign: 'center', marginTop: '2rem' }}>
+                            <em>No Learner Session Data Available</em>
+                        </div>
+                    </section>
+                </main>
+                <Footer stage={stage} setStage={setStage} />
+            </>
+        );
+    }
+
+    // 2) Group sessions by date
+    const groupedSessions = allSessions.reduce((acc, session) => {
+        // for instance, if sessionDate = "2025-02-01 10:35",
+        // you might split on space or T to isolate date portion
+        const dateKey = session.sessionDate.split(" ")[0] || "Unknown Date";
+
+        if (!acc[dateKey]) {
+            acc[dateKey] = [];
         }
-        groups[dateKey].push(student);
-        return groups;
+        acc[dateKey].push(session);
+        return acc;
     }, {});
 
-    // Convert grouped students into a usable array
-    const reportsData = Object.keys(groupedStudents).map((date) => ({
+    // Convert to array
+    const dateGroups = Object.keys(groupedSessions).map((date) => ({
         date,
-        reports: groupedStudents[date].map((student) => ({
-            studentName: student.name,
-            time: student.time,
-            description: student.description,
-            profilePicture: student.profilePicture,
-            status: student.notifications?.[0]?.status || "no_status",
-            statusColor:
-                student.notifications?.[0]?.status === "conversation_processing"
-                    ? "Yellow"
-                    : student.notifications?.[0]?.status === "coaching_insights_available"
-                        ? "#6C7CD7"
-                        : "#28a745",
-            isNew: student.notifications?.[0]?.isNew || false,
-            habits: student.habitsData || [],
-        })),
+        sessions: groupedSessions[date],
     }));
 
+    // 3) Render grouped sessions, one <section> per date
     return (
         <>
             <Header />
             <main id="home">
                 <h1 className="center-title">Clinical Coach</h1>
-                {reportsData.map((group, groupIndex) => (
-                    <section key={groupIndex} className="report-group">
+
+                {dateGroups.map((group, groupIndex) => (
+                <section key={groupIndex} className="report-group">
                         <div className="group-header">
-                            <span className="group-title">
-                                {groupIndex === 0 ? "Coaching Reports" : ""}
-                            </span>
+                            <span className="group-title">{groupIndex === 0 ? "Coaching Reports" : ""}</span>
                             <span className="group-date">{group.date}</span>
                         </div>
                         <div className="report-list">
-                            {group.reports.map((report, index) => (
-                                <div className="report-card" key={`${groupIndex}-${index}`}>
+                            {group.sessions.map((session, idx) => (
+                                <div className="report-card" key={idx}>
                                     <div className="report-card-header">
                                         <div className="profile-picture">
-                                            {report.profilePicture ? (
-                                                <img src={report.profilePicture} alt={report.studentName} />
+                                            {session.profilePicture ? (
+                                                <img src={session.profilePicture} alt={session.studentName} />
                                             ) : (
                                                 <i className="fas fa-user-circle"></i>
                                             )}
                                         </div>
                                         <div className="report-right-content">
-                                            <div
-                                                className={`report-status ${report.status === 'processing' ? 'processing' : ''} ${
-                                                    report.isNew ? 'new' : ''
-                                                }`}
-                                            >
-                                                <div className="report-status-text">
-                                                {report.status === 'processing' && <i className="fas fa-sync-alt spin-icon"></i>}
-                                                {report.status.replace(/_/g, " ").toUpperCase()}
-                                                </div>
+                                            <div className="report-status">
+                                                <div className="report-status-text">COMPLETE</div>
                                             </div>
-                                            <ThinkingHabitsOverview habits={report.habits} />
+                                            <ThinkingHabitsOverview habits={session.habits} />
                                         </div>
                                     </div>
                                     <div className="report-details">
-                                        <div className="report-student-name">{report.studentName}</div>
+                                        <div className="report-student-name">{session.studentName}</div>
                                         <div className="report-meta">
-                                            <p className="report-time">{report.time}</p>
-                                            <p className="report-description">{report.description}</p>
+                                            <p className="report-time">{session.sessionDate}</p>
+                                            <SummaryExpandable text={session.summary} />
                                         </div>
                                     </div>
                                 </div>
@@ -94,3 +123,22 @@ export default function Home() {
         </>
     );
 }
+
+function SummaryExpandable({ text }) {
+    const [expanded, setExpanded] = useState(false);
+    const TRUNCATE_THRESHOLD = 120;
+    const isTruncated = !expanded && text.length > TRUNCATE_THRESHOLD;
+    const displayText = isTruncated ? text.substring(0, TRUNCATE_THRESHOLD) + "..." : text;
+
+    return (
+        <div className="report-description" style={{ marginTop: '0.5rem' }}>
+            <div>{displayText}</div>
+            {text.length > TRUNCATE_THRESHOLD && (
+                <a onClick={() => setExpanded(!expanded)} style={{ cursor: 'pointer', color: '#646cff', fontWeight: 'bold' }}>
+                    {expanded ? ' Show Less -' : ' Show More +' }
+                </a>
+            )}
+        </div>
+    );
+}
+

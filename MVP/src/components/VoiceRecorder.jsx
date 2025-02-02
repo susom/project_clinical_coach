@@ -3,6 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import './VoiceRecorder.css';
 import { useConfirmModal } from '../contexts/ConfirmModal';
 import { useStudents } from '../contexts/Students';
+import { useCoach } from '../contexts/Coach';
 
 const MAX_RECORDING_TIME = 15 * 60; // 15 minutes in seconds
 
@@ -23,6 +24,7 @@ const VoiceRecorder = ({ navigate }) => {
     const [isUploading, setIsUploading] = useState(false); // Tracks the uploading state
     const { showConfirmModal } = useConfirmModal();
     const { selectedStudent, updateStudent } = useStudents();
+    const { coach } = useCoach();
 
     // Function to clear the timer and reset elapsed time
     const clearTimer = () => {
@@ -202,18 +204,38 @@ const VoiceRecorder = ({ navigate }) => {
         }
 
         try {
-            console.log("Submitting recording...");
+            console.log("📌 Creating a new session before posting...");
 
-            const formData = new FormData();
-            formData.append("file", recordedBlob, "recording.wav");
+            const new_session_time = new Date().toISOString().split('T')[0] + " " + new Date().toLocaleTimeString();
+            // ✅ **Step 1: Append new session to student's session list**
+            const newSession = {
+                session_id: Date.now(), // Generate unique ID
+                session_date: new_session_time,
+                transcript: "",
+                reflections: {},
+                summary: "",
+                status: "incomplete", // Will update when REDCap responds
+            };
 
-            // Add metadata for student
-            formData.append("metadata", JSON.stringify({
-                studentId: selectedStudent.id, // Use dynamic student ID
-                clinicianId: "exampleClinicianId", // Replace with dynamic value
+            updateStudent(selectedStudent.id, (prevStudent) => ({
+                ...prevStudent,
+                sessions: [...(prevStudent.sessions || []), newSession],
             }));
 
-            // Use callAjax for backend communication
+            console.log("✅ New session created:", newSession, selectedStudent.id, coach.record_id);
+
+            // ✅ **Step 2: Prepare FormData for submission**
+            const formData = new FormData();
+            formData.append("file", recordedBlob, "recording.wav");
+            formData.append("metadata", JSON.stringify({
+                studentId: selectedStudent.id,
+                coachId: coach.record_id,
+                session_date:new_session_time,
+            }));
+
+            console.log("📤 Sending recording to backend...");
+
+            // ✅ **Step 3: Send to backend**
             callAjax(formData, async (rawResponse) => {
                 try {
                     console.log("[DEBUG RAW RESPONSE FROM MODULE.AJAX]:", rawResponse);

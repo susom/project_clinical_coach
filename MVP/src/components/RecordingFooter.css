@@ -108,8 +108,11 @@
 
 }
 
-.recording-profile-picture {
+.recording-profile-picture img{
     margin:1rem;
+    border-radius:160px;
+    max-width:120px;
+    vertical-align: top;
 }
 
 .recording-current-time {

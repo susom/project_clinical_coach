@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ThinkingHabitsOverview from './ThinkingHabitsOverview';
 import { useStudents } from '../contexts/Students';
@@ -11,58 +11,44 @@ function RecordingFooter({ stage, setStage }) {
     const { showConfirmModal } = useConfirmModal();
     const { students, selectedStudent, selectStudent } = useStudents();
 
-    // for audio recording
-    const mediaRecorderRef = useRef(null); // To store the MediaRecorder instance
-
-    useEffect(() => {
-        // Cleanup the MediaRecorder and stop any active recording
-        return () => {
-            if (mediaRecorderRef.current) {
-                mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
-                mediaRecorderRef.current = null;
-            }
-        };
-    }, []);
-
-
     const handleStudentChange = (event) => {
-        const studentId = Number(event.target.value);
-        selectStudent(studentId);
+        const studentId = event.target.value; // Keep it as a string
+        console.log("🟡 Selected Student ID:", studentId, students);
+
+        const student = students.find(s => s.id === studentId); // Compare as string
+        if (student) {
+            console.log("✅ Found Student:", student);
+            selectStudent(student.id); // Pass the string ID
+            setStage(3); // ✅ Immediately transition to Stage 3
+        } else {
+            console.warn("🚨 Student not found for ID:", studentId);
+        }
     };
 
     const handleRecordClick = () => {
         if (!selectedStudent) {
-            const confirmed = showConfirmModal({
+            showConfirmModal({
                 title: '',
-                message: 'You must select a student to start a recording session. ',
+                message: 'You must select a student to start a recording session.',
                 showConfirm: false,
                 showCancel: true,
                 confirmText: '',
                 cancelText: 'Got It!',
             });
-
-            if (confirmed) {
-                console.log('User logged out');
-                // Add your logout functionality here
-            } else {
-                console.log('User canceled logout');
-            }
         } else {
-            setStage(3); // Move to stage 3 UI
+            console.log("🎤 Recording started for student:", selectedStudent);
+            setStage(3);
         }
     };
 
-    const thmLabels = selectedStudent?.habitsData
-        ? selectedStudent.habitsData
-        : [
-            { label: 'Strategy', color: 'gray' },
-            { label: 'Solution', color: 'gray' },
-            { label: 'Knowledge', color: 'gray' },
-            { label: 'Problem', color: 'gray' },
-            { label: 'Data', color: 'gray' },
-            { label: 'Mind', color: 'gray' },
-        ];
-
+    const thmLabels = selectedStudent?.habitsData || [
+        { label: 'Strategy', color: 'gray' },
+        { label: 'Solution', color: 'gray' },
+        { label: 'Knowledge', color: 'gray' },
+        { label: 'Problem', color: 'gray' },
+        { label: 'Data', color: 'gray' },
+        { label: 'Mind', color: 'gray' },
+    ];
 
     return (
         <div className={`recording-footer ${stage === 3 ? 'stage-3-layout' : 'stage-2-layout'}`}>
@@ -98,10 +84,16 @@ function RecordingFooter({ stage, setStage }) {
                     <h3 className="recording-title">Start A Recording Session</h3>
                     <div className="recording-student-info">
                         <div className="recording-profile-picture">
-                            {selectedStudent && selectedStudent.profilePicture ? (
-                                <img src={selectedStudent.profilePicture} alt={selectedStudent.name} />
+                            {selectedStudent?.profilePicture ? (
+                                <>
+                                    <img src={selectedStudent.profilePicture} alt={selectedStudent.name}/>
+                                    {console.log("🖼️ Profile Pic Loaded:", selectedStudent.profilePicture)}
+                                </>
                             ) : (
-                                <i className="fas fa-user-circle profile-icon"></i>
+                                <>
+                                    <i className="fas fa-user-circle profile-icon"></i>
+                                    {console.log("🚨 No Profile Pic for:", selectedStudent?.name)}
+                                </>
                             )}
                         </div>
                         <div className="student-details">

@@ -50,10 +50,13 @@
 }
 
 /* Profile Icon */
-.profile-icon {
+.notification .profile-icon img{
     font-size: 6rem;
     color: #666;
     margin-right: 1rem;
+    border-radius:160px;
+    max-width:120px;
+    vertical-align: top;
 }
 
 /* Notification Details */

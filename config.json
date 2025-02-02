@@ -46,12 +46,16 @@
 
     "auth-ajax-actions": [
         "callAI",
-        "transcribeAudio"
+        "transcribeAudio",
+        "fetchCoachData",
+        "fetchStudentsData"
     ],
 
     "no-auth-ajax-actions": [
         "callAI",
-        "transcribeAudio"
+        "transcribeAudio",
+        "fetchCoachData",
+        "fetchStudentsData"
     ],
 
 	"no-auth-pages": [
