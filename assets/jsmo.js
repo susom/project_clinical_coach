@@ -20,46 +20,37 @@
             try {
                 console.log("Starting transcribeAudio...");
 
-                let file;
-                for (let pair of formData.entries()) {
-                    console.log(pair[0], pair[1]);
-                    if (pair[0] === "file") {
-                        file = pair[1];
-                        console.log("File found in FormData:", file);
-                    }
-                }
-
-                // Convert the file to Base64
-                console.log("Converting file to Base64...");
-                const fileBase64 = await new Promise((resolve, reject) => {
-                    const reader = new FileReader();
-                    reader.onload = () => resolve(reader.result.split(",")[1]); // Strip the metadata part
-                    reader.onerror = (err) => reject(err);
-                    reader.readAsDataURL(file);
-                });
-
                 const payload = {
-                    file: fileBase64, // Base64-encoded string
-                    fileName: formData.get("file").name, // File name
-                    fileType: formData.get("file").type, // MIME type
-                    metadata: formData.get("metadata"), // Already JSON string
+                    file: await convertFileToBase64(formData.get("file")),
+                    fileName: formData.get("file").name,
+                    fileType: formData.get("file").type,
+                    metadata: formData.get("metadata"),
                 };
-                console.log("Sending payload to module.ajax:", payload);
+
+                console.log("🚀 Sending payload to module.ajax:", payload);
                 const res = await module.ajax("transcribeAudio", payload);
 
+                if (!res) {
+                    console.error("❌ No response received from module.ajax");
+                    errorCallback?.("No response from server");
+                    return;
+                }
 
-                console.log("Raw response from module.ajax:", res);
-                const parsedRes = JSON.parse(res);
+                console.log("🔍 DEBUG: module.ajax() returned:", res, "TYPE:", typeof res);
 
-                if (parsedRes?.response?.content) {
-                    callback(parsedRes.response.content);
+                // 🚀 FINAL FIX → Remove extra JSON.parse
+                const parsedRes = typeof res === "string" ? JSON.parse(res) : res;
+
+                if (parsedRes?.session_id && parsedRes?.text) {
+                    console.log("✅ SUCCESS: Session ID:", parsedRes.session_id, "Transcription:", parsedRes.text);
+                    callback?.(parsedRes);
                 } else {
-                    console.error("Failed to parse transcription response:", parsedRes);
-                    errorCallback(parsedRes);
+                    console.error("❌ Unexpected response format:", parsedRes);
+                    errorCallback?.("Unexpected response format");
                 }
             } catch (err) {
-                console.error("Error in transcribeAudio:", err);
-                errorCallback(err);
+                console.error("❌ Error in transcribeAudio:", err);
+                errorCallback?.(err);
             }
         },
 
@@ -130,5 +121,35 @@
             }
         },
 
+        updateSession: async (sessionData, callback, errorCallback) => {
+            try {
+                console.log("Updating session in REDCap...", sessionData);
+                const res = await module.ajax("updateSession", sessionData);
+
+                console.log("Raw response from module.ajax (updateSession):", res);
+                const parsedRes = JSON.parse(res);
+
+                if (parsedRes.error) {
+                    console.error("❌ Failed to update session in REDCap:", parsedRes.error);
+                    errorCallback?.(parsedRes.error);
+                } else {
+                    console.log("✅ Session successfully updated in REDCap!", parsedRes);
+                    callback?.(parsedRes);
+                }
+            } catch (err) {
+                console.error("Error in updateSession:", err);
+                errorCallback?.(err);
+            }
+        }
+    });
+}
+
+// ✅ Helper function to convert file to Base64
+async function convertFileToBase64(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result.split(",")[1]);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
     });
 }

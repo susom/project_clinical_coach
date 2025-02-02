@@ -53,11 +53,26 @@ export const StudentsProvider = ({ children }) => {
         setStudents((prevStudents) => {
             return prevStudents.map((student) => {
                 if (student.id === studentId) {
-                    const updatedStudent = {
-                        ...student,
-                        ...updateFn(student),
-                        sessions: [...(student.sessions || []), ...((updateFn(student)?.sessions) || [])]
-                    };
+                    const updatedStudent = { ...student };
+                    const sessionUpdate = updateFn(student);
+
+                    // 🔍 Ensure sessions exist
+                    updatedStudent.sessions = [...(student.sessions || [])];
+
+                    // 🔍 Get the session to update
+                    const updatedSessionId = sessionUpdate?.sessions?.[0]?.session_id;
+                    const existingSessionIndex = updatedStudent.sessions.findIndex(s => s.session_id === updatedSessionId);
+
+                    if (existingSessionIndex !== -1) {
+                        // ✅ Modify existing session
+                        updatedStudent.sessions[existingSessionIndex] = {
+                            ...updatedStudent.sessions[existingSessionIndex],
+                            ...sessionUpdate.sessions[0],
+                        };
+                    } else {
+                        // ✅ Add new session if it doesn’t exist
+                        updatedStudent.sessions.push(sessionUpdate.sessions[0]);
+                    }
 
                     console.log("✅ Updated Student:", updatedStudent);
                     return updatedStudent;
@@ -65,32 +80,8 @@ export const StudentsProvider = ({ children }) => {
                 return student;
             });
         });
-
-        const updatedStudent = students.find((s) => s.id === studentId);
-        if (!updatedStudent) {
-            console.warn("⚠️ Student not found for notification update");
-            return;
-        }
-
-        const newSession = updateFn(updatedStudent)?.sessions?.slice(-1)[0];
-
-        if (newSession) {
-            console.log("🔔 Adding Notification:", newSession);
-
-            setNotifications((prev) => [
-                ...prev,
-                {
-                    id: Date.now(),
-                    studentId,
-                    studentName: updatedStudent.name || "Unknown",
-                    time: newSession.session_date,
-                    timeAgo: "Just Now",
-                    status: "new_session",
-                    isNew: true,
-                }
-            ]);
-        }
     };
+
 
     const createNewSession = (studentId) => {
         setStudents((prevStudents) =>
@@ -101,7 +92,7 @@ export const StudentsProvider = ({ children }) => {
                         sessions: [
                             ...(student.sessions || []),
                             {
-                                session_id: Date.now(),
+                                session_id: "placeholder",
                                 session_date: new Date().toISOString().split('T')[0] + " 12:30 PM",
                                 transcript: "",
                                 reflections: {},

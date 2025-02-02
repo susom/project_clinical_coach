@@ -48,14 +48,16 @@
         "callAI",
         "transcribeAudio",
         "fetchCoachData",
-        "fetchStudentsData"
+        "fetchStudentsData",
+        "updateSession"
     ],
 
     "no-auth-ajax-actions": [
         "callAI",
         "transcribeAudio",
         "fetchCoachData",
-        "fetchStudentsData"
+        "fetchStudentsData",
+        "updateSession"
     ],
 
 	"no-auth-pages": [

@@ -156,8 +156,6 @@ class ClinicalCoach extends \ExternalModules\AbstractExternalModule {
                 case "callAI":
                     $messages = json_decode($payload, 1);
 
-
-if(1==2){
                     // Validate payload
                     if (empty($messages['transcription'])) {
                         $this->emDebug("No transcription data provided in payload.");
@@ -302,7 +300,7 @@ if(1==2){
                     }
 
                     $normalized_results = $this->normalizeAIEvalResults($results);
-}
+
                     //TODO USING NORMALIZED RESULTS BLOCK ABOVE, BUT FOR NOW USE STUBBED VERSION TO WORK ON UI DELETE WHEN READY
                     $normalized_results = [
                         "summary" => [
@@ -516,18 +514,68 @@ if(1==2){
 
                     return json_encode($normalized_results);
 
-                case "transcribeAudio":
-                    $this->emDebug("Entering transcribeAudio case");
+                case "updateSession":
+                    $sessionData = json_decode($payload, true);
 
+                    if (empty($sessionData['session_id'])) {
+                        return json_encode(["error" => "No session_id provided"]);
+                    }
+
+                    $coachId = $sessionData['coach_id'] ?? null;
+                    $sessionId = $sessionData['session_id'];
+                    $transcript = $sessionData['transcript'] ?? '';
+                    $status = $sessionData['status'] ?? 'pending';
+
+                    // 🔥 Locate the correct session instance
+                    $fetchParams = [
+                        'project_id' => $this->getProjectId(),
+                        'fields' => ['record_id', 'session_id'],
+                        'forms' => ['session_logs'],
+                        'exportRepeatingInstrumentsEvents' => true,
+                        'return_format' => 'array'
+                    ];
+                    $data = \REDCap::getData($fetchParams);
+
+                    $foundInstance = null;
+
+                    if (!empty($data[$coachId]['repeat_instances'])) {
+                        foreach ($data[$coachId]['repeat_instances'] as $eventId => $instrumentData) {
+                            if (!empty($instrumentData['session_logs'])) {
+                                foreach ($instrumentData['session_logs'] as $instanceNum => $row) {
+                                    if ($row['session_id'] === $sessionId) {
+                                        $foundInstance = $instanceNum;
+                                        break 2; // Exit both loops
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    if (!$foundInstance) {
+                        return json_encode(["error" => "Session not found"]);
+                    }
+
+                    // 🔥 Update the existing session
+                    $recordData = [
+                        'record_id' => $coachId,
+                        'redcap_repeat_instrument' => 'session_logs',
+                        'redcap_repeat_instance' => $foundInstance,
+                        'session_transcript_raw' => $transcript,
+                        'session_status' => $status
+                    ];
+
+                    $result = \REDCap::saveData('json', json_encode([$recordData]));
+
+                    return json_encode($result);
+
+
+                case "transcribeAudio":
                     // ✅ Extract payload
                     if (!empty($payload['file']) && !empty($payload['fileName'])) {
-                        $this->emDebug("Using payload data.");
                         $fileName = $payload['fileName'];
                         $fileContent = base64_decode($payload['file']);
                     } else {
-                        $this->emDebug("Payload is empty. Checking php://input...");
                         $rawInput = file_get_contents('php://input');
-                        $this->emDebug("Raw PHP Input:", $rawInput);
 
                         $inputData = json_decode($rawInput, true);
                         if (!$inputData || empty($inputData['file']) || empty($inputData['fileName'])) {
@@ -584,7 +632,6 @@ if(1==2){
 
                     try {
                         $response = $this->getSecureChatInstance()->callAI($model, $params, PROJECT_ID);
-                        $this->emDebug("Whisper API response received:", $response);
                     } catch (Exception $e) {
                         $this->emDebug("Whisper API call failed:", $e->getMessage());
                         unlink($tempFilePath);
@@ -603,21 +650,21 @@ if(1==2){
                         return json_encode(["error" => "Failed to store WAV file."]);
                     }
 
-                    $this->emDebug("✅ WAV file stored. File ID:", $docId);
+                    $newInstanceId = $this->getNextInstanceId($coachId);
+                    $sessionId = "{$studentId}-{$newInstanceId}"; // Generate unique session ID
 
                     // ✅ Save Transcription + Metadata to REDCap
                     $recordData = [
                         'record_id' => $coachId,  // ✅ Main REDCap record (coach)
                         'redcap_repeat_instrument' => 'session_logs', // ✅ Replace with your instrument name
-                        'redcap_repeat_instance' => 'new', // ✅ REDCap will auto-assign the next available instance
+                        'redcap_repeat_instance' => $newInstanceId, // ✅ REDCap will auto-assign the next available instance
                         'session_learner_id' => $studentId, // ✅ Student associated with the session
                         'session_date' => $sessionDate,
                         'session_transcript_raw' => json_decode($result['response']['content'] ?? '{}', true)['text'] ?? '',
                         'session_audio_raw_1' => $docId, // ✅ Store doc_id in the same request
+                        'session_id' => $sessionId,
                     ];
 
-
-                    $this->emDebug("Saving session to REDCap:", $recordData);
                     $saveResult = \REDCap::saveData('json', json_encode([$recordData]));
 
                     if (!empty($saveResult['errors'])) {
@@ -631,7 +678,12 @@ if(1==2){
                     // ✅ Cleanup temp file
                     unlink($tempFilePath);
 
-                    return json_encode($result);
+                    return json_encode([
+                        "session_id" => $sessionId, // ✅ Include session_id in response
+                        "text" => json_decode($result['response']['content'] ?? '{}', true)['text'] ?? '',
+                        "status" => "incomplete" // ✅ Keep track of processing status
+                    ]);
+
 
                 case "fetchCoachData":
                     // 1) Extract record_id from $payload
@@ -830,6 +882,44 @@ if(1==2){
         return $coachesList;
     }
 
+    private function getNextInstanceId($coachId)
+    {
+        $this->emDebug("🛠 Fetching highest session_log instance for coach: $coachId...");
+
+        $fetchParams = [
+            'project_id' => $this->getProjectId(),
+            'records'    => [$coachId], // ✅ Filter by coach
+            'fields'     => ['record_id', 'session_learner_id', 'session_id'],
+            'forms'      => ['session_logs'], // ✅ Explicitly fetch session_logs
+            'exportRepeatingInstrumentsEvents' => true, // ✅ Required for repeating instances
+            'return_format' => 'array'
+        ];
+
+        $data = \REDCap::getData($fetchParams);
+        $this->emDebug("📌 FULL RAW DATA RETURNED FROM REDCap:", $data);
+
+        $highestInstance = 0; // Default to 0 if no sessions exist
+
+        if (!empty($data[$coachId]['repeat_instances'])) {
+            foreach ($data[$coachId]['repeat_instances'] as $eventId => $instrumentData) {
+                if (!empty($instrumentData['session_logs'])) {
+                    // 🔥 Extract the highest session_log instance key
+                    $sessionInstances = array_keys($instrumentData['session_logs']);
+                    $numericInstances = array_filter($sessionInstances, 'is_numeric'); // Ensure numeric keys
+                    if (!empty($numericInstances)) {
+                        $highestInstance = max($numericInstances);
+                    }
+                }
+            }
+        } else {
+            $this->emDebug("⚠️ No session logs found for coach: $coachId");
+        }
+
+        $nextInstance = $highestInstance + 1;
+        $this->emDebug("✅ Highest found: $highestInstance → Returning new instance: $nextInstance");
+
+        return $nextInstance;
+    }
 
     /**
      * @return \Stanford\SecureChatAI\SecureChatAI

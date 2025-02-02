@@ -239,22 +239,24 @@ const VoiceRecorder = ({ navigate }) => {
                 try {
                     console.log("[DEBUG RAW RESPONSE FROM MODULE.AJAX]:", rawResponse);
 
-                    const parsedResponse = JSON.parse(rawResponse);
+                    const parsedResponse = typeof rawResponse === "string" ? JSON.parse(rawResponse) : rawResponse;
                     const transcription = parsedResponse?.text;
+                    const sessionId = parsedResponse?.session_id; // ✅ Extract session_id
 
-                    if (transcription) {
-                        console.log("[SUCCESS TRANSCRIPTION RECEIVED]:", transcription);
+                    if (transcription && sessionId) {
+                        console.log("[SUCCESS TRANSCRIPTION RECEIVED]:", transcription, "Session ID:", sessionId);
 
                         updateStudent(selectedStudent.id, (student) => {
-                            const updatedSessions = [...(student.sessions || [])];
-                            if (updatedSessions.length > 0) {
-                                updatedSessions[updatedSessions.length - 1].transcript = transcription;
-                            }
-
-                            return { sessions: updatedSessions };
+                            return {
+                                sessions: student.sessions.map(session =>
+                                    session.session_id === sessionId
+                                        ? { ...session, transcript: transcription, status: "pending" } // ✅ Update the correct session
+                                        : session
+                                ),
+                            };
                         });
 
-                        // Show confirmation modal and redirect
+                        // ✅ Show confirmation modal and navigate
                         const postSubmitConfirm = await showConfirmModal({
                             title: 'Recording Submitted!',
                             message: "Your recording has been submitted for Clinical Coach analysis. Redirecting you to the Student Report page now.",
@@ -263,7 +265,7 @@ const VoiceRecorder = ({ navigate }) => {
                         });
 
                         if (postSubmitConfirm) {
-                            navigate('/report');
+                            navigate('/notifications');
                         }
                     } else {
                         console.error("[ERROR NO TRANSCRIPTION RECEIVED]:", rawResponse);
@@ -272,6 +274,7 @@ const VoiceRecorder = ({ navigate }) => {
                     console.error("[ERROR HANDLING TRANSCRIPTION RESPONSE]:", error);
                 }
             });
+
         } catch (error) {
             console.error("Error submitting recording:", error);
         }
