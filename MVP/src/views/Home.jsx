@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import ThinkingHabitsOverview from '../components/ThinkingHabitsOverview';
@@ -8,7 +9,8 @@ import SummaryExpandable from '../components/SummaryExpandable';
 import './Home.css';
 
 export default function Home() {
-    const { students } = useStudents();
+    const navigate = useNavigate();
+    const { students, setSelectedSession , setSelectedStudent} = useStudents();
     const [stage, setStage] = useState(2);
 
     // ✅ Define colorMap at the top
@@ -18,22 +20,32 @@ export default function Home() {
     const allSessions = students
         .flatMap(student => {
             const sessions = student.sessions?.filter(s => s.status === "complete" || !s.status) || [];
-            return sessions.map(sesh => ({
-                learner_id: student.id,
-                studentName: student.name || "Unknown",
-                profilePicture: student.profilePicture || null,
-                sessionDate: sesh.session_date || "",
-                transcript: sesh.transcript || "",
-                summary: sesh.summary || "",
-                habits: [
-                    { label: 'Mind', color: colorMap[sesh.reflections?.mind?.score] || 'gray' },
-                    { label: 'Knowledge', color: colorMap[sesh.reflections?.knowledge?.score] || 'gray' },
-                    { label: 'Problem', color: colorMap[sesh.reflections?.problem?.score] || 'gray' },
-                    { label: 'Strategy', color: colorMap[sesh.reflections?.strategy?.score] || 'gray' },
-                    { label: 'Solution', color: colorMap[sesh.reflections?.solution?.score] || 'gray' },
-                    { label: 'Data', color: colorMap[sesh.reflections?.data?.score] || 'gray' },
-                ],
-            }));
+            return sessions.map(sesh => {
+                let parsedSummary = null;
+                try {
+                    parsedSummary = JSON.parse(sesh.summary); // ✅ Parse JSON safely
+                } catch (error) {
+                    console.error("Invalid JSON in session summary:", sesh.summary, error);
+                }
+
+                return {
+                    session_id: sesh.session_id,
+                    learner_id: student.id,
+                    studentName: student.name || "Unknown",
+                    profilePicture: student.profilePicture || null,
+                    sessionDate: sesh.session_date || "",
+                    transcript: sesh.transcript || "",
+                    summary: parsedSummary?.one_sentence_summary , // ✅ Extract safely
+                    habits: [
+                        { label: 'Mind', color: colorMap[sesh.reflections?.mind?.score] || 'gray' },
+                        { label: 'Knowledge', color: colorMap[sesh.reflections?.knowledge?.score] || 'gray' },
+                        { label: 'Problem', color: colorMap[sesh.reflections?.problem?.score] || 'gray' },
+                        { label: 'Strategy', color: colorMap[sesh.reflections?.strategy?.score] || 'gray' },
+                        { label: 'Solution', color: colorMap[sesh.reflections?.solution?.score] || 'gray' },
+                        { label: 'Data', color: colorMap[sesh.reflections?.data?.score] || 'gray' },
+                    ],
+                };
+            });
         })
         .sort((a, b) => new Date(b.sessionDate) - new Date(a.sessionDate)); // 🔥 Sort descending
 
@@ -106,10 +118,16 @@ export default function Home() {
                                             )}
                                         </div>
                                         <div className="report-right-content">
-                                            <div className="report-status">
+                                            <div
+                                                className="report-status clickable"
+                                                onClick={() => {
+                                                    setSelectedSession(session); // ✅ Store in context
+                                                    navigate(`/report`);
+                                                }}
+                                            >
                                                 <div className="report-status-text">COMPLETE</div>
                                             </div>
-                                            <ThinkingHabitsOverview habits={session.habits} />
+                                            <ThinkingHabitsOverview habits={session.habits}/>
                                         </div>
                                     </div>
                                     <div className="report-details">

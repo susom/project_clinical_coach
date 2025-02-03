@@ -12,6 +12,7 @@ export const StudentsProvider = ({ children }) => {
     const { coach } = useCoach();
     const [students, setStudents] = useState([]);
     const [selectedStudent, setSelectedStudent] = useState(null);
+    const [selectedSession, setSelectedSession] = useState();
     const [lastFetchedCoachId, setLastFetchedCoachId] = useState(null);
     const [notifications, setNotifications] = useState([]);
 
@@ -70,7 +71,6 @@ export const StudentsProvider = ({ children }) => {
         });
     };
 
-
     const createNewSession = (studentId) => {
         const tempSessionId = `temp-${Date.now()}`; // Generate a unique temporary ID
         setStudents((prevStudents) =>
@@ -96,6 +96,77 @@ export const StudentsProvider = ({ children }) => {
         return tempSessionId; // Return the temporary ID for later use
     };
 
+    const callAIAnalysis = async (session_id, coach_id, updateUI = () => {}) => {
+        console.log(`🚀 Initiating AI Analysis for Session ${session_id}...`);
+
+        const payload = { session_id, coach_id };
+
+        return new Promise((resolve) => {
+            window.clinical_coach_jsmo_module.callAI(
+                JSON.stringify(payload),
+                (response) => {
+                    console.log(`✅ AI Response for Session ${session_id}:`, response);
+
+                    updateUI(session_id); // ✅ Update UI (e.g., mark session complete)
+                    //
+                    // if (!response?.summary || !response?.final || !Array.isArray(response?.reflections)) {
+                    //     console.warn(`⚠️ AI Response missing key data. Session ${session_id} marked as complete, but no full update.`);
+                    //     resolve("Partial AI response");
+                    //     return;
+                    // }
+                    //
+                    try {
+                    //     const { summary, reflections, final } = response;
+                    //     const thm_summary = summary.long_summary || "No summary available.";
+                    //
+                    //     const strengths = final.positiveFeedback?.map(feedback => {
+                    //         const [category, description] = feedback.split(': ');
+                    //         return { category, description };
+                    //     }) || [];
+                    //
+                    //     const habitsData = final.thinkingHabitsScore
+                    //         ? final.thinkingHabitsScore.split('|').map(habitScore => {
+                    //             const [label, colorEmoji] = habitScore.trim().split(' ');
+                    //             const colorMap = { '🔴': 'red', '🟡': 'yellow', '🟢': 'green' };
+                    //             return { label, color: colorMap[colorEmoji?.trim()] || 'gray' };
+                    //         })
+                    //         : [];
+                    //
+                    //     const promptsData = reflections.map(reflection => ({
+                    //         category: reflection.report_title || reflection.reflection_context.replace("Reflection on ", ""),
+                    //         color: habitsData.find(habit => habit.label === reflection.reflection_context)?.color || 'gray',
+                    //         prompts: [
+                    //             ...(reflection.coaching_insights?.positive_feedback || []),
+                    //             ...(reflection.coaching_insights?.coaching_questions || []),
+                    //         ],
+                    //         hasError: !reflection.coaching_insights,
+                    //         reflectionVar: `sess_reflection_${reflection.reflection_context.toLowerCase().replace(/\s+/g, '_')}`
+                    //     }));
+                    //
+                    //     updateStudent(session_id, (prevStudent) => ({
+                    //         sessions: prevStudent.sessions.map(s =>
+                    //             s.session_id === session_id
+                    //                 ? { ...s, status: "complete", summary: thm_summary, reflections, strengths, habitsData, promptsData }
+                    //                 : s
+                    //         ),
+                    //     }));
+
+                        resolve("✅ AI Analysis Completed");
+                    } catch (error) {
+                        console.error(`❌ Failed to process AI response for Session ${session_id}:`, error);
+                        resolve("✅ UI updated, but AI data processing failed");
+                    }
+                },
+                (error) => {
+                    console.error(`❌ AI Analysis Error for Session ${session_id}:`, error);
+                    updateUI(session_id); // ✅ Ensure UI still updates
+                    resolve("❌ AI Error - Session marked complete in UI");
+                }
+            );
+        });
+    };
+
+
     return (
         <StudentsContext.Provider
             value={{
@@ -104,6 +175,9 @@ export const StudentsProvider = ({ children }) => {
                 selectStudent,
                 updateStudent,
                 createNewSession,
+                callAIAnalysis,
+                selectedSession,
+                setSelectedSession,
                 notifications,
             }}
         >

@@ -1,121 +1,170 @@
 import React, { useState, useEffect } from 'react';
 import { useStudents } from '../contexts/Students';
+import { useCoach } from '../contexts/Coach';
 import ThinkingHabitsOverview from '../components/ThinkingHabitsOverview';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import './Report.css';
 
 export default function Report() {
-    const {students,  selectStudent, selectedStudent, updateStudent } = useStudents();
+    const { coach } = useCoach();
+    const { students, selectedSession } = useStudents();
     const [expandedAnalysis, setExpandedAnalysis] = useState(false);
 
-    useEffect(() => {
-        console.log("Selected Student Updated:", selectedStudent);
-    }, [selectedStudent]);
+    // 🔥 Retrieve the full session data from students array
+    const the_session = students
+        .find(student => student.id === selectedSession?.learner_id)
+        ?.sessions?.find(session => session.session_id === selectedSession?.session_id);
 
-    useEffect(() => {
-        selectStudent(3); // Only on mount
-    }, []);
+    console.log("selectedSEssion", selectedSession, "coach", coach);
+    console.log("the_session", the_session);
 
-    useEffect(() => {
-        if (selectedStudent?.transcription) {
-            handleAIAnalysis();
+    if (!selectedSession || !the_session) {
+        return <div className="error-message">⚠️ No session data found. Please go back and try again.</div>;
+    }
+
+
+    // 🛠 Define constants for readability
+    const studentName = selectedSession?.studentName || "Unknown Student";
+    const profilePic = selectedSession?.profilePicture || null;
+    const sessionDate = selectedSession?.sessionDate || "Unknown Time";
+    const habits = selectedSession?.habits || [];
+
+
+    // ✅ Parse summary JSON safely
+    let parsedSummary = {};
+    try {
+        parsedSummary = JSON.parse(the_session.summary || '{}');
+    } catch (error) {
+        console.error("Invalid JSON in session summary:", error);
+    }
+
+    // ✅ Parse Thinking Habits Report JSON safely
+    let parsedThmReport = {};
+    try {
+        parsedThmReport = JSON.parse(the_session.thm_report || '{}');
+    } catch (error) {
+        console.error("Invalid JSON in Thinking Habits Report:", error);
+    }
+
+    // Extract key data
+    const oneSentenceSummary = parsedSummary.one_sentence_summary || "No summary available.";
+    const summaryText = parsedSummary.long_summary || "No summary available.";
+
+    // ✅ Parse reflections safely
+    function cleanAndParseJSON(jsonString, fallback = {}) {
+        try {
+            // Remove (Line XX) references
+            // jsonString = jsonString.replace(/\(Line\s\d+\)/g, "");
+            //
+            // // Remove trailing commas before closing brackets
+            // jsonString = jsonString.replace(/,\s*([\]}])/g, '$1');
+            //
+            // // Fix improperly escaped quotes (e.g., `patient"s` → `patient's`)
+            // jsonString = jsonString.replace(/(\w)"(\w)/g, '$1\'$2');
+            //
+            // // Ensure keys are properly quoted (e.g., `{question: "text"}` → `{"question": "text"}`)
+            // jsonString = jsonString.replace(/([{,]\s*)(\w+)\s*:/g, '$1"$2":');
+            //
+            // // Convert single quotes inside JSON strings to double quotes for proper parsing
+            // jsonString = jsonString.replace(/"\s*([^"]*?)\s*"\s*([\]}])/g, '"$1"$2');
+            //
+            // // Ensure arrays are properly formatted (["Text" , "Text" ,] → ["Text", "Text"])
+            // jsonString = jsonString.replace(/,\s*([}\]])/g, '$1');
+            //
+            // // Strip out ` ``` ` markdown artifacts
+            // jsonString = jsonString.replace(/```/g, "");
+
+            return JSON.parse(jsonString);
+        } catch (error) {
+            console.error("🚨 JSON Parsing Failed:", error, "\n🔹 Original String:", jsonString);
+            return fallback;
         }
-    }, []);
+    }
 
-    // HandleAIAnalysis updates the correct student and persists changes
+    let parsedReflections = Object.fromEntries(
+        Object.entries(the_session.reflections || {}).map(([key, reflection]) => {
+            const parsedContent = cleanAndParseJSON(reflection.content || "{}", {});
+
+            console.log("parsedContent", key, parsedContent);
+            return [
+                key,
+                {
+                    ...parsedContent,
+                    hasError: Object.keys(parsedContent).length === 0  // True if parsedContent is empty
+                }
+            ];
+        })
+    );
+
+    // ✅ Extract Coaching Prompts from Reflections
+    const promptsData = Object.entries(parsedReflections).map(([key, reflection]) => ({
+        category: reflection.report_title || key.charAt(0).toUpperCase() + key.slice(1),
+        color: reflection.hasError ? 'red' : 'gray', // Highlight errors
+        prompts: reflection.hasError ? [] : reflection.coaching_insights?.coaching_questions || [],
+        hasError: reflection.hasError, // Pass error flag for UI adjustments
+        reflectionVar: `sess_reflect_${key.toLowerCase()}` // Format reflectionVar
+    }));
+
+    console.log("promptsData",promptsData);
+
+    // ✅ Extract Strengths from Reflections
+    const strengths = Object.values(parsedReflections)
+        .flatMap(reflection => reflection.hasError ? [] : reflection.coaching_insights?.positive_feedback || [])
+        .map(feedback => {
+            const [category, description] = feedback.split(': ');
+            return { category, description };
+        });
+
+
+
+    const toggleAnalysis = () => {
+        setExpandedAnalysis(!expandedAnalysis);
+    };
+
+    if (!selectedSession || !the_session) {
+        return <div>Please select a session to view the report.</div>;
+    }
+
     const handleAIAnalysis = () => {
-        if (!selectedStudent?.transcription) {
-            console.warn("No transcription available for analysis.");
+        if (!selectedSession?.session_id || !coach?.record_id) {
+            console.warn("🚨 Missing session_id or coach_id.");
             return;
         }
 
         const payload = {
-            transcription: selectedStudent.transcription,
+            session_id: selectedSession.session_id,
+            coach_id: coach.record_id
         };
 
-        console.log("Payload being sent:", payload);
+        console.log("🛠️ Triggering AI Analysis with:", payload);
 
         window.clinical_coach_jsmo_module.callAI(
             JSON.stringify(payload),
-            (response) => {
-                console.log("AI Analysis Response:", response);
-
-                if (!response?.summary || !response?.final) {
-                    console.error("Invalid response format:", response);
-                    return;
-                }
-
-                const { summary, reflections, final } = response;
-
-                // Map `thm_summary` from summary
-                const thm_summary = summary.long_summary || "No summary available.";
-
-                // Map strengths from `final.positiveFeedback`
-                const strengths = final.positiveFeedback.map((feedback) => {
-                    const [category, description] = feedback.split(': ');
-                    return { category, description };
-                });
-
-                // Compute habitsData
-                const habitsData = final.thinkingHabitsScore.split('|').map((habitScore) => {
-                    const [label, colorEmoji] = habitScore.split(' ');
-                    const colorMap = { '🔴': 'red', '🟡': 'yellow', '🟢': 'green' };
-                    return {
-                        label: label.trim(),
-                        color: colorMap[colorEmoji.trim()] || 'gray',
-                    };
-                });
-
-                // Map promptsData using reflections and habitsData
-                const promptsData = reflections.map((reflection) => ({
-                    category: reflection.reflection_context.replace("Reflection on ", ""),
-                    color: habitsData.find((habit) => habit.label === reflection.reflection_context)?.color || 'gray',
-                    prompts: [
-                        ...reflection.coaching_insights.positive_feedback,
-                        ...reflection.coaching_insights.coaching_questions,
-                    ],
-                }));
-
-                // Add a new notification
-                const notification = {
-                    id: Date.now(),
-                    time: new Date().toLocaleString(),
-                    timeAgo: "Just Now",
-                    status: 'complete',
-                    isNew: true,
-                };
-
-                // Use `updateStudent` to update the context
-                updateStudent(selectedStudent.id, {
-                    thm_summary,
-                    strengths,
-                    habitsData,
-                    promptsData,
-                    notifications: [...selectedStudent.notifications, notification],
-                });
-
-                console.log("Updated Student Data:", {
-                    thm_summary,
-                    strengths,
-                    habitsData,
-                    promptsData,
-                    notifications: [...selectedStudent.notifications, notification],
-                });
-            },
-            (error) => {
-                console.error("AI Analysis Error:", error);
-            }
+            (response) => console.log("✅ AI Analysis Triggered Successfully:", response),
+            (error) => console.error("🚨 AI Analysis Error:", error)
         );
     };
 
+    const handleSingleReflection = (reflectionVar) => {
+        if (!selectedSession?.session_id || !coach?.record_id) {
+            console.warn("🚨 Missing session_id or coach_id.");
+            return;
+        }
 
-    if (!selectedStudent) {
-        return <div>Please select a student to view their report.</div>;
-    }
+        const payload = {
+            session_id: selectedSession.session_id,
+            coach_id: coach.record_id,
+            reflection_var: reflectionVar // 🔥 Pass only the targeted reflection
+        };
 
-    const toggleAnalysis = () => {
-        setExpandedAnalysis(!expandedAnalysis);
+        console.log("🔄 Re-evaluating Single Reflection:", reflectionVar, "with payload:", payload);
+
+        window.clinical_coach_jsmo_module.callAI(
+            JSON.stringify(payload),
+            (response) => console.log("✅ Reflection Re-evaluated Successfully:", response),
+            (error) => console.error("🚨 AI Reflection Error:", error)
+        );
     };
 
     return (
@@ -123,44 +172,46 @@ export default function Report() {
             <Header showBack={true} />
             <main id="report">
                 <button onClick={handleAIAnalysis}>Trigger AI Analysis</button>
+
                 <section className="report-header">
                     <div className="profile-picture">
-                        {selectedStudent.profilePicture ? (
-                            <img src={selectedStudent.profilePicture} alt={selectedStudent.name} />
+                        {profilePic ? (
+                            <img src={profilePic} alt={studentName}/>
                         ) : (
                             <i className="fas fa-user-circle"></i>
                         )}
                     </div>
                     <div className="profile-details">
-                        <h2 className="student-name">{selectedStudent.name}</h2>
+                        <h2 className="student-name">{studentName}</h2>
                         <p className="conversation-time">
-                            Conversation @ {selectedStudent.time || 'Unknown Time'}
+                            Conversation @ {sessionDate}
                         </p>
                         <p className="report-description">
-                            {selectedStudent.description || 'No description available.'}
+                            {oneSentenceSummary}
                         </p>
                     </div>
                 </section>
+
                 <section className="thinking-habits-container">
                     <h3>Thinking Habits Report</h3>
-                    <ThinkingHabitsOverview habits={selectedStudent.habitsData} />
+                    <ThinkingHabitsOverview habits={habits}/>
 
                     <div className="report-summary">
-                        <p className="summary-text">{selectedStudent.thm_summary || 'No summary available.'}</p>
+                        <p className="summary-text">{summaryText}</p>
                         <div className="summary-buttons">
                             <button className="expandable-button" onClick={toggleAnalysis}>
-                            {expandedAnalysis ? '- HIDE SUMMARY' : '+ IN-DEPTH CASE PRESENTATION SUMMARY'}
+                                {expandedAnalysis ? '- HIDE SUMMARY' : '+ IN-DEPTH CASE PRESENTATION SUMMARY'}
                             </button>
                         </div>
                     </div>
                 </section>
 
                 {/* Strengths Section */}
-                {selectedStudent?.strengths?.length > 0 && (
+                {strengths.length > 0 && (
                     <section className="report-strengths">
-                        <h3>{selectedStudent.name}’s Strengths</h3>
+                        <h3>{studentName}’s Strengths</h3>
                         <div className="strength-tags">
-                            {selectedStudent.strengths.map((strength, index) => (
+                            {strengths.map((strength, index) => (
                                 <div key={index} className="strength-item">
                                     <span className="strength-category">{strength.category}</span>
                                     <span className="strength-description">{strength.description}</span>
@@ -171,57 +222,55 @@ export default function Report() {
                 )}
 
                 {/* Coaching Prompts Section */}
-                {selectedStudent.promptsData.length > 0 && (
+                {promptsData.length > 0 && (
                     <section className="report-analysis">
                         <h3 className="analysis-title">Coaching Prompts & Thinking Habits Analysis</h3>
-                        {selectedStudent.promptsData.map((habit, index) => (
-                            <div key={index} className="habit">
-                                <div className="report-carousel">
-                                    {habit.prompts && habit.prompts.length > 0 ? (
-                                        habit.prompts.map((prompt, idx) => (
-                                            <div key={idx} className="report-carousel-item">
-                                                <p>{prompt}</p>
+                        {promptsData.map((habit, index) => {
+                            const hasError = habit.hasError;  // Only trust the real error flag
+                            return (
+                                <div key={index} className="habit">
+                                    <div className="report-carousel">
+                                        {hasError ? (
+                                            <div className="report-carousel-item error-message">
+                                                ⚠️ There was an error, try re-evaluating the AI reflection.
                                             </div>
-                                        ))
-                                    ) : (
-                                        <div className="report-carousel-item">
-                                            <p>No prompts available.</p>
+                                        ) : habit.prompts.length > 0 ? (
+                                            habit.prompts.map((prompt, idx) => (
+                                                <div key={idx} className="report-carousel-item">
+                                                    <p>{prompt}</p>
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <div className="report-carousel-item">
+                                                <p>No prompts available.</p>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className="action-buttons">
+                                        <div className="action-left">
+                                            <span>{habit.category}</span>
                                         </div>
-                                    )}
-                                </div>
-                                <div className="action-buttons">
-                                    <div className="action-left">
-                                        <span>Reflection on {habit.category}</span>
-                                    </div>
-                                    <div className="action-right">
-                                        <button
-                                            className="detailed-analysis-btn"
-                                            style={{
-                                                backgroundColor:
-                                                    habit.color === 'green'
-                                                        ? '#5cb85c'
-                                                        : habit.color === 'yellow'
-                                                            ? '#f0ad4e'
-                                                            : '#d9534f',
-                                                borderBottomColor:
-                                                    habit.color === 'green'
-                                                        ? '#4cae4c'
-                                                        : habit.color === 'yellow'
-                                                            ? '#d98c2a'
-                                                            : '#b52b27',
-                                            }}
-                                        >
-                                            + DETAILED ANALYSIS
-                                        </button>
+                                        <div className="action-right">
+                                            {hasError ? (
+                                                <button className="re-evaluate-btn" onClick={() => handleSingleReflection(habit.reflectionVar)}>
+                                                    🔄 Re-Evaluate
+                                                </button>
+                                            ) : (
+                                                <button className="detailed-analysis-btn">
+                                                    + DETAILED ANALYSIS
+                                                </button>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </section>
                 )}
             </main>
-            <Footer />
+            <Footer/>
         </>
     );
-
 }
+

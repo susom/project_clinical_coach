@@ -245,7 +245,7 @@ const VoiceRecorder = ({ navigate }) => {
                         // ✅ Show confirmation modal and navigate
                         const postSubmitConfirm = await showConfirmModal({
                             title: 'Recording Submitted!',
-                            message: "Your recording has been submitted for Clinical Coach analysis. Redirecting you to the Student Report page now.",
+                            message: "Your recording has been submitted for Clinical Coach analysis. Evaluations should come shortly.",
                             showConfirm: true,
                             confirmText: 'OK',
                         });

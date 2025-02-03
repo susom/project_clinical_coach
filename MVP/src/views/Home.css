@@ -154,3 +154,13 @@
     margin-top: 0;
     text-align: left; /* Ensure left alignment */
 }
+
+
+.clickable {
+    cursor: pointer;
+    transition: background 0.2s ease-in-out;
+}
+
+.clickable:hover {
+    background: rgba(100, 108, 255, 0.8);
+}

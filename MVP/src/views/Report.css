@@ -62,9 +62,6 @@ main#report {
 .student-name {
     font-size: 1.4rem;
     font-weight: bold;
-    background-color: #f5f5ff; /* Light blue background */
-    padding: 0.3rem 0.5rem 0;
-    border-radius: 8px; /* Rounded corners for highlight */
     display: inline-block;
     margin-bottom: 0rem;
 }
@@ -289,26 +286,47 @@ main#report {
 /* Action Buttons */
 .action-buttons {
     display: flex;
-    justify-content: space-between;
-    align-items: stretch; /* Stretch to match height */
-    margin: 1rem 0; /* Adjust margin for proper spacing */
+    justify-content: space-between;  /* Ensures text and buttons align properly */
+    align-items: stretch;  /* Ensures buttons take full height */
+    margin: 1rem 0;
     background: #f7f7f7;
     border-radius: 5px;
-    padding: 0; /* No padding for clean alignment */
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Subtle shadow */
-    border-bottom: 3px solid #ccc; /* Bottom border for emphasis */
-    overflow: hidden; /* Keep content within rounded corners */
+    padding: 0.5rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border-bottom: 3px solid #ccc;
+    min-height: 50px; /* Ensures uniform height across all reflections */
 }
 
+/* Left Section - Ensures Consistent Width */
 .action-left {
     font-size: 0.7rem;
     font-weight: bold;
     text-transform: uppercase;
     color: #333;
-    padding: 0.5rem 1rem; /* Padding for the left text */
+    padding: 0.5rem 1rem;
+    flex-grow: 1; /* Takes available space */
     display: flex;
     align-items: center;
 }
+
+/* Right Section - Aligns Buttons */
+.action-right {
+    display: flex;
+    gap: 0.5rem; /* Adds spacing between buttons */
+    align-items: stretch; /* Ensures buttons fill available height */
+}
+
+/* Ensures Consistent Button Size */
+.detailed-analysis-btn,
+.re-evaluate-btn {
+    min-width: 150px;  /* Same width for both buttons */
+    height: 40px;  /* Ensures consistent height */
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
 
 
 /* Feedback Buttons */
@@ -333,6 +351,7 @@ main#report {
     color: #d9534f;
 }
 
+.re-evaluate-btn,
 .detailed-analysis-btn {
     background-color: #d9534f;
     color: white;
@@ -344,6 +363,10 @@ main#report {
     height: 100%; /* Match the height of the parent container */
     border-radius: 0; /* Ensure no rounding */
     margin: 0; /* Remove margins to align flush */
+}
+
+.re-evaluate-btn{
+    background-color: #28a745;
 }
 
 .detailed-analysis-btn:hover {
