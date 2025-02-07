@@ -98,59 +98,20 @@ export const StudentsProvider = ({ children }) => {
 
     const callAIAnalysis = async (session_id, coach_id, updateUI = () => {}) => {
         console.log(`🚀 Initiating AI Analysis for Session ${session_id}...`);
-
+    
         const payload = { session_id, coach_id };
-
+    
         return new Promise((resolve) => {
             window.clinical_coach_jsmo_module.callAI(
                 JSON.stringify(payload),
                 (response) => {
                     console.log(`✅ AI Response for Session ${session_id}:`, response);
-
-                    updateUI(session_id); // ✅ Update UI (e.g., mark session complete)
-                    //
-                    // if (!response?.summary || !response?.final || !Array.isArray(response?.reflections)) {
-                    //     console.warn(`⚠️ AI Response missing key data. Session ${session_id} marked as complete, but no full update.`);
-                    //     resolve("Partial AI response");
-                    //     return;
-                    // }
-                    //
+    
                     try {
-                    //     const { summary, reflections, final } = response;
-                    //     const thm_summary = summary.long_summary || "No summary available.";
-                    //
-                    //     const strengths = final.positiveFeedback?.map(feedback => {
-                    //         const [category, description] = feedback.split(': ');
-                    //         return { category, description };
-                    //     }) || [];
-                    //
-                    //     const habitsData = final.thinkingHabitsScore
-                    //         ? final.thinkingHabitsScore.split('|').map(habitScore => {
-                    //             const [label, colorEmoji] = habitScore.trim().split(' ');
-                    //             const colorMap = { '🔴': 'red', '🟡': 'yellow', '🟢': 'green' };
-                    //             return { label, color: colorMap[colorEmoji?.trim()] || 'gray' };
-                    //         })
-                    //         : [];
-                    //
-                    //     const promptsData = reflections.map(reflection => ({
-                    //         category: reflection.report_title || reflection.reflection_context.replace("Reflection on ", ""),
-                    //         color: habitsData.find(habit => habit.label === reflection.reflection_context)?.color || 'gray',
-                    //         prompts: [
-                    //             ...(reflection.coaching_insights?.positive_feedback || []),
-                    //             ...(reflection.coaching_insights?.coaching_questions || []),
-                    //         ],
-                    //         hasError: !reflection.coaching_insights,
-                    //         reflectionVar: `sess_reflection_${reflection.reflection_context.toLowerCase().replace(/\s+/g, '_')}`
-                    //     }));
-                    //
-                    //     updateStudent(session_id, (prevStudent) => ({
-                    //         sessions: prevStudent.sessions.map(s =>
-                    //             s.session_id === session_id
-                    //                 ? { ...s, status: "complete", summary: thm_summary, reflections, strengths, habitsData, promptsData }
-                    //                 : s
-                    //         ),
-                    //     }));
-
+                        updateStudentFromAIResponse(session_id, response); // ✅ Use existing update function
+    
+                        updateUI(session_id); // ✅ Mark session complete in UI
+    
                         resolve("✅ AI Analysis Completed");
                     } catch (error) {
                         console.error(`❌ Failed to process AI response for Session ${session_id}:`, error);
@@ -166,6 +127,53 @@ export const StudentsProvider = ({ children }) => {
         });
     };
 
+    const updateStudentFromAIResponse = (session_id, aiResponse) => {
+        const reflectionKeyFieldMap = ["mind", "knowledge", "problem", "strategy", "solution", "data"];
+
+        setStudents((prevStudents) => {
+            return prevStudents.map((student) => {
+                if (student.sessions.some(session => session.session_id === session_id)) {
+                    console.log("🔍 Updating session with AI data:", session_id);
+    
+                    return {
+                        ...student,
+                        sessions: student.sessions.map(session =>
+                            session.session_id === session_id
+                                ? {
+                                    ...session,
+                                    summary: aiResponse.summary?.content || {}, // ✅ Ensure structured summary
+    
+                                    reflections: Object.fromEntries(
+                                        aiResponse.reflections
+                                            .filter(ref => ref.content && ref.content.report_title) // 🛠️ Ensure content exists
+                                            .map(ref => {
+                                                const title = ref.content.report_title.toLowerCase();
+                                                const key = reflectionKeyFieldMap.find(field => title.includes(field)) || "unknown_reflection";
+
+                                                return [
+                                                    key,
+                                                    { 
+                                                        content: ref.content, 
+                                                        score: ref.content.thm_overall_score || 0 // 🛠️ Default score
+                                                    }
+                                                ];
+                                            })
+                                    ), // ✅ Convert reflections to expected object format
+    
+                                    thm_report: aiResponse.final?.content || {}, // ✅ Store THM report
+                                    status: "complete", // ✅ Mark as complete
+                                }
+                                : session
+                        )
+                    };
+                }
+                return student;
+            });
+        });
+    };
+    
+    
+    
 
     return (
         <StudentsContext.Provider

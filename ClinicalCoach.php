@@ -710,13 +710,14 @@ $this->emDebug($session_id, $coach_id, $reflection_var);
 
 
     // In ClinicalCoach.php
-    public function getCoaches(): array
+    public function getCoaches($user_id=null): array
     {
+        $filter_by_user = !is_null($user_id) ? ' && [coach_sunet] =  "'.$user_id.'"' : "";
         $fields = ['record_id', 'coach_fname', 'coach_lname', 'coach_consent_agree'];
         $params = [
             'project_id'  => $this->getProjectId(),
             'fields'      => $fields,
-            'filterLogic' => '[coach_consent_agree(1)] = "1"'
+            'filterLogic' => '[coach_consent_agree(1)] = "1"' . $filter_by_user
         ];
         $allData = \REDCap::getData($params);
 
@@ -730,6 +731,15 @@ $this->emDebug($session_id, $coach_id, $reflection_var);
                     'lname'     => $row['coach_lname']
                 ];
             }
+        }
+
+        // If no coaches, insert a placeholder with USERID
+        if (empty($coachesList)) {
+            $coachesList = [[
+                "record_id" => null, // No valid coach
+                "fname" => USERID, // Show USERID in place of first name
+                "lname" => "(Not Found)" // Indicate no coach found
+            ]];
         }
 
         return $coachesList;

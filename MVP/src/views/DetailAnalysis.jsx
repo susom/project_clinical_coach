@@ -18,7 +18,9 @@ export default function DetailAnalysis() {
     // ✅ Parse JSON safely
     let parsedContent = {};
     try {
-        parsedContent = reflection.content ? JSON.parse(reflection.content) : {};
+        parsedContent = typeof reflection.content === "string" 
+            ? JSON.parse(reflection.content || '{}') 
+            : reflection.content || {};
     } catch (error) {
         console.error("🚨 JSON Parsing Failed in DetailAnalysis:", error);
     }

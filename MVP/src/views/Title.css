@@ -34,41 +34,37 @@
 }
 
 
-/* Center the dropdown under the heading and give it a large, playful style */
-.dropdown-wrapper {
+/* Center everything inside the .coach-info div */
+.coach-info {
     display: flex;
-    justify-content: center;  /* horizontal center */
-    align-items: center;      /* vertical center if needed within a container */
-    margin-top: 10rem;         /* space below the <h1> */
+    flex-direction: column; /* Stack elements vertically */
+    justify-content: center;
+    align-items: center;
+    margin-top: 5rem; /* Adjust spacing below <h1> */
+    font-size: 1.5rem;
+    text-align: center;
+    width:100%;
 }
 
-.dropdown-wrapper select {
-    font-size: 1.5rem;        /* larger text */
-    padding: 1rem 2rem;       /* "big and juicy" spacing */
-    border: 2px solid #ccc;   /* thicker border for a bold look */
-    border-radius: 10px;      /* rounded corners */
-    background-color: #f9f9f9;
-    cursor: pointer;
-    outline: none;
+.coach-info b {
+    color:red;
 }
 
-/* Add hover/focus effects (optional) */
-.dropdown-wrapper select:hover,
-.dropdown-wrapper select:focus {
+/* Add hover/focus effects */
+.coach-info:hover {
     border-color: #999;
     background-color: #fff;
 }
 
-
-
-/* Login button */
+/* Ensure the button is on a new line */
 #title .login-button {
-    width: 60%; /* Take up 80% of the width */
-    aspect-ratio: 4 / 2; /* 4:3 aspect ratio for a tall button */
+    width: 80%; /* Wider button */
+    max-width: 300px; /* Prevent it from being too large */
+    aspect-ratio: 3 / 1; /* Balanced ratio */
     background-color: #f0f0f0;
     color: #333;
-    border: 1px solid #333;
-    border-radius: 10px;
+    border: 2px solid #333;
+    border-radius: 12px;
     font-size: 1.5rem;
     font-weight: bold;
     cursor: pointer;
@@ -78,15 +74,18 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    margin-bottom: 3rem; /* Space above the footer */
+    margin-top: 1rem; /* Space between text and button */
+    padding: 1rem;
     text-transform: uppercase;
 }
 
+/* Button hover effect */
 #title .login-button:hover {
     background-color: #ddd;
     transform: scale(1.05);
 }
 
+/* Button click effect */
 #title .login-button:active {
     transform: scale(1);
 }

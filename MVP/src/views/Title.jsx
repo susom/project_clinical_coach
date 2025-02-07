@@ -13,35 +13,31 @@ const thmGraphic = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAvQAAAGuCAYAAA
 export default function Title() {
     const navigate = useNavigate();
     const { updateCoachProfile } = useCoach();
+    const [coach, setCoach] = useState(null);
 
-    const [coaches, setCoaches] = useState([]);
-    const [selectedId, setSelectedId] = useState("");
-
-    // Load coachesList from the global window object (if available)
+    // Load coach data from window.coachesList
     useEffect(() => {
         const interval = setInterval(() => {
-          if (window.coachesList && Array.isArray(window.coachesList)) {
-            setCoaches(window.coachesList);
-            clearInterval(interval);
-          }
-        }, 100); // check every 100ms
-      
+            if (window.coachesList && Array.isArray(window.coachesList)) {
+                if (window.coachesList.length > 0) {
+                    setCoach(window.coachesList[0]); // Use the first (and only) coach
+                } else {
+                    // Inject USERID when no coach is found
+                    setCoach({ record_id: null, fname: window.USERID, lname: "(Not Found)" });
+                }
+                clearInterval(interval);
+            }
+        }, 100);
+
         return () => clearInterval(interval);
-      }, []);
-      
+    }, []);
 
-    const handleCoachChange = async (event) => {
-        const chosenId = event.target.value;
-        setSelectedId(chosenId);
-
-        const chosenCoach = coaches.find((c) => c.record_id.toString() === chosenId);
-        if (!chosenCoach) return;
+    const handleEnterApp = async () => {
+        if (!coach || !coach.record_id) return;
 
         try {
-            // Fetch full coach data from server
-            const fullCoachData = await window.ExternalModules.Stanford.ClinicalCoach.fetchCoachData(chosenId);
+            const fullCoachData = await window.ExternalModules.Stanford.ClinicalCoach.fetchCoachData(coach.record_id);
 
-            // Update context **only once** after fetching full data
             updateCoachProfile({
                 record_id: fullCoachData.record_id,
                 name: `${fullCoachData.fname} ${fullCoachData.lname}`,
@@ -50,13 +46,11 @@ export default function Title() {
                 institution: fullCoachData.coach_institution || ""
             });
 
-            // Navigate after context update
             navigate("/home");
         } catch (err) {
             console.error("Error fetching coach data", err);
         }
     };
-
 
     return (
         <>
@@ -65,16 +59,17 @@ export default function Title() {
                 <div className="content">
                     <img src={thmGraphic} alt="THM Graphic" className="graphic" />
                     <h1>Clinical Coach</h1>
-                    <div className="dropdown-wrapper">
-                        <select value={selectedId} onChange={handleCoachChange}>
-                            <option value="">Select Coach to Begin</option>
-                            {coaches.map((coach) => (
-                                <option key={coach.record_id} value={coach.record_id}>
-                                    {coach.fname} {coach.lname}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
+
+                    {coach?.record_id ? (
+                        <div className="coach-info">
+                            <h2>Hi, {coach.fname} {coach.lname}</h2>
+                            <button className="enter-app-btn login-button" onClick={handleEnterApp}>Enter App</button>
+                        </div>
+                    ) : (
+                        <div className="coach-info">
+                            <h2>Sorry, <b>{coach?.fname}</b> was not found...</h2>
+                        </div>
+                    )}
                 </div>
             </main>
             <TitleFooter />

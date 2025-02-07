@@ -27,21 +27,14 @@ export default function Report() {
     const sessionDate = the_session?.session_date || "Unknown Time";
     const reflections = the_session?.reflections || [];
 
-    // ✅ Parse summary JSON safely
-    let parsedSummary = {};
-    try {
-        parsedSummary = JSON.parse(the_session.summary || '{}');
-    } catch (error) {
-        console.error("Invalid JSON in session summary:", error);
-    }
+    // ✅ Ensure summary and thinking habits report are objects, not strings
+    const parsedSummary = typeof the_session.summary === "string" 
+    ? JSON.parse(the_session.summary || '{}') 
+    : the_session.summary || {};
 
-    // ✅ Parse Thinking Habits Report JSON safely
-    let parsedThmReport = {};
-    try {
-        parsedThmReport = JSON.parse(the_session.thm_report || '{}');
-    } catch (error) {
-        console.error("Invalid JSON in Thinking Habits Report:", error);
-    }
+    const parsedThmReport = typeof the_session.thm_report === "string" 
+    ? JSON.parse(the_session.thm_report || '{}') 
+    : the_session.thm_report || {};
 
     console.log("parsedSummary", parsedSummary);
     console.log("parsedThmReport",parsedThmReport);
@@ -54,6 +47,7 @@ export default function Report() {
     function cleanAndParseJSON(jsonString, fallback = {}) {
         try {
             // MAYBE DO SOME CLEANING HERE? BUT SINCE WE PRECHECK BEFORE SAVING SHOUULD BE OK?
+            
             return JSON.parse(jsonString);
         } catch (error) {
             console.error("🚨 JSON Parsing Failed:", error, "\n🔹 Original String:", jsonString);
@@ -63,7 +57,9 @@ export default function Report() {
 
     let parsedReflections = Object.fromEntries(
         Object.entries(the_session.reflections || {}).map(([key, reflection]) => {
-          const parsedContent = cleanAndParseJSON(reflection.content || "{}", {});
+            const parsedContent = typeof reflection.content === "string" 
+            ? JSON.parse(reflection.content || '{}') 
+            : reflection.content || {};
           return [
             key,
             {
