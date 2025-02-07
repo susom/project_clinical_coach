@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useStudents } from '../contexts/Students';
 import { useCoach } from '../contexts/Coach';
 import ThinkingHabitsOverview from '../components/ThinkingHabitsOverview';
@@ -7,29 +8,24 @@ import Footer from '../components/Footer';
 import './Report.css';
 
 export default function Report() {
+    const navigate = useNavigate();
     const { coach } = useCoach();
-    const { students, selectedSession } = useStudents();
+    const { students, selectedStudent, selectedSession } = useStudents();
     const [expandedAnalysis, setExpandedAnalysis] = useState(false);
 
-    // 🔥 Retrieve the full session data from students array
-    const the_session = students
-        .find(student => student.id === selectedSession?.learner_id)
-        ?.sessions?.find(session => session.session_id === selectedSession?.session_id);
-
-    console.log("selectedSEssion", selectedSession, "coach", coach);
+    const the_session = selectedStudent.sessions.find(s => String(s.session_id) === String(selectedSession));
     console.log("the_session", the_session);
 
-    if (!selectedSession || !the_session) {
+    if (!the_session) {
         return <div className="error-message">⚠️ No session data found. Please go back and try again.</div>;
     }
 
-
     // 🛠 Define constants for readability
-    const studentName = selectedSession?.studentName || "Unknown Student";
-    const profilePic = selectedSession?.profilePicture || null;
-    const sessionDate = selectedSession?.sessionDate || "Unknown Time";
-    const habits = selectedSession?.habits || [];
+    const studentName = selectedStudent?.name || "Unknown Student";
+    const profilePic = selectedStudent?.profilePicture || null;
 
+    const sessionDate = the_session?.session_date || "Unknown Time";
+    const reflections = the_session?.reflections || [];
 
     // ✅ Parse summary JSON safely
     let parsedSummary = {};
@@ -47,34 +43,17 @@ export default function Report() {
         console.error("Invalid JSON in Thinking Habits Report:", error);
     }
 
+    console.log("parsedSummary", parsedSummary);
+    console.log("parsedThmReport",parsedThmReport);
+
     // Extract key data
     const oneSentenceSummary = parsedSummary.one_sentence_summary || "No summary available.";
-    const summaryText = parsedSummary.long_summary || "No summary available.";
+    const thm_casefeedback = parsedThmReport.caseOrganizationFeedback || "No case organization feedback available.";
 
     // ✅ Parse reflections safely
     function cleanAndParseJSON(jsonString, fallback = {}) {
         try {
-            // Remove (Line XX) references
-            // jsonString = jsonString.replace(/\(Line\s\d+\)/g, "");
-            //
-            // // Remove trailing commas before closing brackets
-            // jsonString = jsonString.replace(/,\s*([\]}])/g, '$1');
-            //
-            // // Fix improperly escaped quotes (e.g., `patient"s` → `patient's`)
-            // jsonString = jsonString.replace(/(\w)"(\w)/g, '$1\'$2');
-            //
-            // // Ensure keys are properly quoted (e.g., `{question: "text"}` → `{"question": "text"}`)
-            // jsonString = jsonString.replace(/([{,]\s*)(\w+)\s*:/g, '$1"$2":');
-            //
-            // // Convert single quotes inside JSON strings to double quotes for proper parsing
-            // jsonString = jsonString.replace(/"\s*([^"]*?)\s*"\s*([\]}])/g, '"$1"$2');
-            //
-            // // Ensure arrays are properly formatted (["Text" , "Text" ,] → ["Text", "Text"])
-            // jsonString = jsonString.replace(/,\s*([}\]])/g, '$1');
-            //
-            // // Strip out ` ``` ` markdown artifacts
-            // jsonString = jsonString.replace(/```/g, "");
-
+            // MAYBE DO SOME CLEANING HERE? BUT SINCE WE PRECHECK BEFORE SAVING SHOUULD BE OK?
             return JSON.parse(jsonString);
         } catch (error) {
             console.error("🚨 JSON Parsing Failed:", error, "\n🔹 Original String:", jsonString);
@@ -84,45 +63,56 @@ export default function Report() {
 
     let parsedReflections = Object.fromEntries(
         Object.entries(the_session.reflections || {}).map(([key, reflection]) => {
-            const parsedContent = cleanAndParseJSON(reflection.content || "{}", {});
-
-            console.log("parsedContent", key, parsedContent);
-            return [
-                key,
-                {
-                    ...parsedContent,
-                    hasError: Object.keys(parsedContent).length === 0  // True if parsedContent is empty
-                }
-            ];
+          const parsedContent = cleanAndParseJSON(reflection.content || "{}", {});
+          return [
+            key,
+            {
+              ...parsedContent,
+              hasError: Object.keys(parsedContent).length === 0,
+              category: key  // Store the key as the category
+            }
+          ];
         })
-    );
+      );
+      
+    console.log("parsedReflections", parsedReflections);
 
     // ✅ Extract Coaching Prompts from Reflections
     const promptsData = Object.entries(parsedReflections).map(([key, reflection]) => ({
-        category: reflection.report_title || key.charAt(0).toUpperCase() + key.slice(1),
+        title: reflection.report_title || key.charAt(0).toUpperCase() + key.slice(1),
+        category : key.charAt(0).toUpperCase() + key.slice(1),
         color: reflection.hasError ? 'red' : 'gray', // Highlight errors
         prompts: reflection.hasError ? [] : reflection.coaching_insights?.coaching_questions || [],
         hasError: reflection.hasError, // Pass error flag for UI adjustments
         reflectionVar: `sess_reflect_${key.toLowerCase()}` // Format reflectionVar
     }));
 
-    console.log("promptsData",promptsData);
-
     // ✅ Extract Strengths from Reflections
-    const strengths = Object.values(parsedReflections)
-        .flatMap(reflection => reflection.hasError ? [] : reflection.coaching_insights?.positive_feedback || [])
-        .map(feedback => {
-            const [category, description] = feedback.split(': ');
-            return { category, description };
-        });
-
+    // Assuming parsedThmReport is already parsed from the_session.thm_report
+    let strengths = [];
+    if (parsedThmReport && Array.isArray(parsedThmReport.positiveFeedback)) {
+    strengths = parsedThmReport.positiveFeedback.reduce((acc, feedbackStr) => {
+        const parts = feedbackStr.split(':');
+        if (parts.length >= 2) {
+        const cat = parts[0].trim();
+        const desc = parts.slice(1).join(':').trim();
+        const existing = acc.find(item => item.category === cat);
+        if (existing) {
+            existing.descriptions.push(desc);
+        } else {
+            acc.push({ category: cat, descriptions: [desc] });
+        }
+        }
+        return acc;
+    }, []);
+    }
 
 
     const toggleAnalysis = () => {
         setExpandedAnalysis(!expandedAnalysis);
     };
 
-    if (!selectedSession || !the_session) {
+    if (!the_session) {
         return <div>Please select a session to view the report.</div>;
     }
 
@@ -171,7 +161,8 @@ export default function Report() {
         <>
             <Header showBack={true} />
             <main id="report">
-                <button onClick={handleAIAnalysis}>Trigger AI Analysis</button>
+                {/* <button onClick={handleAIAnalysis}>Trigger AI Analysis</button>
+                <br/><br/> */}
 
                 <section className="report-header">
                     <div className="profile-picture">
@@ -194,10 +185,10 @@ export default function Report() {
 
                 <section className="thinking-habits-container">
                     <h3>Thinking Habits Report</h3>
-                    <ThinkingHabitsOverview habits={habits}/>
+                    <ThinkingHabitsOverview reflections={reflections}/>
 
                     <div className="report-summary">
-                        <p className="summary-text">{summaryText}</p>
+                        <p className="summary-text">{thm_casefeedback}</p>
                         <div className="summary-buttons">
                             <button className="expandable-button" onClick={toggleAnalysis}>
                                 {expandedAnalysis ? '- HIDE SUMMARY' : '+ IN-DEPTH CASE PRESENTATION SUMMARY'}
@@ -206,19 +197,20 @@ export default function Report() {
                     </div>
                 </section>
 
-                {/* Strengths Section */}
                 {strengths.length > 0 && (
-                    <section className="report-strengths">
-                        <h3>{studentName}’s Strengths</h3>
-                        <div className="strength-tags">
-                            {strengths.map((strength, index) => (
-                                <div key={index} className="strength-item">
-                                    <span className="strength-category">{strength.category}</span>
-                                    <span className="strength-description">{strength.description}</span>
-                                </div>
-                            ))}
+                <section className="report-strengths">
+                    <h3>{studentName}’s Strengths</h3>
+                    <div className="strength-tags">
+                    {strengths.map((strength, index) => (
+                        <div key={index} className="strength-item">
+                        <span className="strength-category">{strength.category}</span>
+                        {strength.descriptions.map((desc, idx) => (
+                            <div key={idx} className="strength-description">{desc}</div>
+                        ))}
                         </div>
-                    </section>
+                    ))}
+                    </div>
+                </section>
                 )}
 
                 {/* Coaching Prompts Section */}
@@ -249,7 +241,7 @@ export default function Report() {
 
                                     <div className="action-buttons">
                                         <div className="action-left">
-                                            <span>{habit.category}</span>
+                                            <span>{habit.title}</span>
                                         </div>
                                         <div className="action-right">
                                             {hasError ? (
@@ -257,7 +249,10 @@ export default function Report() {
                                                     🔄 Re-Evaluate
                                                 </button>
                                             ) : (
-                                                <button className="detailed-analysis-btn">
+                                                <button 
+                                                    className="detailed-analysis-btn" 
+                                                    onClick={() => navigate(`/detail-analysis/${habit.category.toLowerCase()}`)}
+                                                >
                                                     + DETAILED ANALYSIS
                                                 </button>
                                             )}

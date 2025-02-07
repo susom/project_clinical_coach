@@ -19,10 +19,16 @@ export default function Title() {
 
     // Load coachesList from the global window object (if available)
     useEffect(() => {
-        if (window.coachesList && Array.isArray(window.coachesList)) {
+        const interval = setInterval(() => {
+          if (window.coachesList && Array.isArray(window.coachesList)) {
             setCoaches(window.coachesList);
-        }
-    }, []);
+            clearInterval(interval);
+          }
+        }, 100); // check every 100ms
+      
+        return () => clearInterval(interval);
+      }, []);
+      
 
     const handleCoachChange = async (event) => {
         const chosenId = event.target.value;

@@ -9,8 +9,9 @@
 
 /* Back Button */
 .back-button {
-    font-size: 0.9rem;
-    color: #333;
+    font-size: 20px !important;
+    font-weight:bold;
+    color: #4C2BBD;
     border: none;
     background: none;
     cursor: pointer;
@@ -20,8 +21,12 @@
     gap: 0.5rem; /* Adds consistent spacing between arrow and text */
 }
 
+.back-button:hover{
+    background-color: transparent;
+}
+
 .back-button .arrow {
-    font-size: 1.2rem; /* Proper size for the arrow */
+    font-size: 1.1rem; /* Proper size for the arrow */
 }
 
 /* Filter Button */

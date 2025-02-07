@@ -33,7 +33,12 @@ export const ConfirmModalProvider = ({ children }) => {
                 <div className="modal-overlay">
                     <div className="modal-content">
                         {modalConfig.title && <h3 className="modal-title">{modalConfig.title}</h3>}
-                        {modalConfig.message && <p className="modal-message">{modalConfig.message}</p>}
+                        {modalConfig.message && (
+                            <div
+                                className="modal-message"
+                                dangerouslySetInnerHTML={{ __html: modalConfig.message }}
+                            ></div>
+                        )}
                         <div className="modal-buttons">
                             {modalConfig.showConfirm && (
                                 <button className="modal-button confirm" onClick={handleConfirm}>

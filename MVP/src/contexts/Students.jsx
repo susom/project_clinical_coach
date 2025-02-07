@@ -172,6 +172,7 @@ export const StudentsProvider = ({ children }) => {
             value={{
                 students,
                 selectedStudent,
+                setSelectedStudent,
                 selectStudent,
                 updateStudent,
                 createNewSession,
