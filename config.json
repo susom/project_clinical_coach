@@ -188,6 +188,27 @@
             "default": 800
         },
         {
+            "key": "reasoning-effort",
+            "name": "<b>Reasoning Effort</b>  <br>(only applicable to o1, o3-mini reasoning models)",
+            "required": false,
+            "type": "dropdown",
+            "choices": [
+                {
+                    "value": "low",
+                    "name": "low"
+                },
+                {
+                    "value": "medium",
+                    "name": "medium"
+                },
+                {
+                    "value": "high",
+                    "name": "high"
+                }
+            ],
+            "default": "medium"
+        },
+        {
             "key": "secure-chat-whisper-system-context",
             "name": "<b>Whisper System Context</b> Sets the initial prompt used before any audio is transcribed",
             "required": false,
