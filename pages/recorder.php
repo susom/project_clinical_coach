@@ -51,7 +51,6 @@ $build_files = $module->generateAssetFiles();
     // TODO for MVP use blind list of coaches for now
     // $userInfo = \User::getUserInfo(USERID);
     $coaches = $module->getCoaches(USERID);
-    $module->emDebug($coaches);
     $cmds[] = "window.coachesList = " . json_encode($coaches);
     ?>
 
