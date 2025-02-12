@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useStudents } from '../contexts/Students';
 import { useCoach } from '../contexts/Coach';
 import ThinkingHabitsOverview from '../components/ThinkingHabitsOverview';
+import CaseSummary from "../components/CaseSummary";
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import './Report.css';
@@ -11,7 +12,7 @@ export default function Report() {
     const navigate = useNavigate();
     const { coach } = useCoach();
     const { students, selectedStudent, selectedSession } = useStudents();
-    const [expandedAnalysis, setExpandedAnalysis] = useState(false);
+    const [showCaseSummary, setShowCaseSummary] = useState(false);
 
     const the_session = selectedStudent.sessions.find(s => String(s.session_id) === String(selectedSession));
     console.log("the_session", the_session);
@@ -39,7 +40,7 @@ export default function Report() {
     // Extract key data
     const oneSentenceSummary = parsedSummary.one_sentence_summary || "No summary available.";
     const thm_casefeedback = parsedThmReport.caseOrganizationFeedback || "No case organization feedback available.";
-
+console.log("parsed thm_report", parsedThmReport);
     // ✅ Parse reflections safely
     function cleanAndParseJSON(jsonString, fallback = {}) {
         try {
@@ -102,7 +103,7 @@ export default function Report() {
 
 
     const toggleAnalysis = () => {
-        setExpandedAnalysis(!expandedAnalysis);
+        setShowCaseSummary(!showCaseSummary);
     };
 
     if (!the_session) {
@@ -198,7 +199,7 @@ export default function Report() {
                         <p className="summary-text">{thm_casefeedback}</p>
                         <div className="summary-buttons">
                             <button className="expandable-button" onClick={toggleAnalysis}>
-                                {expandedAnalysis ? '- HIDE SUMMARY' : '+ IN-DEPTH CASE PRESENTATION SUMMARY'}
+                                {showCaseSummary ? '- HIDE SUMMARY' : '+ IN-DEPTH CASE PRESENTATION SUMMARY'}
                             </button>
                         </div>
                     </div>
@@ -271,6 +272,8 @@ export default function Report() {
                     </section>
                 )}
             </main>
+            {/* Insert CaseSummary Component */}
+            {showCaseSummary && <CaseSummary casePresentationSummary={parsedSummary} organizationFeedback={parsedThmReport.caseOrganizationFeedback} onClose={() => setShowCaseSummary(false)} />}
             <Footer/>
         </>
     );
