@@ -1,0 +1,94 @@
+#full_transcript {
+    background: #f9f9f9;
+    min-height: 100vh;
+}
+
+.transcript-header {
+    background: #5a67d8;
+    color: white;
+    padding: .5rem 1rem;
+    text-align: center;
+}
+
+.transcript-header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: normal;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.transcript-name {
+    font-size: 1.2rem;
+    font-weight: bold;
+    text-align: left;
+    flex-grow: 1;
+}
+
+.transcript-date {
+    font-size: 1rem;
+    font-weight: normal;
+    text-align: right;
+    white-space: nowrap;
+}
+.transcript-date p{
+    margin:0;
+}
+
+.transcript-title {
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+
+.transcript-container {
+    background-color: #E5E8F5; /* Light blue/purple background */
+    padding: 1rem;
+    font-family: Arial, sans-serif;
+    font-size: 1rem;
+    line-height: 1.5;
+    max-width: 700px;
+    margin: 0 auto;
+    height:100vh;
+}
+
+.error-warning {
+    color: red;
+    font-size: 0.77rem;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: .85rem;
+}
+
+.transcript-entry {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.transcript-number {
+    font-weight: bold;
+    font-size: 1rem;
+    color: #222;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.transcript-content {
+    flex: 1;
+    text-align:left;
+    border-left: 2px solid #333;
+    padding-left:1.5rem;
+}
+
+.transcript-time {
+    font-weight: bold;
+    color: #3366CC;
+    font-size: 0.9rem;
+}
+
+p.transcript-text{
+    font-size: 1rem;
+    margin-bottom:0;
+}

@@ -36,9 +36,6 @@ export default function Report() {
     ? JSON.parse(the_session.thm_report || '{}') 
     : the_session.thm_report || {};
 
-    console.log("parsedSummary", parsedSummary);
-    console.log("parsedThmReport",parsedThmReport);
-
     // Extract key data
     const oneSentenceSummary = parsedSummary.one_sentence_summary || "No summary available.";
     const thm_casefeedback = parsedThmReport.caseOrganizationFeedback || "No case organization feedback available.";
@@ -153,6 +150,11 @@ export default function Report() {
         );
     };
 
+    const handleFullTranscript = () => {
+        navigate('/full-transcript');
+    };
+    
+
     return (
         <>
             <Header showBack={true} />
@@ -182,6 +184,15 @@ export default function Report() {
                 <section className="thinking-habits-container">
                     <h3>Thinking Habits Report</h3>
                     <ThinkingHabitsOverview reflections={reflections}/>
+
+                    <button 
+                        className="detailed-analysis-btn" 
+                        onClick={() => navigate(`/full-transcript/${selectedSession}`)}
+                    >
+                        + Transcript
+                    </button>
+
+
 
                     <div className="report-summary">
                         <p className="summary-text">{thm_casefeedback}</p>
