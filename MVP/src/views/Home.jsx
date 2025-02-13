@@ -65,6 +65,12 @@ export default function Home() {
     return acc;
   }, {});
 
+  const handleStudentClick = (student) => {
+      setSelectedStudent(student);
+      navigate('/students-profile');
+  };
+
+
   // Sort groups in reverse chronological order
   const dateGroups = Object.keys(groupedSessions)
     .sort((a, b) => new Date(b) - new Date(a))
@@ -88,7 +94,10 @@ export default function Home() {
               {group.sessions.map((session, idx) => (
                 <div className="report-card" key={idx}>
                   <div className="report-card-header">
-                    <div className="profile-picture">
+                    <div 
+                      className="profile-picture clickable" 
+                      onClick={() => handleStudentClick(session.student)}
+                    >
                       {session.student.profilePicture ? (
                         <img src={session.student.profilePicture} alt={session.student.name} />
                       ) : (
@@ -110,7 +119,10 @@ export default function Home() {
                     </div>
                   </div>
                   <div className="report-details">
-                    <div className="report-student-name">{session.student.name}</div>
+                    <div 
+                      className="report-student-name clickable"
+                      onClick={() => handleStudentClick(session.student)}
+                    >{session.student.name}</div>
                     <div className="report-meta">
                       <p className="report-time">{session.sessionDate}</p>
                       <SummaryExpandable text={session.summary} />
