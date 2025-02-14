@@ -14,7 +14,7 @@ function Header({ showBack = false, previousView = null, showFilter = false }) {
     };
 
     return (
-        <header className="header">
+        <header className={`header ${showBack || showFilter ? "hasbg" : ""}`}>
             {showBack && (
                 <button className="back-button" onClick={handleBack}>
                     <span className="arrow"><i class="fas fa-chevron-left"></i></span> Back

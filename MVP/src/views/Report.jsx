@@ -29,45 +29,41 @@ export default function Report() {
     const reflections = the_session?.reflections || [];
 
     // ✅ Ensure summary and thinking habits report are objects, not strings
-    const parsedSummary = typeof the_session.summary === "string" 
-    ? JSON.parse(the_session.summary || '{}') 
-    : the_session.summary || {};
-
-    const parsedThmReport = typeof the_session.thm_report === "string" 
-    ? JSON.parse(the_session.thm_report || '{}') 
-    : the_session.thm_report || {};
+    const parsedSummary = cleanAndParseJSON(the_session.summary, {});
+    const parsedThmReport = cleanAndParseJSON(the_session.thm_report, {});
 
     // Extract key data
     const oneSentenceSummary = parsedSummary.one_sentence_summary || "No summary available.";
     const thm_casefeedback = parsedThmReport.caseOrganizationFeedback || "No case organization feedback available.";
-console.log("parsed thm_report", parsedThmReport);
+
     // ✅ Parse reflections safely
     function cleanAndParseJSON(jsonString, fallback = {}) {
         try {
-            // MAYBE DO SOME CLEANING HERE? BUT SINCE WE PRECHECK BEFORE SAVING SHOUULD BE OK?
-            
-            return JSON.parse(jsonString);
+            return typeof jsonString === "string" ? JSON.parse(jsonString) : jsonString || fallback;
         } catch (error) {
             console.error("🚨 JSON Parsing Failed:", error, "\n🔹 Original String:", jsonString);
-            return fallback;
+            return fallback; // Graceful fallback to prevent page crashes
         }
     }
 
+    // Safely parse reflections
     let parsedReflections = Object.fromEntries(
         Object.entries(the_session.reflections || {}).map(([key, reflection]) => {
-            const parsedContent = typeof reflection.content === "string" 
-            ? JSON.parse(reflection.content || '{}') 
-            : reflection.content || {};
-          return [
-            key,
-            {
-              ...parsedContent,
-              hasError: Object.keys(parsedContent).length === 0,
-              category: key  // Store the key as the category
-            }
-          ];
+            const parsedContent = cleanAndParseJSON(reflection.content, {});
+
+            return [
+                key,
+                {
+                    ...parsedContent,
+                    report_title: parsedContent.report_title
+                        ? parsedContent.report_title.replace(/\b(report|thinking habits)\b/gi, '').trim()
+                        : "Unknown",
+                    hasError: Object.keys(parsedContent).length === 0,
+                    category: key
+                }
+            ];
         })
-      );
+    );
       
     console.log("parsedReflections", parsedReflections);
 
@@ -183,17 +179,15 @@ console.log("parsed thm_report", parsedThmReport);
                 </section>
 
                 <section className="thinking-habits-container">
-                    <h3>Thinking Habits Report</h3>
-                    <ThinkingHabitsOverview reflections={reflections}/>
+                    <div className="thinking-habits-header">
+                        <h3>Thinking Habits Report</h3>
+                        <button 
+                            className="full-transcript-btn" 
+                            onClick={() => navigate(`/full-transcript/${selectedSession}`)}
+                        >+ Transcript</button>
+                    </div>
 
-                    <button 
-                        className="detailed-analysis-btn" 
-                        onClick={() => navigate(`/full-transcript/${selectedSession}`)}
-                    >
-                        + Transcript
-                    </button>
-
-
+                    <ThinkingHabitsOverview reflections={reflections} />
 
                     <div className="report-summary">
                         <p className="summary-text">{thm_casefeedback}</p>

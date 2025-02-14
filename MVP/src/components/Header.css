@@ -7,6 +7,12 @@
     background-color: #fff;
 }
 
+.header.hasbg{
+    background-color: #F5F5F5;
+    border-bottom:1px solid #000;
+    margin-bottom: 1rem;
+}
+
 /* Back Button */
 .back-button {
     font-size: 20px !important;
@@ -19,6 +25,7 @@
     align-items: center;
     margin-right: auto; /* Pushes back button to the left */
     gap: 0.5rem; /* Adds consistent spacing between arrow and text */
+    padding:0;
 }
 
 .back-button:hover{

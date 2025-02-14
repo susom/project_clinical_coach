@@ -21,7 +21,6 @@ body, html {
 
 #clinicalcoachmvp_container {
     border: 1px solid #ccc;
-    border-radius: 8px;
     background-color: white;
     box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
     width: 100%;

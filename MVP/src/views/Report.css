@@ -23,11 +23,6 @@ main#report {
     flex-direction: column;
 }
 
-.habit {
-    margin-bottom: 2rem; /* Add spacing between habits */
-}
-
-
 /* Report Header */
 .report-header {
     display: flex;
@@ -67,12 +62,11 @@ main#report {
 
 .conversation-time {
     font-size: 0.9rem;
-    color: #666;
     margin-bottom: 0rem;
 }
 
 .report-description {
-    font-size: 1rem;
+    font-size: .85rem;
     color: #333;
     line-height: 1.4;
     margin-top: 0.5rem;
@@ -90,11 +84,40 @@ main#report {
     background-color: #fff;
 }
 
-.thinking-habits-container h3 {
+.thinking-habits-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center; /* Ensures items stay aligned properly */
+    width: 100%; /* Ensures full width */
+}
+
+.thinking-habits-header h3 {
     font-size: 1.2rem;
     font-weight: bold;
     margin-bottom: 0;
+    text-align:left;
+    flex-grow: 1;
 }
+
+.full-transcript-btn {
+    display: flex;
+    align-items: center; /* Ensures vertical alignment */
+    background: #ccc;
+    border: none;
+    border-radius: 5px;
+    padding: 0.1rem 0.5rem;
+    cursor: pointer;
+    font-size: 0.7rem;
+    color: #333;
+    box-shadow: 1px 1px 3px #333;
+    white-space: nowrap;
+    margin:0; 
+}
+
+.full-transcript-btn:hover {
+    background: #aaa;
+}
+
 
 .at-a-glance {
     font-size: 0.8rem;
@@ -171,7 +194,7 @@ main#report {
 }
 
 .report-strengths h3 {
-    font-size: 1.2rem;
+    font-size: .82rem;
     font-weight: bold;
     margin-bottom: 0.5rem;
     text-align: left;
@@ -214,10 +237,10 @@ main#report {
 .analysis-title {
     background-color: #f7f7f7;
     text-align: center;
-    font-size: 1.2rem;
+    font-size: .82rem;
     font-weight: bold;
     text-transform: uppercase;
-    padding: 1rem;
+    padding: .5rem;
     margin-bottom: 1rem;
 }
 
@@ -226,7 +249,7 @@ main#report {
 }
 
 .habit {
-    padding:1rem 3rem;
+    padding: .2rem 1rem .5rem;
 }
 
 
@@ -242,12 +265,13 @@ main#report {
     scrollbar-width: thin; /* Thin scrollbar for Firefox */
     -webkit-overflow-scrolling: touch; /* Mobile smooth scrolling */
     border: none; /* Remove debugging border */
+    margin:0 1rem;
 }
 
 .report-carousel-item {
     flex: 0 0 auto; /* Items shouldn't resize, but occupy space based on content */
     min-width: 80%;
-    max-width: 90%;
+    max-width: 100%;
     padding: 1rem 1.5rem;
     border-radius: 10px; /* Rounded corners for the bubble effect */
     text-align: left; /* Left-align the text */
@@ -256,6 +280,7 @@ main#report {
     color: white; /* Ensure contrast with background colors */
     scroll-snap-align: start; /* Align bubbles at the start when scrolling */
     background-color: #6C7CD7; /* Default bubble color */
+    margin-left:1rem;
 }
 
 /* Alternate bubble colors for variety */
@@ -289,15 +314,13 @@ main#report {
     margin: 1rem 0;
     background: #f7f7f7;
     border-radius: 5px;
-    padding: 0.5rem;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     border-bottom: 3px solid #ccc;
-    min-height: 50px; /* Ensures uniform height across all reflections */
 }
 
 /* Left Section - Ensures Consistent Width */
 .action-left {
-    font-size: 0.7rem;
+    font-size: 0.6rem;
     font-weight: bold;
     text-transform: uppercase;
     color: #333;
@@ -317,12 +340,11 @@ main#report {
 /* Ensures Consistent Button Size */
 .detailed-analysis-btn,
 .re-evaluate-btn {
-    min-width: 150px;  /* Same width for both buttons */
-    height: 40px;  /* Ensures consistent height */
     text-align: center;
     display: flex;
     justify-content: center;
     align-items: center;
+    border-radius: 0 5px 5px 0;
 }
 
 
@@ -354,11 +376,11 @@ main#report {
     background-color: #d9534f;
     color: white;
     border: none;
-    font-size: 0.8rem;
+    border-radius: 0 5px 5px 0;
+    font-size: 0.6rem;
     text-transform: uppercase;
     font-weight: bold;
-    padding: 0.5rem 1rem;
-    border-radius: 0; /* Ensure no rounding */
+    padding: 0.2rem .5rem;
     margin: 0; /* Remove margins to align flush */
     white-space: nowrap;
 }
@@ -410,7 +432,7 @@ main#report {
     padding: 1.5rem;
     text-align: left;
     font-size: 92%;
-    margin-bottom:1.5rem;
+    margin:1rem;
 }
 
 .case-summary-inner.organization-assessment{
