@@ -53,30 +53,35 @@ function RecordingFooter({ stage, setStage }) {
     return (
         <div className={`recording-footer ${stage === 3 ? 'stage-3-layout' : 'stage-2-layout'}`}>
             {stage === 2 && (
-                <div className="stage-2-container">
-                    <div className="record-button" onClick={handleRecordClick}>
-                        <i className="fas fa-microphone record-icon"></i>
-                    </div>
-                    <div className="recording-setup">
-                        <h3 className="recording-title">Start A Recording Session</h3>
-                        <select
-                            className="student-dropdown"
-                            value={selectedStudent ? selectedStudent.id : ''}
-                            onChange={handleStudentChange}
-                        >
-                            <option value="">Select A Student</option>
-                            {students.map((student) => (
-                                <option key={student.id} value={student.id}>
-                                    {student.name}
-                                </option>
-                            ))}
-                        </select>
+                    <div className="stage-2-container">
+                        <div className='recording-header'>
+                            <div className="record-left-content">
+                                <div className="record-button" onClick={handleRecordClick}>
+                                    <i className="fas fa-microphone record-icon"></i>
+                                </div>
+                            </div>
+                            <div className="recording-setup">
+                                <h3 className="recording-title">Start A Recording Session</h3>
+                                <select
+                                    className="student-dropdown"
+                                    value={selectedStudent ? selectedStudent.id : ''}
+                                    onChange={handleStudentChange}
+                                >
+                                    <option value="">Select A Student</option>
+                                    {students.map((student) => (
+                                        <option key={student.id} value={student.id}>
+                                            {student.name}
+                                        </option>
+                                    ))}
+                                </select>
+                                
+                                <p className="recording-helper-text">
+                                    Your student's thinking habits metrics will appear here if you've coached them before.
+                                </p>
+                            </div>
+                        </div>        
                         <ThinkingHabitsOverview habits={thmLabels} disabled />
-                        <p className="recording-helper-text">
-                            Your student's thinking habits metrics will appear here if you've coached them before.
-                        </p>
                     </div>
-                </div>
             )}
 
             {stage === 3 && (

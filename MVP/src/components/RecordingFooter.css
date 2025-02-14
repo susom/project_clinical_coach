@@ -1,11 +1,5 @@
 .recording-footer {
-    display: flex;
-    flex-direction: row; /* Horizontal layout */
-    align-items: flex-start; /* Align to the top */
-    gap: 1rem; /* Minimal gap between mic and content */
-    background: #d6d6f0;
-    padding: 0.5rem;
-    border-radius: 8px;
+
 }
 
 /* Stage 3-specific layout */
@@ -15,6 +9,14 @@
 }
 
 /*Shared across both layouts*/
+.record-left-contnet{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 100px;
+}
+
 .record-button {
     background-color: #95D470;
     width: 6rem;
@@ -36,18 +38,20 @@
 .recording-title {
     font-size: 1rem;
     font-weight: bold;
-    margin: 0;
+    margin: .2rem 0 .3rem;
     padding:0;
 }
 
 .student-dropdown {
     font-size: 1rem;
-    padding: 0.5rem;
+    padding: 0.3rem;
     border: 1px solid #ccc;
     border-radius: 8px;
     width: 100%; /* Full width for readability */
-    max-width: 300px; /* Limit width for dropdown */
+    max-width: 240px; /* Limit width for dropdown */
     text-align: center;
+    margin-bottom:.5rem;
+    position: relative; 
 }
 
 /* Thinking Habits Overview alignment */
@@ -60,30 +64,37 @@
 /* Stage 2 specific styles */
 .stage-2-container {
     display: flex;
-    flex-direction: row; /* Side-by-side layout */
-    align-items: flex-start; /* Align elements to the top */
-    gap: .5rem; /* Add spacing between mic and setup */
-    width: 100%; /* Full width of the container */
-    border: 1px solid #333;
+    flex-direction: column;
+    background-color: #e3e4ed;
     border-radius: 10px;
-    background: #D8D8D8;
-    padding: .5rem; /* Padding for internal spacing */
+    padding: .5rem;
+    margin: 1rem .5rem;
+    border: 1px solid #333;
+}
+
+.recording-header{
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: .7rem;
+    margin-bottom: .3rem;
 }
 
 .recording-setup {
     display: flex;
-    flex-direction: column; /* Stack elements vertically */
-    align-items: flex-start; /* Align to the left */
-    gap: 0.5rem; /* Minimal spacing between elements */
+    flex-direction: column;
+    align-items: flex-start;
+    flex-grow: 1;
 }
 
 
 
 .recording-helper-text {
-    font-size: 0.7rem;
+    font-size: 0.8rem;
     color: #666;
     margin: 0;
-    text-align:left
+    text-align:left;
+    line-height:1rem;
 }
 
 
@@ -91,12 +102,12 @@
 .stage-3-container {
     display: flex;
     flex-direction: column;
-    align-items: middle;
-    width: 100%; /* Full width of the container */
+    align-items: center;
     border: 1px solid #333;
     border-radius: 10px;
     background: #D8D8D8;
-    padding: 3rem 0 1rem 0; /* Padding for internal spacing */
+    padding: 3rem .5rem .5rem ; /* Padding for internal spacing */
+    margin: 1rem .5rem;
 
 }
 

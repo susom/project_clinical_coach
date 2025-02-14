@@ -94,15 +94,23 @@ export default function Home() {
               {group.sessions.map((session, idx) => (
                 <div className="report-card" key={idx}>
                   <div className="report-card-header">
-                    <div 
-                      className="profile-picture clickable" 
-                      onClick={() => handleStudentClick(session.student)}
-                    >
-                      {session.student.profilePicture ? (
-                        <img src={session.student.profilePicture} alt={session.student.name} />
-                      ) : (
-                        <i className="fas fa-user-circle"></i>
-                      )}
+                    <div className="report-student-info">
+                      <div 
+                        className="profile-picture clickable" 
+                        onClick={() => handleStudentClick(session.student)}
+                      >
+                        {session.student.profilePicture ? (
+                          <img src={session.student.profilePicture} alt={session.student.name} />
+                        ) : (
+                          <i className="fas fa-user-circle"></i>
+                        )}
+                      </div>
+                      <div 
+                        className="report-student-name clickable"
+                        onClick={() => handleStudentClick(session.student)}
+                      >
+                        {session.student.name}
+                      </div>
                     </div>
                     <div className="report-right-content">
                       <div
@@ -113,21 +121,18 @@ export default function Home() {
                           navigate(`/report`);
                         }}
                       >
-                        <div className="report-status-text">COMPLETE {session.student.id} {session.session_id}</div>
+                        <div className="report-status-text" title={session.session_id}>COMPLETE</div>
                       </div>
-                      <ThinkingHabitsOverview reflections={session.reflections} />
+                        
+                      <div className="report-details">
+                        <div className="report-meta">
+                          <p className="report-time">{session.sessionDate}</p>
+                          <SummaryExpandable text={session.summary} />
+                        </div>
+                      </div>
                     </div>
                   </div>
-                  <div className="report-details">
-                    <div 
-                      className="report-student-name clickable"
-                      onClick={() => handleStudentClick(session.student)}
-                    >{session.student.name}</div>
-                    <div className="report-meta">
-                      <p className="report-time">{session.sessionDate}</p>
-                      <SummaryExpandable text={session.summary} />
-                    </div>
-                  </div>
+                  <ThinkingHabitsOverview reflections={session.reflections} />
                 </div>
               ))}
             </div>

@@ -64,26 +64,6 @@ class ClinicalCoach extends \ExternalModules\AbstractExternalModule {
         return $chatMlArray;
     }
 
-    public function formatResponse($response) {
-        $content = $this->getSecureChatInstance()->extractResponseText($response);
-        $role = $response['choices'][0]['message']['role'] ?? 'assistant';
-        $id = $response['id'] ?? null;
-        $model = $response['model'] ?? null;
-        $usage = $response['usage'] ?? null;
-
-        $formattedResponse = [
-            'response' => [
-                'role' => $role,
-                'content' => $content
-            ],
-            'id' => $id,
-            'model' => $model,
-            'usage' => $usage
-        ];
-
-        return $formattedResponse;
-    }
-
 
     public function redcap_module_ajax($action, $payload, $project_id, $record, $instrument, $event_id, $repeat_instance,
                                        $survey_hash, $response_id, $survey_queue_hash, $page, $page_full, $user_id, $group_id) {
@@ -103,8 +83,6 @@ class ClinicalCoach extends \ExternalModules\AbstractExternalModule {
                     $session_id = $data['session_id'];
                     $coach_id = $data['coach_id'];
                     $reflection_var = $data['reflection_var'] ?? null;
-
-$this->emDebug($session_id, $coach_id, $reflection_var);
 
                     // 🔍 Fetch transcription from REDCap repeating instrument
                     $params = [
@@ -222,7 +200,6 @@ $this->emDebug($session_id, $coach_id, $reflection_var);
                         5 => 'sess_reflect_data'
                     ];
                     foreach ($reflection_contexts as $index => $reflection_context) {
-//                        if(in_array($index,[0,1,3,4,5])) continue;
 
                         $fieldName = $reflectionFieldMap[$index];
                         if ($reflection_var && $reflection_var !== $fieldName) continue;
@@ -593,6 +570,68 @@ $this->emDebug($session_id, $coach_id, $reflection_var);
     }
 
 
+    public function formatResponse($response) {
+        $content = $this->getSecureChatInstance()->extractResponseText($response);
+        $role = $response['choices'][0]['message']['role'] ?? 'assistant';
+        $id = $response['id'] ?? null;
+        $model = $response['model'] ?? null;
+        $usage = $response['usage'] ?? null;
+
+        $formattedResponse = [
+            'response' => [
+                'role' => $role,
+                'content' => $content
+            ],
+            'id' => $id,
+            'model' => $model,
+            'usage' => $usage
+        ];
+
+        return $formattedResponse;
+    }
+
+    /**
+     * Processes an AI response by preparing messages, making the request, and cleaning the result.
+     *
+     * @param string $model The AI model to use.
+     * @param string $systemContext The system prompt for AI guidance.
+     * @param string $userInput The user's input (e.g., transcript).
+     * @param array $defaultParams Default AI request parameters.
+     * @return array An array containing the structured response and cleaned JSON content.
+     */
+    function processAIResponse($model, $systemContext, $userInput, $defaultParams) {
+        try {
+            // 📝 Prepare AI request payload
+            $messages = [
+                ["role" => "system", "content" => $systemContext],
+                ["role" => "user", "content" => $userInput]
+            ];
+
+            // 🔥 Call AI securely
+            $response = $this->getSecureChatInstance()->callAI(
+                $model,
+                array_merge(["messages" => $messages], $defaultParams),
+                PROJECT_ID
+            );
+
+            // 🎯 Process and clean response
+            $result = $this->formatResponse($response);
+            $cleanedContent = $this->sanitizeJson($result['response']['content'] ?? '');
+
+            // ✅ Return structured result
+            return [
+                "response" => $result,
+                "content" => $cleanedContent
+            ];
+        } catch (Exception $e) {
+            $this->emDebug("❌ AI Processing Error:", $e->getMessage());
+            return [
+                "response" => null,
+                "content" => "Error generating response: " . $e->getMessage()
+            ];
+        }
+    }
+
     private function fetchSessionsForLearner($coachRecordId, $learnerId) {
         $params = [
             'project_id' => $this->getProjectId(),
@@ -666,49 +705,6 @@ $this->emDebug($session_id, $coach_id, $reflection_var);
         return $sessions;
     }
 
-    /**
-     * Processes an AI response by preparing messages, making the request, and cleaning the result.
-     *
-     * @param string $model The AI model to use.
-     * @param string $systemContext The system prompt for AI guidance.
-     * @param string $userInput The user's input (e.g., transcript).
-     * @param array $defaultParams Default AI request parameters.
-     * @return array An array containing the structured response and cleaned JSON content.
-     */
-    function processAIResponse($model, $systemContext, $userInput, $defaultParams) {
-        try {
-            // 📝 Prepare AI request payload
-            $messages = [
-                ["role" => "system", "content" => $systemContext],
-                ["role" => "user", "content" => $userInput]
-            ];
-
-            // 🔥 Call AI securely
-            $response = $this->getSecureChatInstance()->callAI(
-                $model,
-                array_merge(["messages" => $messages], $defaultParams),
-                PROJECT_ID
-            );
-
-            // 🎯 Process and clean response
-            $result = $this->formatResponse($response);
-            $cleanedContent = $this->sanitizeJson($result['response']['content'] ?? '');
-
-            // ✅ Return structured result
-            return [
-                "response" => $result,
-                "content" => $cleanedContent
-            ];
-        } catch (Exception $e) {
-            $this->emDebug("❌ AI Processing Error:", $e->getMessage());
-            return [
-                "response" => null,
-                "content" => "Error generating response: " . $e->getMessage()
-            ];
-        }
-    }
-
-
     // In ClinicalCoach.php
     public function getCoaches($user_id=null): array
     {
@@ -744,6 +740,7 @@ $this->emDebug($session_id, $coach_id, $reflection_var);
 
         return $coachesList;
     }
+
 
     /**
      * Cleans and safely decodes JSON content from AI responses.
@@ -796,7 +793,6 @@ $this->emDebug($session_id, $coach_id, $reflection_var);
         // ✅ JSON is valid, return the properly formatted version
         return json_encode($decodedJson, JSON_PRETTY_PRINT);
     }
-
 
     /**
      * Updates a specific repeating instrument instance in REDCap
@@ -897,6 +893,7 @@ $this->emDebug($session_id, $coach_id, $reflection_var);
 
         return $nextInstance;
     }
+
 
     /**
      * @return \Stanford\SecureChatAI\SecureChatAI

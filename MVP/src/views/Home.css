@@ -37,36 +37,72 @@
     flex-direction: column;
     background-color: #e3e4ed;
     border-radius: 10px;
-    padding: 1rem;
-    margin: 1rem;
+    padding: .8rem;
+    margin: 1rem .5rem;
 }
 
 .report-card-header {
-    display: flex; /* Use flex for alignment */
-    justify-content: flex-start; /* Align items horizontally */
-    align-items: center; /* Center vertically */
-    gap: 1rem; /* Add spacing between profile and right content */
-    margin-bottom: 1rem;
+    display: flex;
+    justify-content: space-between; /* Spread profile + name and right content */
+    align-items: flex-start;
+    gap:.7rem;
+    margin-bottom: .3rem;
 }
 
-.profile-picture {
-    font-size: 6rem;
+/* Profile Picture + Name grouped together */
+.report-student-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Center both picture and name */
+    justify-content: center;
+    flex: 0 0 100px; /* Fixed width */
+}
+
+/* Profile Picture */
+#home .profile-picture {
+    font-size: 4rem;
     color: #666;
-    margin-bottom: 0; /* Remove the margin as it’s aligned left */
-    flex-shrink: 0; /* Prevent resizing of the profile picture */
+    width: 6rem;
+    height: 6rem;
+    border-radius: 50%;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
+#home .profile-picture img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Student Name */
+.report-student-name {
+    margin-top: 0.3rem;
+    font-size: 0.77rem;
+    font-weight: bold;
+    background-color: white;
+    padding: 0.2rem 0.5rem;
+    border-radius: 8px;
+    text-align: center;
+    border-bottom: 4px solid #666;
+    width: 100%; /* Make sure it aligns with the profile picture */
+}
+
+/* Status and Thinking Habits Overview stack on the right */
 .report-right-content {
     display: flex;
-    flex-direction: column; /* Stack status and THM */
-    align-items: flex-start; /* Align to the left */
-    flex-grow: 1; /* Allow it to take remaining space */
+    flex-direction: column;
+    align-items: flex-start;
+    flex-grow: 1;
 }
 
+
 .report-status {
-    padding: 2rem;
-    width:350px;
-    border-radius: 20px;
+    padding: .5rem 1rem;
+    width:100%;
+    border-radius: 8px;
     font-size: 1rem;
     font-weight: bold;
     color: #fff;
@@ -109,18 +145,7 @@
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.report-student-name {
-    background-color: #fff;
-    color: #333;
-    padding: 0.3rem 0.6rem;
-    border-radius: 8px;
-    font-size: 1rem;
-    font-weight: bold;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    text-align: left;
-    border-bottom: 5px solid #666; /* Thick border at the bottom */
-    flex-shrink: 0; /* Prevent resizing */
-}
+
 
 .report-details {
     display: flex;
@@ -134,13 +159,11 @@
     flex-direction: column;
     align-items: flex-start; /* Ensure text is aligned to the left */
     justify-content: flex-start;
-    gap: 0.2rem;
-    margin-top: -1rem;
     text-align: left; /* Force left alignment */
 }
 
 .report-meta .report-time {
-    font-size: 0.8rem;
+    font-size: 0.77rem;
     color: #666;
     margin-bottom: 0;
     line-height: 1.2;
@@ -148,7 +171,7 @@
 }
 
 .report-meta .report-description {
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     color: #333;
     line-height: 1.2;
     margin-top: 0;
