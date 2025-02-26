@@ -10,6 +10,8 @@ import THM from './views/ThinkingHabitsMatrix';
 import Notifications from './views/Notifications';
 import Profile from './views/Profile';
 import Report from './views/Report';
+import DetailAnalysis from "./views/DetailAnalysis";
+import FullTranscript from "./views/FullTranscript";
 import StudentProfile from "./views/StudentProfile";
 
 function App() {
@@ -27,6 +29,8 @@ function App() {
                                 <Route path="/notifications" element={<Notifications />} />
                                 <Route path="/coach-profile" element={<Profile />} />
                                 <Route path="/report" element={<Report />} />
+                                <Route path="/detail-analysis/:category" element={<DetailAnalysis />} />
+                                <Route path="/full-transcript/:category" element={<FullTranscript />} />
                                 <Route path="/students-profile" element={<StudentProfile />} />
                             </Routes>
                         </div>

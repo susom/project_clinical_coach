@@ -18,13 +18,14 @@
     display: flex;
     flex-direction: column;
     gap: 1rem;
-    margin: 0 1rem; /* Restore padding on the sides */
     padding-top: 1rem; /* Add spacing at the top */
 }
 
 /* Individual Notification */
 .notification {
     display: flex;
+    justify-content: space-between;
+    gap:.7rem;
     align-items: flex-start; /* Align items to the top */
     padding: 1rem;
     border: 1px solid #ccc;
@@ -33,6 +34,7 @@
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     position: relative;
     background:#E3E4ED;
+    margin:.5rem;
 }
 
 /* Red Dot for New Notifications */
@@ -49,11 +51,25 @@
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
+.notification .report-student-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Center both picture and name */
+    justify-content: center;
+    flex: 0 0 100px; /* Fixed width */
+}
+
 /* Profile Icon */
-.profile-icon {
-    font-size: 6rem;
+.notification .profile-icon {
+    font-size: 4rem;
     color: #666;
-    margin-right: 1rem;
+    width: 6rem;
+    height: 6rem;
+    border-radius: 50%;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 /* Notification Details */
@@ -91,6 +107,23 @@
     margin-top:.5rem;
     font-style:italic;
 }
+
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background-color: #FFD166; /* Rich yellow */
+    color: white;
+    font-weight: bold;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+}
+
+.status-badge i {
+    font-size: 1rem;
+}
+
 
 
 /* Button with Icon Container */
@@ -157,4 +190,30 @@
     to {
         transform: rotate(360deg);
     }
+}
+
+
+.notification.clickable {
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.notification.clickable:hover {
+    background: #eef7ff; /* Light blue highlight */
+}
+
+.status-badge.complete {
+    background: #28a745;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-weight: bold;
+}
+
+.status-badge.pending {
+    background: #ffc107;
+    color: black;
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-weight: bold;
 }

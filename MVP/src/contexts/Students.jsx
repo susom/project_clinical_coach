@@ -1,4 +1,5 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
+import { useCoach } from './Coach';
 
 // Create the context
 const StudentsContext = createContext();
@@ -8,128 +9,34 @@ export const useStudents = () => useContext(StudentsContext);
 
 // Provider component to wrap the app
 export const StudentsProvider = ({ children }) => {
+    const { coach } = useCoach();
+    const [students, setStudents] = useState([]);
     const [selectedStudent, setSelectedStudent] = useState(null);
+    const [selectedSession, setSelectedSession] = useState();
+    const [lastFetchedCoachId, setLastFetchedCoachId] = useState(null);
+    const [notifications, setNotifications] = useState([]);
 
-    const [students, setStudents] = useState([
-        {
-            id: 1,
-            name: "Yaseem Amellal",
-            reflections: {},
-            profilePicture: null,
-            transcription: "",
-            description: '15-minute case presentation regarding 8-year-old patient in ICU.',
-            time: '1:05 PM',
-            thm_summary: "No summary available.",
-            strengths: [],
-            habitsData: [
-                { label: 'Strategy', color: 'green' },
-                { label: 'Solution', color: 'green' },
-                { label: 'Knowledge', color: 'green' },
-                { label: 'Problem', color: 'yellow' },
-                { label: 'Data', color: 'yellow' },
-                { label: 'Mind', color: 'red' },
-            ],
-            promptsData: [],
-            notifications: [
-                { id: 1, time: '1:00PM Thursday, December 12, 2024', timeAgo: '10 Mins Ago', status: 'processing', isNew: false },
-            ],
-        },
-        {
-            id: 2,
-            name: "Jasmine Machado",
-            reflections: {},
-            profilePicture: null,
-            transcription: "",
-            description: '20-minute case presentation regarding 10-year-old patient with group-A strep.',
-            time: '12:45 PM',
-            thm_summary: "Jasmine demonstrated a solid grasp of the clinical complexity involved in the patient, particularly in recognizing and questioning the initial diagnosis of mastoiditis.",
-            strengths: [
-                { category: "Strategy", description: "Recognized knowledge gaps" },
-                { category: "Knowledge", description: "Thoughtful therapeutic plan" },
-                { category: "Solution", description: "Correctly questioned initial diagnosis" },
-            ],
-            habitsData: [
-                { label: 'Strategy', color: 'green' },
-                { label: 'Solution', color: 'yellow' },
-                { label: 'Knowledge', color: 'green' },
-                { label: 'Problem', color: 'red' },
-                { label: 'Data', color: 'yellow' },
-                { label: 'Mind', color: 'red' },
-            ],
-            promptsData: [
-                {
-                    category: 'Strategy',
-                    color: 'green',
-                    prompts: [
-                        'Your case presentation didn’t include a clear rationale for stopping vancomycin...',
-                        'How might you articulate your reasoning more clearly?',
-                    ],
-                },
-                {
-                    category: 'Solution',
-                    color: 'green',
-                    prompts: ['How could you approach prioritizing between chronic and acute issues?'],
-                },
-            ],
-            notifications: [
-                { id: 2, time: '1:21PM Thursday, December 12, 2024', timeAgo: '1 Hr Ago', status: 'complete', isNew: true },
-            ],
-        },
-        {
-            id: 3,
-            name: "Dennis Johnson",
-            reflections: {},
-            profilePicture: null,
-            transcription: "",
-            description: '8-minute case presentation patient with mastoiditis and complications.',
-            time: '12:00 PM',
-            thm_summary: "No summary available.",
-            strengths: [],
-            habitsData: [
-                { label: 'Strategy', color: 'gray' },
-                { label: 'Solution', color: 'gray' },
-                { label: 'Knowledge', color: 'gray' },
-                { label: 'Problem', color: 'gray' },
-                { label: 'Data', color: 'gray' },
-                { label: 'Mind', color: 'gray' },
-            ],
-            promptsData: [],
-            notifications: [],
-        },
-    ]);
+    useEffect(() => {
+        // If there's a valid coach AND we haven't fetched for this coach yet
+        if (coach?.record_id && coach.record_id !== lastFetchedCoachId) {
+            (async () => {
+                try {
+                    const studentList = await window.ExternalModules.Stanford.ClinicalCoach.fetchStudentsData(coach.record_id);
+                    // console.log("Fetched Students from backend:", studentList);
 
-    const selectStudent = (studentId) => {
-        const student = students.find((s) => s.id === studentId);
-        setSelectedStudent({ ...student }); // Create a new object to avoid mutating state
-    };
-
-    const updateStudent = (studentId, updatedData) => {
-        if (!studentId || !updatedData || typeof updatedData !== "object") {
-            console.error("Invalid arguments passed to updateStudent:", { studentId, updatedData });
-            return;
+                    if (Array.isArray(studentList) && studentList.length > 0) {
+                        setStudents(studentList);
+                    } else {
+                        console.warn("No students found for coach:", coach.record_id);
+                    }
+                    // Update lastFetchedCoachId so we don't fetch again for the same coach
+                    setLastFetchedCoachId(coach.record_id);
+                } catch (err) {
+                    console.error("Failed to fetch students:", err);
+                }
+            })();
         }
-
-        console.log("Updating student:", { studentId, updatedData });
-
-        // Update the main `students` array
-        setStudents((prevStudents) => {
-            const updatedStudents = prevStudents.map((student) =>
-                student.id === studentId
-                    ? { ...student, ...updatedData } // Merge updates for the matched student
-                    : student
-            );
-            console.log("Updated students array:", updatedStudents);
-            return updatedStudents;
-        });
-
-        // Update the currently `selectedStudent` if it matches the updated student
-        if (selectedStudent?.id === studentId) {
-            const updatedSelected = { ...selectedStudent, ...updatedData };
-            console.log("Updated selectedStudent:", updatedSelected);
-            setSelectedStudent(updatedSelected);
-        }
-    };
-
+    }, [coach?.record_id, lastFetchedCoachId]);
 
     useEffect(() => {
         if (selectedStudent) {
@@ -138,13 +45,149 @@ export const StudentsProvider = ({ children }) => {
         }
     }, [students]);
 
+    const selectStudent = (studentId) => {
+        const student = students.find((s) => s.id === studentId);
+        setSelectedStudent({ ...student }); // Create a new object to avoid mutating state
+    };
+
+    const updateStudent = (studentId, updateFn) => {
+        setStudents((prevStudents) => {
+            return prevStudents.map((student) => {
+                if (String(student.id) === String(studentId)) {
+                    console.log("🔍Found student Updating Student:", student);
+
+                    const updatedSessions = student.sessions.map(session => {
+                        const updatedSession = updateFn(session);
+                        return updatedSession;
+                    });
+
+                    return {
+                        ...student,
+                        sessions: updatedSessions
+                    };
+                }
+                return student;
+            });
+        });
+    };
+
+    const createNewSession = (studentId) => {
+        const tempSessionId = `temp-${Date.now()}`; // Generate a unique temporary ID
+        setStudents((prevStudents) =>
+            prevStudents.map((student) =>
+                student.id === studentId
+                    ? {
+                        ...student,
+                        sessions: [
+                            ...(student.sessions || []),
+                            {
+                                session_id: tempSessionId, // Use the temporary ID
+                                session_date: new Date().toISOString().split('T')[0] + " 12:30 PM",
+                                transcript: "",
+                                reflections: {},
+                                summary: "",
+                                status: "incomplete",
+                            },
+                        ],
+                    }
+                    : student
+            )
+        );
+        return tempSessionId; // Return the temporary ID for later use
+    };
+
+    const callAIAnalysis = async (session_id, coach_id, updateUI = () => {}) => {
+        console.log(`🚀 Initiating AI Analysis for Session ${session_id}...`);
+    
+        const payload = { session_id, coach_id };
+    
+        return new Promise((resolve) => {
+            window.clinical_coach_jsmo_module.callAI(
+                JSON.stringify(payload),
+                (response) => {
+                    console.log(`✅ AI Response for Session ${session_id}:`, response);
+    
+                    try {
+                        updateStudentFromAIResponse(session_id, response); // ✅ Use existing update function
+    
+                        updateUI(session_id); // ✅ Mark session complete in UI
+    
+                        resolve("✅ AI Analysis Completed");
+                    } catch (error) {
+                        console.error(`❌ Failed to process AI response for Session ${session_id}:`, error);
+                        resolve("✅ UI updated, but AI data processing failed");
+                    }
+                },
+                (error) => {
+                    console.error(`❌ AI Analysis Error for Session ${session_id}:`, error);
+                    updateUI(session_id); // ✅ Ensure UI still updates
+                    resolve("❌ AI Error - Session marked complete in UI");
+                }
+            );
+        });
+    };
+
+    const updateStudentFromAIResponse = (session_id, aiResponse) => {
+        const reflectionKeyFieldMap = ["mind", "knowledge", "problem", "strategy", "solution", "data"];
+
+        setStudents((prevStudents) => {
+            return prevStudents.map((student) => {
+                if (student.sessions.some(session => session.session_id === session_id)) {
+                    console.log("🔍 Updating session with AI data:", session_id);
+    
+                    return {
+                        ...student,
+                        sessions: student.sessions.map(session =>
+                            session.session_id === session_id
+                                ? {
+                                    ...session,
+                                    summary: aiResponse.summary?.content || {}, // ✅ Ensure structured summary
+    
+                                    reflections: Object.fromEntries(
+                                        aiResponse.reflections
+                                            .filter(ref => ref.content && ref.content.report_title) // 🛠️ Ensure content exists
+                                            .map(ref => {
+                                                const title = ref.content.report_title.toLowerCase();
+                                                const key = reflectionKeyFieldMap.find(field => title.includes(field)) || "unknown_reflection";
+
+                                                return [
+                                                    key,
+                                                    { 
+                                                        content: ref.content, 
+                                                        score: ref.content.thm_overall_score || 0 // 🛠️ Default score
+                                                    }
+                                                ];
+                                            })
+                                    ), // ✅ Convert reflections to expected object format
+    
+                                    thm_report: aiResponse.final?.content || {}, // ✅ Store THM report
+                                    status: "complete", // ✅ Mark as complete
+                                }
+                                : session
+                        )
+                    };
+                }
+                return student;
+            });
+        });
+    };
+    
+    
+    
+
     return (
         <StudentsContext.Provider
             value={{
                 students,
                 selectedStudent,
+                setSelectedStudent,
                 selectStudent,
                 updateStudent,
+                createNewSession,
+                callAIAnalysis,
+                selectedSession,
+                setSelectedSession,
+                notifications,
             }}
         >
             {children}

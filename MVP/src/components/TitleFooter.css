@@ -11,7 +11,7 @@
 .title-footer-links {
     display: flex;
     justify-content: space-between; /* Spread links apart */
-    padding: 0 10rem; /* Align links with the edges of the "Enter" button */
+    padding: 0 5rem; /* Align links with the edges of the "Enter" button */
     margin-bottom: 2rem; /* Increase vertical spacing from copyright */
 }
 

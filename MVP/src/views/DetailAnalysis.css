@@ -1,0 +1,130 @@
+/* General Page Styling */
+#detail_analysis {
+    flex: 1;
+    overflow-y: auto; /* Allow scrolling */
+    padding-bottom: 2rem; /*
+    
+    max-width: 600px; /* Keep content narrow for readability */
+    margin: 0 auto;
+    padding: 1rem;
+    font-family: 'Arial', sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    color: #333;
+}
+
+/* Title */
+#detail_analysis .analysis-title {
+    font-size: 16px;
+    font-weight: bold;
+    margin-bottom: 1rem;
+    padding:.5rem 2rem;
+    background-color: transparent !important;
+}
+
+/* Sections */
+.analysis-section {
+    margin-bottom: 1.5rem;
+    padding: 0 1rem;
+}
+
+/* Headings */
+.analysis-section h3 {
+    font-size: 16px;
+    font-weight: bold;
+    margin: .5rem .5rem 1rem 0;
+    text-align: left;
+}
+
+/* Feedback & Questions List */
+.analysis-section ul {
+    padding-left: 20px;
+    text-align: left;
+}
+
+.analysis-section li {
+    margin-bottom: 0.5rem;
+}
+
+/* Detailed Analysis Items */
+.analysis-item {
+    margin-top: 1rem;
+    margin-bottom:2rem; 
+    text-align:left;
+}
+
+.analysis-item h5{
+    font-size:120%;
+}
+
+/* Certainty Score */
+.certainty-score {
+    font-weight: bold;
+    margin-top: 0.3rem;
+    margin-bottom: .3rem;
+    text-align: right;
+}
+
+/* Supporting Citations */
+.supporting-citations h5 {
+    font-size: 14px;
+    font-weight: bold;
+    margin-top: 1rem;
+}
+
+.supporting-citations ul {
+    padding-left: 20px;
+    text-align: left;
+}
+
+/* Back Button */
+.back-button {
+    display: block;
+    margin-bottom: 1rem;
+    font-size: 14px;
+}
+
+#detail_analysis {
+    min-height: calc(100vh - 60px); /* Adjust for header/footer */
+    display: flex;
+    flex-direction: column;
+}
+
+#detail_analysis footer {
+    margin-top: auto;
+    padding: 1rem;
+    text-align: center;
+    background: #fff;
+    box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
+}
+
+
+/* Info Button (Question Mark) */
+
+.analysis-header{
+    position: relative;
+}
+
+.info-button:hover,
+.info-button {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    margin-left: auto;
+    position:absolute;
+    top:0; right:0;
+    background-color: transparent;
+}
+
+.info-button i {
+    font-size: 20px;
+    background:#5a2fc2;
+    border-radius:100%;
+}
+
+.info-button:hover i {
+    box-shadow:1px 1px 3px #333;
+}

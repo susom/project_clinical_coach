@@ -47,6 +47,11 @@ $build_files = $module->generateAssetFiles();
     if (!empty($init_method)) {
         $cmds[] = "window.clinical_coach_jsmo_module.afterRender(clinical_coach_jsmo_module." . $init_method . ")";
     }
+
+    // TODO for MVP use blind list of coaches for now
+    // $userInfo = \User::getUserInfo(USERID);
+    $coaches = $module->getCoaches(USERID);
+    $cmds[] = "window.coachesList = " . json_encode($coaches);
     ?>
 
     <!-- Custom JS -->

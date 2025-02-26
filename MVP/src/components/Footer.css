@@ -84,7 +84,7 @@
 .expanded-content {
     flex-grow: 1;
     background-color: #d6d6f0;
-    padding: 1rem 1rem 0;
+    padding: .3rem 0;
 }
 
 

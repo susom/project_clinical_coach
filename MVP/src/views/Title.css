@@ -33,14 +33,38 @@
     text-transform: uppercase;
 }
 
-/* Login button */
+
+/* Center everything inside the .coach-info div */
+.coach-info {
+    display: flex;
+    flex-direction: column; /* Stack elements vertically */
+    justify-content: center;
+    align-items: center;
+    margin-top: 5rem; /* Adjust spacing below <h1> */
+    font-size: 1.5rem;
+    text-align: center;
+    width:100%;
+}
+
+.coach-info b {
+    color:red;
+}
+
+/* Add hover/focus effects */
+.coach-info:hover {
+    border-color: #999;
+    background-color: #fff;
+}
+
+/* Ensure the button is on a new line */
 #title .login-button {
-    width: 60%; /* Take up 80% of the width */
-    aspect-ratio: 4 / 2; /* 4:3 aspect ratio for a tall button */
+    width: 80%; /* Wider button */
+    max-width: 300px; /* Prevent it from being too large */
+    aspect-ratio: 3 / 1; /* Balanced ratio */
     background-color: #f0f0f0;
     color: #333;
-    border: 1px solid #333;
-    border-radius: 10px;
+    border: 2px solid #333;
+    border-radius: 12px;
     font-size: 1.5rem;
     font-weight: bold;
     cursor: pointer;
@@ -50,15 +74,18 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    margin-bottom: 3rem; /* Space above the footer */
+    margin-top: 1rem; /* Space between text and button */
+    padding: 1rem;
     text-transform: uppercase;
 }
 
+/* Button hover effect */
 #title .login-button:hover {
     background-color: #ddd;
     transform: scale(1.05);
 }
 
+/* Button click effect */
 #title .login-button:active {
     transform: scale(1);
 }
