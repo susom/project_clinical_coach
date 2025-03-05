@@ -9,7 +9,7 @@ import './Home.css';
 
 export default function Home() {
   const navigate = useNavigate();
-  const [stage, setStage] = useState(2);
+  const [stage, setStage] = useState(1);
   const { students, setSelectedStudent, setSelectedSession } = useStudents();
 
   // Flatten and transform sessions for display

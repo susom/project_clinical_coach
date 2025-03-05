@@ -21,13 +21,12 @@ function Footer({ stage = 1, setStage }) {
                 <Link
                     to="/home"
                     className={`footer-item ${currentPath === '/home' ? 'active' : ''}`} // Remove stage check here
-                    onClick={() => setStage(2)} // Retain stage reset logic
+                    onClick={() => setStage(1)} // Retain stage reset logic
                 >
                     <i className="fas fa-home footer-icon"></i>
                     <span>Home</span>
                 </Link>
                 <Link
-                    to="/recording"
                     className={`footer-item ${currentPath === '/recording' ? 'active' : ''}`}
                     onClick={() => setStage(2)} // Set stage to 2 for recording
                 >
