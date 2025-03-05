@@ -6,6 +6,7 @@ import ThinkingHabitsOverview from '../components/ThinkingHabitsOverview';
 import { useStudents } from '../contexts/Students';
 import SummaryExpandable from '../components/SummaryExpandable';
 import './StudentProfile.css';
+import ReflectionScoreChart from '../components/ReflectionScoreChart';
 
 export default function StudentProfile() {
     const navigate = useNavigate();
@@ -112,6 +113,7 @@ export default function StudentProfile() {
                         <h1 className="student-name">{selectedStudent.name}</h1>
                     </div>
                     <ThinkingHabitsOverview reflections={aggregateReflections(selectedStudent)} />
+                    <ReflectionScoreChart sessions={selectedStudent.sessions} />
                 </header>
                 {dateGroups.map((group, groupIndex) => (
                     <section key={groupIndex} className="report-group">

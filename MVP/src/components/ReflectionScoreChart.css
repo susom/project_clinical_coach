@@ -1,0 +1,76 @@
+/* Container is full-width, purple background, white text */
+.chart-container {
+    width: 100%;
+    background-color: #4a56a6;
+    color: #fff;
+    padding: 1rem;
+    /* No border-radius if you want square corners */
+  }
+  
+  /* Each row is taller to accommodate the offset blocks */
+  .score-row {
+    position: relative; 
+    display: flex;
+    align-items: center;
+    width: 100%;
+    height: 32px; /* Enough space for the line + offset blocks */
+    margin-bottom: 1rem;
+  }
+  
+  /* Labels on the left in white text */
+  .reflection-label {
+    width: 100px; 
+    font-weight: bold;
+    text-transform: uppercase;
+    margin-right: 1rem;
+    text-align: right;
+  }
+  
+  /* The thin white line in the center of the row */
+  .score-line {
+    flex: 1;
+    position: relative;
+    height: 2px;
+    background-color: #fff;
+    /* We'll position blocks absolutely over this line */
+  }
+  
+  /* The container for blocks, absolutely positioned on the line */
+  .score-blocks {
+    display: flex;
+    gap: 6px; 
+    position: absolute;
+    left: 0;
+    top: 50%; 
+    transform: translateY(-50%); /* center the blocks vertically on the line */
+  }
+  
+  /* Each block is a small square */
+  .score-block {
+    width: 10px;
+    height: 10px;
+  }
+  
+  /* No score => empty/transparent */
+  .score-block.empty {
+    background: transparent;
+  }
+  
+  /* Score=1 => red block below the line */
+  .score-1 {
+    background-color: red;
+    transform: translateY(6px);
+  }
+  
+  /* Score=2 => yellow block centered on the line */
+  .score-2 {
+    background-color: gold;
+    /* already centered by parent transform */
+  }
+  
+  /* Score=3 => green block above the line */
+  .score-3 {
+    background-color: green;
+    transform: translateY(-6px);
+  }
+  
