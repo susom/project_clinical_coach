@@ -127,53 +127,65 @@ export const StudentsProvider = ({ children }) => {
         });
     };
 
-    const updateStudentFromAIResponse = (session_id, aiResponse) => {
-        const reflectionKeyFieldMap = ["mind", "knowledge", "problem", "strategy", "solution", "data"];
+    const updateStudentFromAIResponse = (session_id, aiResponse, singleReflectionKey = null) => {
+        // const reflectionKeyFieldMap = ["mind", "knowledge", "problem", "strategy", "solution", "data"];
+        // TODO: Remove this once we have the new reflection key field map
+        const reflectionKeyFieldMap = {
+            "mind": "Frame of Mind Reflection Report",
+            "knowledge": "Knowledge Reflection Report",
+            "problem": "Problem Definition & Assumptions Reflection Report",
+            "strategy": "Reflection on Clinical Strategy Thinking Habits Report",
+            "solution": "Reflection on Clinical Solution Thinking Habits Report",
+            "data": "Reflection on Data Thinking Habits Report"
+        };
 
+        console.log("🔍 Updating session with AI data:", session_id, reflectionKeyFieldMap , aiResponse);
+        
         setStudents((prevStudents) => {
             return prevStudents.map((student) => {
                 if (student.sessions.some(session => session.session_id === session_id)) {
-                    console.log("🔍 Updating session with AI data:", session_id);
-    
+                    console.log("🔍 Updating session with AI data:", session_id, `Single Reflection: ${singleReflectionKey || "All"}`);
+
                     return {
                         ...student,
-                        sessions: student.sessions.map(session =>
-                            session.session_id === session_id
-                                ? {
-                                    ...session,
-                                    summary: aiResponse.summary?.content || {}, // ✅ Ensure structured summary
-    
-                                    reflections: Object.fromEntries(
-                                        aiResponse.reflections
-                                            .filter(ref => ref.content && ref.content.report_title) // 🛠️ Ensure content exists
-                                            .map(ref => {
-                                                const title = ref.content.report_title.toLowerCase();
-                                                const key = reflectionKeyFieldMap.find(field => title.includes(field)) || "unknown_reflection";
+                        sessions: student.sessions.map(session => {
+                            if (session.session_id !== session_id) return session;
 
-                                                return [
-                                                    key,
-                                                    { 
-                                                        content: ref.content, 
-                                                        score: ref.content.thm_overall_score || 0 // 🛠️ Default score
-                                                    }
-                                                ];
-                                            })
-                                    ), // ✅ Convert reflections to expected object format
-    
-                                    thm_report: aiResponse.final?.content || {}, // ✅ Store THM report
-                                    status: "complete", // ✅ Mark as complete
+                            const updatedReflections = { ...session.reflections };
+
+                            Object.entries(aiResponse.reflections).forEach(([key, ref]) => {
+                                if (!ref.content || !ref.content.report_title) return;
+
+                                // 🔥 Find the mapped reflection key
+                                const title = ref.content.report_title;
+                                const mappedKey = Object.keys(reflectionKeyFieldMap).find(k => reflectionKeyFieldMap[k] === title) || `reflection_${key}`;
+
+                                // 🔥 If singleReflectionKey is set, update only that one
+                                if (singleReflectionKey) {
+                                    // Remove 'sess_reflect_' prefix if present
+                                    const cleanKey = singleReflectionKey.replace('sess_reflect_', '');
+                                    if (mappedKey !== cleanKey) return;
                                 }
-                                : session
-                        )
+                                
+                                updatedReflections[mappedKey] = {
+                                    content: ref.content,
+                                    score: ref.content.thm_overall_score || 0
+                                };
+                            });
+
+                            return {
+                                ...session,
+                                reflections: updatedReflections, // ✅ Keep all existing reflections, only updating the relevant one
+                                status: "complete"
+                            };
+                        })
                     };
                 }
                 return student;
             });
         });
     };
-    
-    
-    
+
 
     return (
         <StudentsContext.Provider
@@ -183,6 +195,7 @@ export const StudentsProvider = ({ children }) => {
                 setSelectedStudent,
                 selectStudent,
                 updateStudent,
+                updateStudentFromAIResponse,
                 createNewSession,
                 callAIAnalysis,
                 selectedSession,

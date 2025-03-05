@@ -53,10 +53,13 @@
                 const res = await module.ajax('callAI', payload);
                 console.log("Raw response from module.ajax:", res, typeof res);
 
+                let cleanedRes = typeof res === "string" ? cleanAIResponse(res) : res; // 🔥 Apply cleaning function
+                console.log("Cleaned AI Response:", cleanedRes);
+
                 let parsedRes;
-                if (typeof res === "string") {
+                if (typeof cleanedRes === "string") {
                     try {
-                        parsedRes = JSON.parse(res);
+                        parsedRes = JSON.parse(cleanedRes);
                     } catch (parseError) {
                         console.error("Error parsing response:", parseError);
                         errorCallback?.("Invalid JSON response");
@@ -71,7 +74,7 @@
 
                 console.log("Parsed response:", parsedRes);
 
-                if (parsedRes.summary && Array.isArray(parsedRes.reflections) && parsedRes.final) {
+                if (parsedRes.summary && (Array.isArray(parsedRes.reflections) || typeof parsedRes.reflections === "object") && parsedRes.final) {
                     // Fully normalized response
                     callback?.(parsedRes);
                 } else {
@@ -146,4 +149,8 @@ async function convertFileToBase64(file) {
         reader.onerror = reject;
         reader.readAsDataURL(file);
     });
+}
+
+function cleanAIResponse(responseText) {
+    return responseText.replace(/```json|```/g, "").trim(); 
 }

@@ -333,18 +333,8 @@ main#report {
 /* Right Section - Aligns Buttons */
 .action-right {
     display: flex;
-    gap: 0.5rem; /* Adds spacing between buttons */
+    gap: 0; /* Adds spacing between buttons */
     align-items: stretch; /* Ensures buttons fill available height */
-}
-
-/* Ensures Consistent Button Size */
-.detailed-analysis-btn,
-.re-evaluate-btn {
-    text-align: center;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    border-radius: 0 5px 5px 0;
 }
 
 
@@ -383,16 +373,27 @@ main#report {
     padding: 0.2rem .5rem;
     margin: 0; /* Remove margins to align flush */
     white-space: nowrap;
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .re-evaluate-btn{
-    background-color: #28a745;
+    background-color: #D3D3D3;
+    border-radius: 0 !important;
+
 }
 
 .detailed-analysis-btn:hover {
     background-color: #e74c3c;
 }
 
+
+.re-evaluate-btn.highlighted {
+    background: #FFA500;
+    cursor: pointer;
+}
 
 
 

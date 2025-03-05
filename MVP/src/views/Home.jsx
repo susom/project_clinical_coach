@@ -14,16 +14,18 @@ export default function Home() {
 
   // Flatten and transform sessions for display
   const allSessions = students.flatMap(student => {
-    const sessions = student.sessions?.filter(s => s.status === "complete" || !s.status) || [];
-    return sessions.map(sesh => {
+      const sessions = student.sessions?.filter(s => s.status === "complete" || !s.status) || [];
+      return sessions.map(sesh => {
         let parsedSummary = null;
-        if (sesh.summary && sesh.summary.trim() !== "") {
+        if (sesh.summary && typeof sesh.summary === "string" && sesh.summary.trim() !== "") {
             try {
-            parsedSummary = JSON.parse(sesh.summary);
+                parsedSummary = JSON.parse(sesh.summary);
             } catch (error) {
-            console.error("Invalid JSON in session summary:", sesh.summary, error);
+                console.error("❌ Invalid JSON in session summary:", sesh.summary, error);
+                parsedSummary = { one_sentence_summary: "Summary unavailable." }; // Graceful fallback
             }
         }
+      
       return {
         session_id: sesh.session_id,
         sessionDate: sesh.session_date || "",
@@ -78,6 +80,26 @@ export default function Home() {
       date,
       sessions: groupedSessions[date],
     }));
+
+  if (!students || students.length === 0) {
+      return (
+        <>
+          <Header />
+          <main id="home">
+            <h1 className="center-title">Clinical Coach</h1>
+            <section className="report-group">
+              <div className="group-header">
+                <span className="group-title">Coaching Reports</span>
+              </div>
+              <div className="no-data-message" style={{ textAlign: 'center', marginTop: '2rem' }}>
+                <em>Loading student data...</em>
+              </div>
+            </section>
+          </main>
+          <Footer stage={stage} setStage={setStage} />
+        </>
+      );
+  }
 
   return (
     <>

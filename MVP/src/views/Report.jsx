@@ -11,11 +11,14 @@ import './Report.css';
 export default function Report() {
     const navigate = useNavigate();
     const { coach } = useCoach();
-    const { students, selectedStudent, selectedSession } = useStudents();
+    const { students, selectedStudent, selectedSession, setSelectedSession, updateStudentFromAIResponse } = useStudents();
     const [showCaseSummary, setShowCaseSummary] = useState(false);
+    const [loadingReflection, setLoadingReflection] = useState(null);
+
 
     const the_session = selectedStudent.sessions.find(s => String(s.session_id) === String(selectedSession));
     console.log("the_session", the_session);
+    console.log("coach", coach);
 
     if (!the_session) {
         return <div className="error-message">⚠️ No session data found. Please go back and try again.</div>;
@@ -58,7 +61,7 @@ export default function Report() {
                     report_title: parsedContent.report_title
                         ? parsedContent.report_title.replace(/\b(report|thinking habits)\b/gi, '').trim()
                         : "Unknown",
-                    hasError: Object.keys(parsedContent).length === 0,
+                    hasError: Object.keys(parsedContent).length === 0 || parsedContent.error,
                     category: key
                 }
             ];
@@ -127,25 +130,43 @@ export default function Report() {
     };
 
     const handleSingleReflection = (reflectionVar) => {
-        if (!selectedSession?.session_id || !coach?.record_id) {
+        if (!the_session?.session_id || !coach?.record_id) {
             console.warn("🚨 Missing session_id or coach_id.");
             return;
         }
+        
+        setLoadingReflection(reflectionVar);
 
         const payload = {
-            session_id: selectedSession.session_id,
+            session_id: the_session.session_id,
             coach_id: coach.record_id,
-            reflection_var: reflectionVar // 🔥 Pass only the targeted reflection
+            reflection_var: reflectionVar
         };
-
+    
         console.log("🔄 Re-evaluating Single Reflection:", reflectionVar, "with payload:", payload);
-
+    
         window.clinical_coach_jsmo_module.callAI(
             JSON.stringify(payload),
-            (response) => console.log("✅ Reflection Re-evaluated Successfully:", response),
-            (error) => console.error("🚨 AI Reflection Error:", error)
+            (response) => {
+                console.log("✅ Reflection Re-evaluated Successfully:", response);
+    
+                if (!response?.reflections) {
+                    console.error("🚨 No reflections returned in response.");
+                    setLoadingReflection(null);
+                    return;
+                }
+    
+                // 🔥 Use the function to update session data
+                updateStudentFromAIResponse(the_session.session_id, response, reflectionVar);
+                setLoadingReflection(null);
+            },
+            (error) => {
+                console.error("🚨 AI Reflection Error:", error);
+                setLoadingReflection(null);
+            }
         );
     };
+    
 
     const handleFullTranscript = () => {
         navigate('/full-transcript');
@@ -246,18 +267,19 @@ export default function Report() {
                                             <span>{habit.title}</span>
                                         </div>
                                         <div className="action-right">
-                                            {hasError ? (
-                                                <button className="re-evaluate-btn" onClick={() => handleSingleReflection(habit.reflectionVar)}>
-                                                    🔄 Re-Evaluate
-                                                </button>
-                                            ) : (
-                                                <button 
-                                                    className="detailed-analysis-btn" 
-                                                    onClick={() => navigate(`/detail-analysis/${habit.category.toLowerCase()}`)}
-                                                >
-                                                    + DETAILED ANALYSIS
-                                                </button>
-                                            )}
+                                            <button 
+                                                className={`re-evaluate-btn ${hasError ? 'highlighted' : 'disabled'}`} 
+                                                onClick={() => handleSingleReflection(habit.reflectionVar)}
+                                                title="Re-Evaluate"
+                                            >
+                                                <i className={`fas fa-sync-alt ${loadingReflection === habit.reflectionVar ? 'fa-spin' : ''}`}></i>
+                                            </button>
+                                            <button 
+                                                className="detailed-analysis-btn" 
+                                                onClick={() => navigate(`/detail-analysis/${habit.category.toLowerCase()}`)}
+                                            >
+                                                + DETAILED ANALYSIS
+                                            </button>
                                         </div>
                                     </div>
                                 </div>

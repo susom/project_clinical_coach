@@ -749,50 +749,56 @@ class ClinicalCoach extends \ExternalModules\AbstractExternalModule {
      * @return array|null Returns a decoded array or null on failure.
      */
     private function sanitizeJson($jsonString) {
-        // 🔹 Remove surrounding markdown-style JSON markers (e.g., ```json ... ```)
-        $cleanedJson = trim(preg_replace('/^```json|```$/', '', $jsonString));
-
-        // 🔧 Fix common JSON formatting issues
+        // 🔹 Remove Markdown-style JSON wrappers (```json ... ```)
+        $cleanedJson = preg_replace('/^```json|```$/', '', trim($jsonString));
+    
+        // 🔧 Fix malformed key-value structures
         $patterns = [
-            '/"\s*([^"]*?)\s*"/',        // Trim spaces inside keys
-            '/(\w+):\s*([{\[])/',         // Ensure keys are quoted before arrays/objects
-            '/(\w+)\s*({)/',              // Fix missing colons in keys
-            '/:\s*{/',                    // Ensure consistent formatting of key-value pairs with objects
-            '/"\s*(\w+)\s*"\s*:/',        // Normalize spacing between keys and colons
-            '/(\d+)\s*AI Certainty/'      // Normalize percentages (55 AI Certainty → "55% AI Certainty")
+            '/(\w+)\s*:\s*([{\[])/',   // Ensure keys are quoted before arrays/objects
+            '/([{,])\s*(\w+)\s*:/',    // Fix missing quotes around keys
+            '/:\s*{/',                 // Ensure consistent formatting of key-value pairs with objects
+            '/"\s*(\w+)\s*"\s*:/',     // Normalize spacing between keys and colons
+            '/,\s*([}\]])/'            // Remove trailing commas before closing brackets
         ];
-
+    
         $replacements = [
-            '"$1"',
             '"$1": $2',
-            '"$1": {',
+            '$1"$2":',
             ':{',
             '"$1":',
-            '"$1% AI Certainty"'
+            '$1'
         ];
-
-        // 🔧 Apply regex fixes
+    
+        // 🔄 Apply regex fixes
         $fixedJson = preg_replace($patterns, $replacements, $cleanedJson);
-
+    
+        // 🔄 Remove single quotes around JSON keys (AI sometimes does this)
+        $fixedJson = preg_replace("/'(\w+)'\s*:/", '"$1":', $fixedJson);
+    
+        // 🔄 Remove incorrect double entries of keys (`"n":{ ... "n": {...}}`)
+        $fixedJson = preg_replace('/,\s*"n":/', '', $fixedJson);
+    
         // 🔄 Attempt to decode JSON to validate structure
         $decodedJson = json_decode($fixedJson, true);
-
+    
         if (json_last_error() !== JSON_ERROR_NONE) {
             // 🛑 Log bad JSON before returning error
             $this->emDebug("❌ Bad JSON Detected", [
+                "error" => json_last_error_msg(),
                 "broken_json" => $fixedJson
             ]);
-
+    
             // Return error message instead of invalid JSON
             return json_encode([
                 "error" => "Invalid JSON detected: " . json_last_error_msg(),
                 "broken_json" => $fixedJson
             ]);
         }
-
+    
         // ✅ JSON is valid, return the properly formatted version
         return json_encode($decodedJson, JSON_PRETTY_PRINT);
     }
+    
 
     /**
      * Updates a specific repeating instrument instance in REDCap
