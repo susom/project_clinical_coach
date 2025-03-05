@@ -188,7 +188,7 @@ const VoiceRecorder = ({ navigate }) => {
     };
 
     const submitRecording = async () => {
-        // Show confirmation modal before submission
+        // 1. Ask if user wants to submit recording
         const confirmed = await showConfirmModal({
             title: 'Submit Recording?',
             message: 'Are you sure you want to submit this recording?',
@@ -208,65 +208,74 @@ const VoiceRecorder = ({ navigate }) => {
             return;
         }
 
+        // 2. Show "Recording Submitted!" modal
+        const postSubmitConfirm = await showConfirmModal({
+            title: 'Recording Submitted!',
+            message: "Your recording has been submitted for Clinical Coach analysis. Evaluations should come shortly.",
+            showConfirm: true,
+            confirmText: 'OK',
+        });
+        if (!postSubmitConfirm) {
+            console.log('User did not confirm submission modal.');
+            return;
+        }
+        
+        // 3. Submit the recording to the backend
         try {
             const new_session_time = new Date().toISOString().split('T')[0] + " " + new Date().toLocaleTimeString();
-            const tempSessionId = createNewSession(selectedStudent.id); // Capture the temporary ID
-
-            // ✅ **Step 2: Prepare FormData for submission**
+            const tempSessionId = createNewSession(selectedStudent.id);
+        
+            // Prepare FormData for backend submission
             const formData = new FormData();
             formData.append("file", recordedBlob, "recording.wav");
             formData.append("metadata", JSON.stringify({
-                studentId: selectedStudent.id,
-                coachId: coach.record_id,
-                session_date:new_session_time
+              studentId: selectedStudent.id,
+              coachId: coach.record_id,
+              session_date: new_session_time,
             }));
-
-            // ✅ **Step 3: Send to backend**
-            // Ensure the session gets added to the correct student
-            callAjax(formData, async (rawResponse) => {
-                try {
-                    const parsedResponse = typeof rawResponse === "string" ? JSON.parse(rawResponse) : rawResponse;
-                    const transcription = parsedResponse?.text;
-                    const sessionId = parsedResponse?.session_id; // ✅ Extract session_id
-
-                    if (transcription && sessionId) {
-                        console.log("[callAjax SUCCESS TRANSCRIPTION RECEIVED]:", transcription, "Session ID:", sessionId);
-
-                        updateStudent(selectedStudent.id, (session) => {
-                            if (session.session_id === tempSessionId) {
-
-                                let updatedSession = {
-                                    ...session,
-                                    session_id: sessionId,
-                                    transcript: transcription,
-                                    status: "pending"
-                                };
-                                console.log("✅ Session_id Match , Updating Session:", session, "➡", updatedSession);
-                                return updatedSession;
-                            }
-                            return session;
-                        });
-
-
-                        // ✅ Show confirmation modal and navigate
-                        const postSubmitConfirm = await showConfirmModal({
-                            title: 'Recording Submitted!',
-                            message: "Your recording has been submitted for Clinical Coach analysis. Evaluations should come shortly.",
-                            showConfirm: true,
-                            confirmText: 'OK',
-                        });
-
-                        if (postSubmitConfirm) {
-                            navigate('/notifications');
-                        }
-                    } else {
-                        console.error("[ERROR NO TRANSCRIPTION RECEIVED]:", rawResponse);
-                    }
-                } catch (error) {
-                    console.error("[ERROR HANDLING TRANSCRIPTION RESPONSE]:", error);
-                }
+        
+            // Immediately update session to pending placeholder
+            updateStudent(selectedStudent.id, (session) => {
+              if (session.session_id === tempSessionId) {
+                return {
+                  ...session,
+                  session_id: tempSessionId,
+                  transcript: "Transcription pending...",
+                  status: "pending",
+                };
+              }
+              return session;
             });
-
+        
+            // Fire off AJAX call in the background
+            callAjax(formData, async (rawResponse) => {
+              try {
+                const parsedResponse = typeof rawResponse === "string" ? JSON.parse(rawResponse) : rawResponse;
+                const transcription = parsedResponse?.text;
+                const sessionId = parsedResponse?.session_id;
+                if (transcription && sessionId) {
+                  updateStudent(selectedStudent.id, (session) => {
+                    if (session.session_id === tempSessionId) {
+                      return {
+                        ...session,
+                        session_id: sessionId,
+                        transcript: transcription,
+                        status: "pending",
+                      };
+                    }
+                    return session;
+                  });
+                } else {
+                  console.error("[ERROR NO TRANSCRIPTION RECEIVED]:", rawResponse);
+                }
+              } catch (error) {
+                console.error("[ERROR HANDLING TRANSCRIPTION RESPONSE]:", error);
+              }
+            });
+        
+            // Navigate immediately to notifications view
+            navigate('/notifications');
+        
         } catch (error) {
             console.error("Error submitting recording:", error);
         }
