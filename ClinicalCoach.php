@@ -354,6 +354,88 @@ class ClinicalCoach extends \ExternalModules\AbstractExternalModule {
 
                     return json_encode($result);
 
+                
+                
+                case "savePromptRating":
+                    $data = json_decode($payload, true);
+                    if (!$data || empty($data['coach_id']) || empty($data['sess_id']) || empty($data['category']) || empty($data['prompt'])) {
+                        return json_encode(["error" => "Missing required parameters"]);
+                    }
+                
+                    $fieldName = "sess_reflect_" . strtolower($data['category']) . "_rating";
+                
+                    // 🔍 Fetch existing ratings (ensure correct REDCap structure)
+                    $existingData = \REDCap::getData([
+                        'project_id' => $this->getProjectId(),
+                        'records'    => [$data['coach_id']],
+                        'fields'     => [$fieldName, 'session_id'],
+                        'forms'      => ['session_logs'],
+                        'exportRepeatingInstrumentsEvents' => true,
+                        'return_format' => 'array'
+                    ]);
+                
+                    $currentRatings = [];
+                    $foundInstance = null;
+                
+                    // ✅ Correctly extract ratings from the nested structure
+                    if (!empty($existingData[$data['coach_id']]['repeat_instances'])) {
+                        foreach ($existingData[$data['coach_id']]['repeat_instances'] as $eventId => $instances) {
+                            if (!empty($instances['session_logs'])) {
+                                foreach ($instances['session_logs'] as $instanceNum => $row) {
+                                    if ($row['session_id'] === $data['sess_id']) {
+                                        $foundInstance = $instanceNum;  // 🔥 Save the correct instance number
+                                        if (!empty($row[$fieldName])) {
+                                            $currentRatings = json_decode($row[$fieldName], true) ?? [];
+                                        }
+                                        break 2;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                
+                    // 🔄 Update only the relevant prompt, leave others unchanged
+                    $found = false;
+                    foreach ($currentRatings as &$ratingEntry) {
+                        if ($ratingEntry['prompt'] === $data['prompt']) {
+                            $ratingEntry['rating'] = $data['rating']; // Update existing rating
+                            $found = true;
+                            break;
+                        }
+                    }
+                
+                    // 🚀 Debug: Log if new prompt is added
+                    if (!$found) {
+                        $currentRatings[] = [
+                            "prompt" => $data['prompt'],
+                            "rating" => $data['rating']
+                        ];
+                    }
+                
+                    // 🔥 Ensure we have a valid instance to update
+                    if ($foundInstance === null) {
+                        return json_encode(["error" => "Session not found for updating ratings"]);
+                    }
+                
+                    // ✅ Save back to REDCap in the correct instance
+                    $updateResult = $this->updateRepeatingInstrument($data['coach_id'], $data['sess_id'], 'session_logs', [
+                        'record_id' => $data['coach_id'],
+                        'redcap_repeat_instrument' => 'session_logs',
+                        'redcap_repeat_instance' => $foundInstance,  // ✅ Correct instance number
+                        $fieldName => json_encode($currentRatings, JSON_PRETTY_PRINT)
+                    ]);
+                
+                    if (!empty($updateResult['errors'])) {
+                        return json_encode(["error" => "Failed to save prompt rating", "details" => $updateResult['errors']]);
+                    }
+                
+                    return json_encode([
+                        "success" => true,
+                        "message" => "Prompt rating saved!",
+                        "updated_ratings" => $currentRatings
+                    ]);
+                    
+                
                 case "transcribeAudio":
                     // ✅ Extract payload
                     if (!empty($payload['file']) && !empty($payload['fileName'])) {
@@ -469,6 +551,8 @@ class ClinicalCoach extends \ExternalModules\AbstractExternalModule {
                         "status" => "incomplete" // ✅ Keep track of processing status
                     ]);
 
+                
+                
                 case "fetchCoachData":
                     // 1) Extract record_id from $payload
                     $recordId = $payload['record_id'] ?? null;
@@ -501,6 +585,7 @@ class ClinicalCoach extends \ExternalModules\AbstractExternalModule {
                         ];
                     }
                     return json_encode($returnPayload);
+
 
                 case "fetchStudentsData":
                     $coachRecordId = $payload['coach_record_id'] ?? null;
@@ -548,14 +633,16 @@ class ClinicalCoach extends \ExternalModules\AbstractExternalModule {
                         }
                     }
 
-                    if (empty($students)) {
-                        $this->emDebug("No students found for coach $coachRecordId");
-                    } else {
-                        $this->emDebug("Found students (including sessions) for coach $coachRecordId", $students);
-                    }
+                    // if (empty($students)) {
+                    //     $this->emDebug("No students found for coach $coachRecordId");
+                    // } else {
+                    //     $this->emDebug("Found students (including sessions) for coach $coachRecordId", $students);
+                    // }
 
                     return json_encode($students);
 
+                
+                
                 default:
                     throw new Exception("Action $action is not defined");
 
@@ -637,25 +724,25 @@ class ClinicalCoach extends \ExternalModules\AbstractExternalModule {
             'project_id' => $this->getProjectId(),
             'records'    => [$coachRecordId],
             'fields'     => [
-                'session_id', 'session_learner_id','session_date','session_transcript_raw',
-                'sess_reflect_mind','sess_reflect_mind_score',
-                'sess_reflect_knowledge','sess_reflect_knowledge_score',
-                'sess_reflect_problem','sess_reflect_problem_score',
-                'sess_reflect_strategy','sess_reflect_strategy_score',
-                'sess_reflect_solution','sess_reflect_solution_score',
-                'sess_reflect_data','sess_reflect_data_score','sess_reflect_summary', 'sess_main_summary'
+                'session_id', 'session_learner_id', 'session_date', 'session_transcript_raw',
+                'sess_reflect_mind', 'sess_reflect_mind_score', 'sess_reflect_mind_rating',
+                'sess_reflect_knowledge', 'sess_reflect_knowledge_score', 'sess_reflect_knowledge_rating',
+                'sess_reflect_problem', 'sess_reflect_problem_score', 'sess_reflect_problem_rating',
+                'sess_reflect_strategy', 'sess_reflect_strategy_score', 'sess_reflect_strategy_rating',
+                'sess_reflect_solution', 'sess_reflect_solution_score', 'sess_reflect_solution_rating',
+                'sess_reflect_data', 'sess_reflect_data_score', 'sess_reflect_data_rating',
+                'sess_reflect_summary', 'sess_main_summary'
             ],
             'forms' => ['session_logs'],
             'filterLogic' => '[session_learner_id] = "' . db_escape($learnerId) . '"',
             'exportRepeatingInstrumentsEvents' => true,
             'return_format' => 'array'
         ];
-
+    
         $sessionData = \REDCap::getData($params);
-        $this->emDebug("fetchSessionsForLearner > session logs raw", $params, $sessionData);
-
+    
         $sessions = [];
-
+    
         if (!empty($sessionData[$coachRecordId]['repeat_instances'])) {
             foreach ($sessionData[$coachRecordId]['repeat_instances'] as $eventId => $instrumentData) {
                 if (!empty($instrumentData['session_logs'])) {
@@ -669,30 +756,35 @@ class ClinicalCoach extends \ExternalModules\AbstractExternalModule {
                                 'reflections'  => [
                                     'mind' => [
                                         'content' => $row['sess_reflect_mind'] ?? '',
-                                        'score'   => $row['sess_reflect_mind_score'] ?? ''
+                                        'score'   => $row['sess_reflect_mind_score'] ?? '',
+                                        'rating'  => json_decode($row['sess_reflect_mind_rating'] ?? '[]', true) // Ensure it's parsed as an array
                                     ],
                                     'knowledge' => [
                                         'content' => $row['sess_reflect_knowledge'] ?? '',
-                                        'score'   => $row['sess_reflect_knowledge_score'] ?? ''
+                                        'score'   => $row['sess_reflect_knowledge_score'] ?? '',
+                                        'rating'  => json_decode($row['sess_reflect_knowledge_rating'] ?? '[]', true)
                                     ],
                                     'problem' => [
                                         'content' => $row['sess_reflect_problem'] ?? '',
-                                        'score'   => $row['sess_reflect_problem_score'] ?? ''
+                                        'score'   => $row['sess_reflect_problem_score'] ?? '',
+                                        'rating'  => json_decode($row['sess_reflect_problem_rating'] ?? '[]', true)
                                     ],
                                     'strategy' => [
                                         'content' => $row['sess_reflect_strategy'] ?? '',
-                                        'score'   => $row['sess_reflect_strategy_score'] ?? ''
+                                        'score'   => $row['sess_reflect_strategy_score'] ?? '',
+                                        'rating'  => json_decode($row['sess_reflect_strategy_rating'] ?? '[]', true)
                                     ],
                                     'solution' => [
                                         'content' => $row['sess_reflect_solution'] ?? '',
-                                        'score'   => $row['sess_reflect_solution_score'] ?? ''
+                                        'score'   => $row['sess_reflect_solution_score'] ?? '',
+                                        'rating'  => json_decode($row['sess_reflect_solution_rating'] ?? '[]', true)
                                     ],
                                     'data' => [
                                         'content' => $row['sess_reflect_data'] ?? '',
-                                        'score'   => $row['sess_reflect_data_score'] ?? ''
+                                        'score'   => $row['sess_reflect_data_score'] ?? '',
+                                        'rating'  => json_decode($row['sess_reflect_data_rating'] ?? '[]', true)
                                     ]
                                 ],
-                                // A top-level property for "summary" if you like
                                 'summary' => $row['sess_main_summary'] ?? '',
                                 'thm_report' => $row['sess_reflect_summary'] ?? ''
                             ];
@@ -701,9 +793,10 @@ class ClinicalCoach extends \ExternalModules\AbstractExternalModule {
                 }
             }
         }
-
+    
         return $sessions;
     }
+    
 
     // In ClinicalCoach.php
     public function getCoaches($user_id=null): array
@@ -921,5 +1014,5 @@ class ClinicalCoach extends \ExternalModules\AbstractExternalModule {
     public function setSecureChatInstance(\Stanford\SecureChatAI\SecureChatAI $secureChatInstance): void
     {
         $this->secureChatInstance = $secureChatInstance;
-    }
+    } 
 }

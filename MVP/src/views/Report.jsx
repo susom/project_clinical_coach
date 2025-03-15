@@ -14,11 +14,13 @@ export default function Report() {
     const { students, selectedStudent, selectedSession, setSelectedSession, updateStudentFromAIResponse } = useStudents();
     const [showCaseSummary, setShowCaseSummary] = useState(false);
     const [loadingReflection, setLoadingReflection] = useState(null);
-
+    const [promptsData, setPromptsData] = useState([]);
+    const [promptRatings, setPromptRatings] = useState({});
 
     const the_session = selectedStudent.sessions.find(s => String(s.session_id) === String(selectedSession));
-    console.log("the_session", the_session);
-    console.log("coach", coach);
+    // console.log("coach", coach);
+    // console.log("selectedStudent", selectedStudent);
+    // console.log("the_session", the_session);
 
     if (!the_session) {
         return <div className="error-message">⚠️ No session data found. Please go back and try again.</div>;
@@ -44,7 +46,7 @@ export default function Report() {
         try {
             return typeof jsonString === "string" ? JSON.parse(jsonString) : jsonString || fallback;
         } catch (error) {
-            console.error("🚨 JSON Parsing Failed:", error, "\n🔹 Original String:", jsonString);
+            // console.error("🚨 JSON Parsing Failed:", error, "\n🔹 Original String:", jsonString);
             return fallback; // Graceful fallback to prevent page crashes
         }
     }
@@ -53,7 +55,6 @@ export default function Report() {
     let parsedReflections = Object.fromEntries(
         Object.entries(the_session.reflections || {}).map(([key, reflection]) => {
             const parsedContent = cleanAndParseJSON(reflection.content, {});
-
             return [
                 key,
                 {
@@ -62,23 +63,38 @@ export default function Report() {
                         ? parsedContent.report_title.replace(/\b(report|thinking habits)\b/gi, '').trim()
                         : "Unknown",
                     hasError: Object.keys(parsedContent).length === 0 || parsedContent.error,
+                    rating: reflection.rating || [],
                     category: key
                 }
             ];
         })
     );
       
-    console.log("parsedReflections", parsedReflections);
-
-    // ✅ Extract Coaching Prompts from Reflections
-    const promptsData = Object.entries(parsedReflections).map(([key, reflection]) => ({
-        title: reflection.report_title || key.charAt(0).toUpperCase() + key.slice(1),
-        category : key.charAt(0).toUpperCase() + key.slice(1),
-        color: reflection.hasError ? 'red' : 'gray', // Highlight errors
-        prompts: reflection.hasError ? [] : reflection.coaching_insights?.coaching_questions || [],
-        hasError: reflection.hasError, // Pass error flag for UI adjustments
-        reflectionVar: `sess_reflect_${key.toLowerCase()}` // Format reflectionVar
-    }));
+    
+    useEffect(() => {
+        const initialPrompts = Object.entries(parsedReflections).map(([key, reflection]) => ({
+            title: reflection.report_title || key.charAt(0).toUpperCase() + key.slice(1),
+            category: key.charAt(0).toUpperCase() + key.slice(1),
+            color: reflection.hasError ? 'red' : 'gray',
+            prompts: reflection.hasError 
+                ? [] 
+                : (reflection.coaching_insights?.coaching_questions || []).map((prompt) => {
+                    const matchedRating = reflection.rating?.find(r => r.prompt === prompt);
+                    console.log("reflection rationg?", reflection.rating);
+                    return {
+                        text: prompt,
+                        rating: matchedRating ? matchedRating.rating : null // ✅ Match by prompt text
+                    };
+                }),
+            hasError: reflection.hasError,
+            reflectionVar: `sess_reflect_${key.toLowerCase()}`,
+            coach_id: coach?.record_id || null,  
+            student_id: selectedStudent?.id || null,  
+            sess_id: the_session?.session_id || null
+        }));
+    
+        setPromptsData(initialPrompts);
+    }, [the_session, coach]); 
 
     // ✅ Extract Strengths from Reflections
     // Assuming parsedThmReport is already parsed from the_session.thm_report
@@ -167,6 +183,45 @@ export default function Report() {
         );
     };
     
+    const handleFeedback = (habit, promptIdx, type) => {
+        const newRating = habit.prompts[promptIdx].rating === type ? null : type;
+    
+        // 🔥 Update the matching rating object
+        const updatedRatings = habit.rating.map(r =>
+            r.prompt === habit.prompts[promptIdx].text ? { ...r, rating: newRating } : r
+        );
+    
+        const updatedPrompts = habit.prompts.map((prompt, idx) =>
+            idx === promptIdx ? { ...prompt, rating: newRating } : prompt
+        );
+    
+        const updatedPromptsData = promptsData.map(h =>
+            h.category === habit.category ? { ...h, prompts: updatedPrompts, rating: updatedRatings } : h
+        );
+    
+        setPromptRatings(updatedPromptsData);
+    
+        // 🔥 Send the full updated ratings array to REDCap
+        const payload = {
+            coach_id: habit.coach_id,
+            student_id: habit.student_id,
+            sess_id: habit.sess_id,
+            category: habit.category,
+            prompt: habit.prompts[promptIdx].text,
+            rating: updatedRatings  // ✅ Now correctly updating the matching prompt
+        };
+    
+        window.clinical_coach_jsmo_module.savePromptRating(
+            JSON.stringify(payload),
+            (res) => {
+                console.log("RATING SAVED SUCCESSFULLY:", res);
+            },
+            (err) => {
+                console.error("SAVE PROMPT RATING ERROR:", err);
+                setPromptRatings(promptsData); // Revert on failure
+            }
+        );
+    };
 
     const handleFullTranscript = () => {
         navigate('/full-transcript');
@@ -252,7 +307,27 @@ export default function Report() {
                                         ) : habit.prompts.length > 0 ? (
                                             habit.prompts.map((prompt, idx) => (
                                                 <div key={idx} className="report-carousel-item">
-                                                    <p>{prompt}</p>
+                                                    <p>{prompt.text}</p>
+                                                    <div className="feedback-section">
+                                                        <p className="feedback-text">
+                                                            <em>Provide feedback on this coaching prompt:</em>
+                                                        </p>
+                                                        <div className="feedback-buttons">
+                                                            <button 
+                                                                className="thumb-btn" 
+                                                                onClick={() => handleFeedback(habit, idx, 'up')}
+                                                            >
+                                                                <i className={`fas fa-thumbs-up ${habit.prompts[idx].rating === 'up' ? 'active-up' : ''}`}></i>
+                                                            </button>
+                                                            <button 
+                                                                className="thumb-btn" 
+                                                                onClick={() => handleFeedback(habit, idx, 'down')}
+                                                            >
+                                                                <i className={`fas fa-thumbs-down ${habit.prompts[idx].rating === 'down' ? 'active-down' : ''}`}></i>
+                                                            </button>
+                                                        </div>
+
+                                                    </div>
                                                 </div>
                                             ))
                                         ) : (

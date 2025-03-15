@@ -49,7 +49,8 @@
         "transcribeAudio",
         "fetchCoachData",
         "fetchStudentsData",
-        "updateSession"
+        "updateSession",
+        "savePromptRating"
     ],
 
     "no-auth-ajax-actions": [
@@ -57,7 +58,8 @@
         "transcribeAudio",
         "fetchCoachData",
         "fetchStudentsData",
-        "updateSession"
+        "updateSession",
+        "savePromptRating"
     ],
 
 	"no-auth-pages": [

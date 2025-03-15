@@ -137,6 +137,24 @@
                 console.error("Error in updateSession:", err);
                 errorCallback?.(err);
             }
+        },
+
+        savePromptRating: async (payload, callback, errorCallback) => {
+            try {
+                const res = await module.ajax("savePromptRating", payload);
+                const parsedRes = JSON.parse(res);
+
+                if (parsedRes.error) {
+                    console.error("❌ Failed to update session in REDCap:", parsedRes.error);
+                    errorCallback?.(parsedRes.error);
+                } else {
+                    console.log("✅ Session successfully updated in REDCap!", parsedRes);
+                    callback?.(parsedRes);
+                }
+            } catch (err) {
+                console.error("Error in updateSession:", err);
+                errorCallback?.(err);
+            }
         }
     });
 }

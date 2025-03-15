@@ -272,7 +272,7 @@ main#report {
     flex: 0 0 auto; /* Items shouldn't resize, but occupy space based on content */
     min-width: 80%;
     max-width: 100%;
-    padding: 1rem 1.5rem;
+    padding: 1rem .8rem;
     border-radius: 10px; /* Rounded corners for the bubble effect */
     text-align: left; /* Left-align the text */
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow for bubble depth */
@@ -338,29 +338,69 @@ main#report {
 }
 
 
+/* Feedback Section */
+.feedback-section {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem; /* Minimal spacing between text and buttons */
+    margin-top: 0.5rem;
+}
 
-/* Feedback Buttons */
+/* Italicized feedback text */
+.feedback-text {
+    font-size: 0.8rem;
+    font-style: italic;
+    color: #f5f5f5;
+    margin-right: 0.5rem;
+    margin-bottom:0;
+
+}
+
+/* Feedback Buttons - Keep them in one tight row */
 .feedback-buttons {
     display: flex;
-    justify-content: flex-end;
-    gap: 0.5rem;
+    align-items: center;
+    gap: 0.3rem;
 }
 
-.feedback-buttons button {
+/* Default (off-state) for thumbs */
+.thumb-btn:hover,
+.thumb-btn {
     background: none;
     border: none;
-    font-size: 1.2rem;
     cursor: pointer;
+    padding: 0;
+    margin-top: 0;
 }
 
-.feedback-buttons .thumb-up {
-    color: #4cae4c;
+/* Default gray color */
+.thumb-btn i {
+    font-size: 1.2rem;
+    color: #ccc;
+    transition: color 0.2s ease-in-out;
 }
 
-.feedback-buttons .thumb-down {
-    color: #d9534f;
+/* Active (on-state) colors */
+.thumb-btn i.active-up {
+    color: #4cae4c; /* Green for thumbs-up */
 }
 
+.thumb-btn i.active-down {
+    color: #d9534f; /* Red for thumbs-down */
+}
+
+/* Hover effect - slight brightness */
+.thumb-btn:hover i {
+    filter: brightness(1.8);
+}
+
+
+
+
+
+
+
+/* detailed analysis and re-eval */
 .re-evaluate-btn,
 .detailed-analysis-btn {
     background-color: #d9534f;
