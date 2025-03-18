@@ -69,7 +69,8 @@ export default function Home() {
 
   const handleStudentClick = (student) => {
       setSelectedStudent(student);
-      navigate('/students-profile');
+      setSelectedSession(null); 
+      setTimeout(() => navigate('/students-profile'), 0); 
   };
 
 

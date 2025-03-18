@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useParams } from 'react-router-dom';
 import { useStudents } from '../contexts/Students';
 import Header from '../components/Header';
@@ -6,8 +7,16 @@ import Footer from '../components/Footer';
 import './FullTranscript.css';
 
 export default function FullTranscript() {
+    const navigate = useNavigate();
     const { category } = useParams();
     const { selectedStudent, selectedSession } = useStudents();
+
+    if (!selectedStudent || !selectedSession) {
+        console.warn("MISSING STUDENT OR SESSION, REDIRECTING TO HOME");
+        navigate('/');
+        return null; // Prevent render
+    }
+
     const the_session = selectedStudent.sessions.find(s => String(s.session_id) === String(category));
 
 

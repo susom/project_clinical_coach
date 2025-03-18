@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useParams } from 'react-router-dom';
 import { useStudents } from '../contexts/Students';
 import Header from '../components/Header';
@@ -7,9 +8,17 @@ import { useConfirmModal } from '../contexts/ConfirmModal';
 import './DetailAnalysis.css';
 
 export default function DetailAnalysis() {
+    const navigate = useNavigate();
     const { category } = useParams();
     const { showConfirmModal } = useConfirmModal();
     const { selectedStudent, selectedSession } = useStudents();
+
+    if (!selectedStudent || !selectedSession) {
+        console.warn("MISSING STUDENT OR SESSION, REDIRECTING TO HOME");
+        navigate('/');
+        return null; // Prevent render
+    }
+
     const the_session = selectedStudent.sessions.find(s => String(s.session_id) === String(selectedSession));
 
     // Find the reflection data for the selected category

@@ -17,6 +17,12 @@ export default function Report() {
     const [promptsData, setPromptsData] = useState([]);
     const [promptRatings, setPromptRatings] = useState({});
 
+    if (!selectedStudent || !selectedSession) {
+        console.warn("MISSING STUDENT OR SESSION, REDIRECTING TO HOME");
+        navigate('/');
+        return null; // Prevent render
+    }
+
     const the_session = selectedStudent.sessions.find(s => String(s.session_id) === String(selectedSession));
     // console.log("coach", coach);
     // console.log("selectedStudent", selectedStudent);
