@@ -4,7 +4,8 @@
     text-align: center;
     padding: 1rem 0;
     font-size: 0.9rem;
-    color: #666;
+    color: #fff;;
+    background:#5433ff;
 }
 
 /* Navigation Links */
@@ -17,8 +18,9 @@
 
 .title-footer-links a {
     text-decoration: none;
-    color: #999;
+    color: #fff;
     font-size: 0.9rem;
+    font-weight:bold;
 }
 
 .title-footer-links a:hover {
@@ -27,7 +29,7 @@
 
 /* Copyright Text */
 .title-footer-copyright {
-    color: #999;
+    color: #fff;
     font-size: 0.8rem;
     margin-top: 1rem; /* Optional for extra spacing */
 }

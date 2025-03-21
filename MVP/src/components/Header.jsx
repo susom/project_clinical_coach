@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Header.css';
 
-function Header({ showBack = false, previousView = null, showFilter = false }) {
+function Header({ showBack = false, previousView = null, showFilter = false, isTitle = false }) {
     const navigate = useNavigate();
 
     const handleBack = () => {
@@ -14,7 +14,7 @@ function Header({ showBack = false, previousView = null, showFilter = false }) {
     };
 
     return (
-        <header className={`header ${showBack || showFilter ? "hasbg" : ""}`}>
+        <header className={`header ${showBack || showFilter ? "hasbg" : ""} ${isTitle ? "isTitle" : ""}`}>
             {showBack && (
                 <button className="back-button" onClick={handleBack}>
                     <span className="arrow"><i class="fas fa-chevron-left"></i></span> Back

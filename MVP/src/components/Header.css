@@ -7,6 +7,10 @@
     background-color: #fff;
 }
 
+.header.isTitle{
+    background:#5a67d8;
+}
+
 .header.hasbg{
     background-color: #F5F5F5;
     border-bottom:1px solid #000;

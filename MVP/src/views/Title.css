@@ -1,91 +1,85 @@
-/* Main container */
+/* Full-page layout with gradient background */
 #title {
     display: flex;
     flex-direction: column;
-    justify-content: space-between; /* Push content to top and bottom */
+    justify-content: center; /* Centers content vertically */
     align-items: center;
-    height: calc(100vh - 3rem); /* Full height minus header/footer */
+    height: 100vh;
     padding: 1rem;
     text-align: center;
+    background: linear-gradient(to bottom, #5a67d8, #5433ff); /* Purple gradient */
+    color: white;
 }
 
-/* Centered content (graphic + title) */
+/* Centered content block */
 #title .content {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    flex-grow: 1; /* Take up available space to center */
-    margin-top: auto; /* Ensures it's visually centered */
-    margin-bottom: auto; /* Ensures spacing above the button */
+    flex-grow: 1;
+    width: 100%;
+    max-width: 600px; /* Restrict width */
 }
 
-#title .graphic {
-    max-width: 90%;
-    height: auto;
-    margin-bottom: 1rem;
-}
-
+/* Large, bold title */
 #title h1 {
-    font-size: 2.0rem;
+    font-size: 2rem;
     font-weight: bold;
-    color: #333;
     text-transform: uppercase;
+    margin-bottom: 5rem;
 }
 
 
-/* Center everything inside the .coach-info div */
-.coach-info {
-    display: flex;
-    flex-direction: column; /* Stack elements vertically */
-    justify-content: center;
-    align-items: center;
-    margin-top: 5rem; /* Adjust spacing below <h1> */
-    font-size: 1.5rem;
-    text-align: center;
-    width:100%;
+.coach-info{
+    width: 100%;
+    align-content: center;
+    display: contents;
 }
 
-.coach-info b {
-    color:red;
-}
-
-/* Add hover/focus effects */
-.coach-info:hover {
-    border-color: #999;
-    background-color: #fff;
-}
-
-/* Ensure the button is on a new line */
+/* Buttons */
 #title .login-button {
-    width: 80%; /* Wider button */
-    max-width: 300px; /* Prevent it from being too large */
-    aspect-ratio: 3 / 1; /* Balanced ratio */
-    background-color: #f0f0f0;
+    width: 80%;
+    border:1px solid red;
+    max-width: 300px;
+    background-color: white;
     color: #333;
-    border: 2px solid #333;
-    border-radius: 12px;
-    font-size: 1.5rem;
+    border: none;
+    border-radius: 25px;
+    font-size: 1.2rem;
     font-weight: bold;
     cursor: pointer;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     transition: background-color 0.3s, transform 0.2s;
-
+    margin: 0.5rem 0;
+    text-transform: uppercase;
     display: flex;
     justify-content: center;
     align-items: center;
-    margin-top: 1rem; /* Space between text and button */
-    padding: 1rem;
-    text-transform: uppercase;
 }
 
 /* Button hover effect */
 #title .login-button:hover {
-    background-color: #ddd;
+    background-color: #f0f0f0;
     transform: scale(1.05);
 }
 
 /* Button click effect */
 #title .login-button:active {
     transform: scale(1);
+}
+
+/* Footer */
+#title-footer {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    padding: 1rem;
+    font-size: 0.9rem;
+}
+
+#title-footer a {
+    color: white;
+    text-decoration: none;
+    font-weight: bold;
 }

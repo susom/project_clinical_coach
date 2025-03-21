@@ -15,7 +15,6 @@
     background: #fff;
     padding: 2rem;
     border-radius: 8px;
-    background-color: #D8D8D8;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     text-align: center;
     max-width: 400px;
@@ -48,9 +47,8 @@
 }
 
 .modal-button.confirm {
-    background-color: #5cb85c;
+    background-color: #5F45C9;
     color: white;
-    border-bottom:5px solid #51763A;
 }
 
 .modal-button.cancel {

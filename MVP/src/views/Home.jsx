@@ -5,6 +5,7 @@ import Footer from '../components/Footer';
 import ThinkingHabitsOverview from '../components/ThinkingHabitsOverview';
 import { useStudents } from '../contexts/Students';
 import SummaryExpandable from '../components/SummaryExpandable';
+import { format, parseISO, isToday, isYesterday } from 'date-fns';
 import './Home.css';
 
 export default function Home() {
@@ -73,12 +74,24 @@ export default function Home() {
       setTimeout(() => navigate('/students-profile'), 0); 
   };
 
+  // Function to format date with special cases
+  const formatDate = (dateString) => {
+    const date = parseISO(dateString);
+
+    if (isToday(date)) {
+      return `Today, ${format(date, 'MMMM d, yyyy')}`;
+    } else if (isYesterday(date)) {
+      return `Yesterday, ${format(date, 'MMMM d, yyyy')}`;
+    }
+
+    return format(date, 'MMMM d, yyyy');
+  };
 
   // Sort groups in reverse chronological order
   const dateGroups = Object.keys(groupedSessions)
     .sort((a, b) => new Date(b) - new Date(a))
     .map(date => ({
-      date,
+      date: formatDate(date), // Apply formatting
       sessions: groupedSessions[date],
     }));
 
@@ -128,34 +141,35 @@ export default function Home() {
                           <i className="fas fa-user-circle"></i>
                         )}
                       </div>
+                    </div>
+                    <div className="report-right-content">
                       <div 
                         className="report-student-name clickable"
                         onClick={() => handleStudentClick(session.student)}
                       >
                         {session.student.name}
                       </div>
-                    </div>
-                    <div className="report-right-content">
-                      <div
-                        className="report-status clickable"
-                        onClick={() => {
-                          setSelectedStudent(session.student);
-                          setSelectedSession(session.session_id);
-                          navigate(`/report`);
-                        }}
-                      >
-                        <div className="report-status-text" title={session.session_id}>COMPLETE</div>
-                      </div>
-                        
-                      <div className="report-details">
-                        <div className="report-meta">
-                          <p className="report-time">{session.sessionDate}</p>
-                          <SummaryExpandable text={session.summary} />
-                        </div>
-                      </div>
+                      <ThinkingHabitsOverview reflections={session.reflections} />
                     </div>
                   </div>
-                  <ThinkingHabitsOverview reflections={session.reflections} />
+                  <>
+                    <div className="report-details">
+                      <div className="report-meta">
+                        <p className="report-time">{session.sessionDate}</p>
+                        <SummaryExpandable text={session.summary} />
+                      </div>
+                    </div>
+                    <div
+                      className="report-status clickable"
+                      onClick={() => {
+                        setSelectedStudent(session.student);
+                        setSelectedSession(session.session_id);
+                        navigate(`/report`);
+                      }}
+                    >
+                      <div className="report-status-text" title={session.session_id}>COMPLETE</div>
+                    </div>
+                  </>
                 </div>
               ))}
             </div>

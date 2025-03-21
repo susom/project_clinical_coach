@@ -467,18 +467,16 @@ main#report {
 
 /* Inner Content */
 .case-summary-inner {
-    background: #dddee9;
-    border: 1px solid #333;
     border-radius: 15px;
     padding: 1.5rem;
     text-align: left;
     font-size: 92%;
-    margin:1rem;
+    margin:.2rem;
 }
 
 .case-summary-inner.organization-assessment{
     color:#fff;
-    background:#5888CA
+    background: #5F45C9;
 }
 
 /* Titles */

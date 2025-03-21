@@ -1,38 +1,34 @@
 /* Thinking Habits Overview */
 .thinking-habits-overview {
-    display: flex;
-    justify-content: stretch;
-    align-items: flex-start;
-    gap: 0;
-    width: 100%; /* Ensure it scales to container width */
-    max-width: 600px; /* Prevent excessive width on large screens */
-    margin: 0 auto; /* Center it horizontally */
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); /* Three items per row */
+    gap: 0.4rem 1rem; /* Adjust spacing */
+    width: 100%;
+    max-width: 400px; /* Centered, fixed max-width */
+    margin: 0 auto;
 }
 
 /* Individual Habit Item */
 .habit-item {
-    flex-grow: 1;
-    min-width: 58px; /* Smaller base for mobile */
-    max-width:92px;
-    width:14vw;
-    height: 2vw; /* Adjust height dynamically */
-    max-height: 15px; /* Prevent from getting too large on big screens */
+    width: 100%;
+    height: 6px; 
+    border-radius:5px;
     background-color: gray;
-    clip-path: polygon(5% 0, 100% 0, 95% 100%, 0% 100%);
+    /* clip-path: polygon(5% 0, 100% 0, 95% 100%, 0% 100%); */
 }
 
 /* Dynamic Colors */
-.habit-item.green { background-color: #5cb85c; }
-.habit-item.yellow { background-color: #f0ad4e; }
-.habit-item.red { background-color: #d9534f; }
+.habit-item.green { background-color: #0E6A4A; }
+.habit-item.yellow { background-color: #FED92A; }
+.habit-item.red { background-color: #A60028; }
 .habit-item.gray { background-color: #ccc; }
 
 /* Habit Labels */
 .habit-label {
-    font-size: clamp(0.5rem, 1vw, 0.7rem); /* Scales text but keeps it readable */
+    font-size: 0.5rem;
     font-weight: bold;
     text-transform: uppercase;
     color: #333;
-    margin-top: 0.3rem;
+    margin-top: 0.2rem;
     text-align: center;
 }

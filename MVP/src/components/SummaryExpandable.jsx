@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 
 const SummaryExpandable = ({ text }) => {
     const [expanded, setExpanded] = useState(false);
-    const TRUNCATE_THRESHOLD = 120;
+    const TRUNCATE_THRESHOLD = 170;
 
     // ✅ Default Text for Empty Summaries
     if (!text || text.trim() === '') {
@@ -13,7 +13,7 @@ const SummaryExpandable = ({ text }) => {
     const displayText = isTruncated ? text.substring(0, TRUNCATE_THRESHOLD) + "..." : text;
 
     return (
-        <div className="report-description" style={{ marginTop: '0.5rem' }}>
+        <div className="report-description">
             <div>{displayText}</div>
             {text.length > TRUNCATE_THRESHOLD && (
                 <a
