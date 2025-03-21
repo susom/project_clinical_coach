@@ -14,12 +14,11 @@ div.veear{
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    margin-top: 1rem;
     width:100%;
 }
 
 .vr_record-button {
-    background-color: #95D470;
+    background: linear-gradient(120deg, #95D470, #007C5E);
     width: 6rem;
     height: 6rem;
     border-radius: 50%;
@@ -27,8 +26,8 @@ div.veear{
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    border-bottom: 5px solid #51763A;
-    cursor: pointer;
+    margin-top:1rem;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
     transition: background-color 0.3s ease, box-shadow 0.3s ease;
 }
 .vr_record-button:hover{
@@ -36,8 +35,7 @@ div.veear{
     border-bottom: 5px solid #51763A;
 }
 .vr_record-button.active {
-    background-color: #FFD700; /* Yellow */
-    border-bottom: 5px solid #B89F2D; /* Slightly darker yellow for the shadow */
+    background: linear-gradient(120deg, #FFD233, #FF6A00);
 }
 .vr_record-icon {
     color: white;
@@ -62,8 +60,7 @@ div.veear{
     position:relative;
 }
 .vr_progress-bar {
-    width: 85%;
-    height: 8px; /* Adjust thickness */
+    height: 8px; 
     background-color: #e0e0e0; /* Background track color */
     border-radius: 5px;
     position: relative;
@@ -79,16 +76,13 @@ div.veear{
 .vr_timer-remaining {
     font-size: 0.77rem;
     text-align: center;
-    position:absolute;
-    right: -2rem; top:-.6rem;
     line-height:.9rem;
+    margin-top:.2rem;
 }
 .vr_timer-remaining span:first-child {
     font-weight: bold;
-    display: block; /* Ensure the remaining time is on its own line */
-}
-.vr_timer-remaining span:last-child {
-    display: block; /* Display "Mins Remaining" below */
+    display:inline-block;
+    margin-right:5px;
 }
 
 .vr_buttons {
@@ -111,12 +105,8 @@ div.veear{
 
 .vr_waveform-container {
     width: 100%; /* Span the full width of the parent container */
-    height: 100px; /* Adjust height as needed */
-    background-color: #D8D8D8; /* Match the background color to your container */
-    margin: 1rem 0; /* Add some spacing above and below */
+    height: 90px; /* Adjust height as needed */
     display: block; /* Ensure it behaves as a block element */
-    border-top:1px solid #ccc;
-    border-bottom:1px solid #ccc;
     position:relative;
 }
 .vr_waveform-container.paused::before {
@@ -132,7 +122,7 @@ div.veear{
 
 /*Recording Stage 3*/
 .vr_stop-button {
-    background-color: #FF4E4E;
+    background: linear-gradient(120deg, #E30000, #B00040);
     color: white;
     border: none;
     border-radius: 50%;
@@ -143,11 +133,11 @@ div.veear{
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    box-shadow: 0px 4px #B03535;
     transition: all 0.2s ease;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
 }
 .vr_restart-button {
-    background-color: #4E9CFF;
+    background: linear-gradient(120deg, #FFD43B, #FF7300);
     color: white;
     border: none;
     border-radius: 50%;
@@ -158,15 +148,15 @@ div.veear{
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    box-shadow: 0px 4px #3577B0;
     transition: all 0.2s ease;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
 }
 
 .vr_stop-button:hover{
-    background-color:#B03535;
+    background: linear-gradient(120deg, #E30000, #B00040);
 }
 .vr_restart-button:hover{
-    background-color:#3577B0;
+    background: linear-gradient(120deg, #FFD43B, #FF7300);
 }
 
 .vr_stop-button .vr_record-icon,
@@ -183,14 +173,37 @@ div.veear{
     border-radius:10px;
 }
 
+.vr_buttons.finalize {
+    display: flex;
+    flex-direction: column; /* Stack buttons vertically */
+    align-items: center;
+    gap: 1rem; 
+    width:70%;
+    margin-bottom:2rem;
+}
+
+.vr_submit-button {
+    color: #5f45c9;
+    margin: .5rem 0 0;
+    font-size: 1.2rem;
+    font-weight: 700;
+    background-color: #fff;
+    padding: .2rem .5rem;
+    border-radius: 20px;
+    text-align: center;
+    border: 1.5px solid #AFB4D1;
+    box-shadow: 0 0 3px #85859e;
+    width: 100%;
+}
+
+
 
 .vr_previews {
-    margin-top: 1rem;
     width: 100%;
-    border: 1px solid #333; /* Add border to the container */
+    color:#5F45C9;
     border-radius: 8px;
     padding: 0.5rem;
-    background-color: #f5f5f5; /* Light gray background */
+    box-shadow: 0 1px 3px #85859e;
 }
 
 .vr_previews h4{
@@ -221,7 +234,7 @@ div.veear{
 }
 
 .vr_delete-button i{
-    color:#333;
+    color:#5F45C9;
     font-size:1.5rem;
     margin-top:0;
 }

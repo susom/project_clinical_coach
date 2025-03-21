@@ -4,8 +4,8 @@
     flex-direction: column;
     justify-content: flex-end;
     height: 100%;
-    background-color: #d6d6f0; /* Darker purple background */
-    border-top: 5px solid #8589A6; /* Thicker top border */
+    background-color: ##fff; 
+    box-shadow:0 -2px 3px #85859E;
 }
 
 /* Global navigation */
@@ -83,7 +83,6 @@
 
 .expanded-content {
     flex-grow: 1;
-    background-color: #d6d6f0;
     padding: .3rem 0;
 }
 

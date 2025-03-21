@@ -6,6 +6,7 @@
     width: 100%;
     max-width: 400px; /* Centered, fixed max-width */
     margin: 0 auto;
+    padding:.5rem;
 }
 
 /* Individual Habit Item */

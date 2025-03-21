@@ -406,7 +406,6 @@ const VoiceRecorder = ({ navigate }) => {
         <div className="vr_recording-controls">
             {state === 'pre-record' && (
                 <div className="veear stage_1">
-                    <p>Confirm information and press record to start</p>
                     <button className="vr_record-button" onClick={startRecording}>
                         <i className="fas fa-microphone vr_record-icon"></i>
                     </button>
@@ -429,7 +428,7 @@ const VoiceRecorder = ({ navigate }) => {
                         <button className="vr_stop-button" onClick={stopRecording}>
                             <i className="fas fa-stop vr_record-icon"></i>
                         </button>
-                        <button className="vr_record-button active" onClick={resumeRecording}>
+                        <button className="vr_record-button" onClick={resumeRecording}>
                             <i className="fas fa-microphone vr_record-icon"></i>
                         </button>
                         <button className="vr_restart-button" onClick={restartRecording}>
@@ -442,7 +441,6 @@ const VoiceRecorder = ({ navigate }) => {
             {state === 'finalized' && (
                 <div className="veear stage_4">
                     <div className="vr_previews">
-                        <h4>Recording Preview</h4>
                         {previewUrl && (
                             <div className="vr_audio-container">
                                 <audio controls key={previewUrl} className="vr_audio-preview">
@@ -465,39 +463,40 @@ const VoiceRecorder = ({ navigate }) => {
                     </div>
 
                     <div className="vr_buttons finalize">
-                        <button className="vr_stop-button">
-                            <i className="fas fa-stop vr_record-icon"></i>
+                        <button className="vr_submit-button" onClick={submitRecording}>
+                            Submit Recording
                         </button>
                         <button className="vr_record-button" onClick={startRecording}>
                             <i className="fas fa-microphone vr_record-icon"></i>
-                        </button>
-                        <button className="vr_restart-button" onClick={submitRecording}>
-                            <i className="fas fa-upload vr_record-icon"></i>
                         </button>
                     </div>
                 </div>
             )}
 
-            <p className="vr_record-timer">{`${Math.floor(elapsedTime / 60)
-                .toString()
-                .padStart(2, '0')}:${(elapsedTime % 60).toString().padStart(2, '0')}`}</p>
+            {state !== 'finalized' && (
+                <>
+                    <p className="vr_record-timer">{`${Math.floor(elapsedTime / 60)
+                                .toString()
+                                .padStart(2, '0')}:${(elapsedTime % 60).toString().padStart(2, '0')}`}</p>
 
-            <div className="vr_progress-container">
-                <div className="vr_progress-bar">
-                    <div
-                        className="vr_progress"
-                        style={{ width: `${progressPercentage}%` }}
-                    ></div>
-                </div>
-                <div className="vr_timer-remaining">
-                    <span>{`${minutesRemaining
-                        .toString()
-                        .padStart(2, '0')}:${secondsRemaining
-                        .toString()
-                        .padStart(2, '0')}`} Mins</span>
-                    <b>Remaining</b>
-                </div>
-            </div>
+                    <div className="vr_progress-container">
+                        <div className="vr_progress-bar">
+                            <div
+                                className="vr_progress"
+                                style={{ width: `${progressPercentage}%` }}
+                            ></div>
+                        </div>
+                        <div className="vr_timer-remaining">
+                            <span>{`${minutesRemaining
+                                .toString()
+                                .padStart(2, '0')}:${secondsRemaining
+                                .toString()
+                                .padStart(2, '0')}`} Mins</span>
+                            <b>Remaining</b>
+                        </div>
+                    </div>
+                </>
+            )}
         </div>
     );
 };

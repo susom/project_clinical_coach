@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { format, parseISO, isToday, isYesterday } from 'date-fns';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import ThinkingHabitsOverview from '../components/ThinkingHabitsOverview';
@@ -89,11 +90,24 @@ export default function StudentProfile() {
         return acc;
     }, {});
 
+    // Function to format date with special cases
+    const formatDate = (dateString) => {
+        const date = parseISO(dateString);
+
+        if (isToday(date)) {
+            return `Today, ${format(date, 'MMMM d, yyyy')}`;
+        } else if (isYesterday(date)) {
+            return `Yesterday, ${format(date, 'MMMM d, yyyy')}`;
+        }
+
+        return format(date, 'MMMM d, yyyy');
+    };
+    
     // Sort groups in reverse chronological order
     const dateGroups = Object.keys(groupedSessions)
         .sort((a, b) => new Date(b) - new Date(a))
         .map(date => ({
-            date,
+            date: formatDate(date), 
             sessions: groupedSessions[date],
         }));
 

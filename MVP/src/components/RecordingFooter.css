@@ -18,7 +18,7 @@
 }
 
 .record-button {
-    background-color: #95D470;
+    background: linear-gradient(120deg, #95D470, #007C5E);
     width: 6rem;
     height: 6rem;
     border-radius: 50%;
@@ -26,8 +26,8 @@
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    border-bottom:5px solid #51763A;
     margin-top:1rem;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
 }
 
 .record-icon {
@@ -36,7 +36,7 @@
 }
 
 .recording-title {
-    font-size: 1rem;
+    font-size: 1.4rem;
     font-weight: bold;
     margin: .2rem 0 .3rem;
     padding:0;
@@ -44,13 +44,14 @@
 
 .student-dropdown {
     font-size: 1rem;
+    font-weight:bold;
     padding: 0.3rem;
-    border: 1px solid #ccc;
-    border-radius: 8px;
+    border: 1px solid #AFB4D1;
+    border-radius: 20px;
+    color:#5F45C9;
     width: 100%; /* Full width for readability */
     max-width: 240px; /* Limit width for dropdown */
     text-align: center;
-    margin-bottom:.5rem;
     position: relative; 
 }
 
@@ -65,11 +66,8 @@
 .stage-2-container {
     display: flex;
     flex-direction: column;
-    background-color: #e3e4ed;
-    border-radius: 10px;
     padding: .5rem;
-    margin: 1rem .5rem;
-    border: 1px solid #333;
+    margin: 0;
 }
 
 .recording-header{
@@ -77,7 +75,6 @@
     justify-content: space-between;
     align-items: flex-start;
     gap: .7rem;
-    margin-bottom: .3rem;
 }
 
 .recording-setup {
@@ -90,11 +87,11 @@
 
 
 .recording-helper-text {
-    font-size: 0.8rem;
+    font-size: 1rem;
     color: #666;
-    margin: 0;
+    margin: 0 .8rem;
     text-align:left;
-    line-height:1rem;
+    line-height:1.3rem;
 }
 
 
@@ -103,12 +100,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    border: 1px solid #333;
-    border-radius: 10px;
-    background: #D8D8D8;
     padding: 3rem .5rem .5rem ; /* Padding for internal spacing */
-    margin: 1rem .5rem;
-
 }
 
 /* Profile picture and dropdown */
@@ -127,8 +119,9 @@
 }
 
 .recording-current-time {
-    font-size: 0.9rem;
-    color: #666;
+    font-size: .9rem;
+    font-weight:bold;
+    color: #000;
 }
 
 /* Controls section */

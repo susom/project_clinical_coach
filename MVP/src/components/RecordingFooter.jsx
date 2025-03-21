@@ -74,19 +74,19 @@ function RecordingFooter({ stage, setStage }) {
                                         </option>
                                     ))}
                                 </select>
+                                <ThinkingHabitsOverview habits={thmLabels} disabled />
                                 
-                                <p className="recording-helper-text">
-                                    Your student's thinking habits metrics will appear here if you've coached them before.
-                                </p>
                             </div>
                         </div>        
-                        <ThinkingHabitsOverview habits={thmLabels} disabled />
+                        <p className="recording-helper-text">
+                            Your student's thinking habits metrics will appear here if you've coached them before.
+                        </p>
                     </div>
             )}
 
             {stage === 3 && (
                 <div className="stage-3-container">
-                    <h3 className="recording-title">Start A Recording Session</h3>
+                    <h3 className="recording-title">Your Current Recording Session</h3>
                     <div className="recording-student-info">
                         <div className="recording-profile-picture">
                             {selectedStudent?.profilePicture ? (
