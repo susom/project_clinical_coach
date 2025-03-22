@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStudents } from '../contexts/Students';
 import { useCoach } from '../contexts/Coach';
@@ -16,7 +16,9 @@ export default function Report() {
     const [loadingReflection, setLoadingReflection] = useState(null);
     const [promptsData, setPromptsData] = useState([]);
     const [promptRatings, setPromptRatings] = useState({});
-
+    const [activeIndices, setActiveIndices] = useState({});
+    const carouselRefs = useRef({});
+    
     if (!selectedStudent || !selectedSession) {
         console.warn("MISSING STUDENT OR SESSION, REDIRECTING TO HOME");
         navigate('/');
@@ -191,6 +193,10 @@ export default function Report() {
         );
     };
     
+    const handleFullTranscript = () => {
+        navigate('/full-transcript');
+    };
+
     const handleFeedback = (habit, promptIdx, type) => {
         const newRating = habit.prompts[promptIdx].rating === type ? null : type;
     
@@ -240,9 +246,68 @@ export default function Report() {
         }
     };
 
+    useEffect(() => {
+        if (!carouselRefs.current) return;
     
-    const handleFullTranscript = () => {
-        navigate('/full-transcript');
+        Object.keys(carouselRefs.current).forEach((habitKey) => {
+            const carousel = carouselRefs.current[habitKey];
+    
+            if (!carousel) {
+                console.warn(`🚨 No carousel found for habitKey: ${habitKey}`);
+                return;
+            }
+    
+            const handleScroll = () => {
+                const items = carousel.children;
+                if (!items.length) {
+                    console.warn(`🚨 No items in carousel for habit: ${habitKey}`);
+                    return;
+                }
+    
+                let closestIndex = 0;
+                let minDiff = Infinity;
+    
+                for (let i = 0; i < items.length; i++) {
+                    const rect = items[i].getBoundingClientRect();
+                    const diff = Math.abs(rect.left - carousel.getBoundingClientRect().left);
+                    
+                    if (diff < minDiff) {
+                        minDiff = diff;
+                        closestIndex = i;
+                    }
+                }
+    
+                setActiveIndices((prev) => ({ ...prev, [habitKey]: closestIndex }));
+            };
+    
+            carousel.addEventListener("scroll", handleScroll, { passive: true });
+    
+            return () => {
+                carousel.removeEventListener("scroll", handleScroll);
+            };
+        });
+    }, [promptsData]);
+
+    const handleDotClick = (habitKey, index) => {
+        setActiveIndices((prev) => ({ ...prev, [habitKey]: index }));
+    
+        const carousel = carouselRefs.current[habitKey];
+    
+        if (!carousel) {
+            console.warn(`🚨 No carousel found for habitKey: ${habitKey}`);
+            return;
+        }
+    
+        const items = carousel.children;
+        if (!items || !items[index]) {
+            console.warn(`🚨 No carousel items found for habitKey: ${habitKey} at index: ${index}`);
+            return;
+        }
+    
+        carousel.scrollTo({
+            left: items[index].offsetLeft - carousel.offsetLeft,
+            behavior: "smooth",
+        });
     };
     
 
@@ -318,7 +383,11 @@ export default function Report() {
                             const hasError = habit.hasError;  // Only trust the real error flag
                             return (
                                 <div key={index} className="habit">
-                                    <div className="report-carousel">
+                                    <div 
+                                    ref={(el) => { 
+                                        if (el) carouselRefs.current[habit.category] = el;
+                                    }} 
+                                    className="report-carousel">
                                         {hasError ? (
                                             <div className="report-carousel-item error-message">
                                                 ⚠️ There was an error, try re-evaluating the AI reflection.
@@ -354,6 +423,16 @@ export default function Report() {
                                                 <p>No prompts available.</p>
                                             </div>
                                         )}
+                                    </div>
+
+                                    <div className="carousel-dots">
+                                        {habit.prompts.map((_, idx) => (
+                                            <button 
+                                                key={idx} 
+                                                className={`dot ${idx === (activeIndices[habit.category] || 0) ? 'active' : ''}`} 
+                                                onClick={() => handleDotClick(habit.category, idx)}
+                                            />
+                                        ))}
                                     </div>
 
                                     <div className="action-buttons">
