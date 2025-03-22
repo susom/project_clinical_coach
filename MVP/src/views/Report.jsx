@@ -28,7 +28,7 @@ export default function Report() {
     const the_session = selectedStudent.sessions.find(s => String(s.session_id) === String(selectedSession));
     // console.log("coach", coach);
     // console.log("selectedStudent", selectedStudent);
-    // console.log("the_session", the_session);
+    console.log("the_session", the_session);
 
     if (!the_session) {
         return <div className="error-message">⚠️ No session data found. Please go back and try again.</div>;
@@ -49,7 +49,11 @@ export default function Report() {
     const oneSentenceSummary = parsedSummary.one_sentence_summary || "No summary available.";
     const thm_casefeedback = parsedThmReport.caseOrganizationFeedback || "No case organization feedback available.";
 
-    // ✅ Parse reflections safely
+    if (!the_session) {
+        return <div>Please select a session to view the report.</div>;
+    }
+
+    // Parse reflections safely
     function cleanAndParseJSON(jsonString, fallback = {}) {
         try {
             return typeof jsonString === "string" ? JSON.parse(jsonString) : jsonString || fallback;
@@ -77,8 +81,29 @@ export default function Report() {
             ];
         })
     );
-      
     
+    // Extract Strengths from Reflections
+    let strengths = [];
+    if (parsedThmReport && Array.isArray(parsedThmReport.positiveFeedback)) {
+        console.log("parsedThmReport", parsedThmReport);
+        strengths = parsedThmReport.positiveFeedback.reduce((acc, feedbackStr) => {
+            const parts = feedbackStr.split(':');
+            if (parts.length >= 2) {
+            const cat = parts[0].trim();
+            const desc = parts.slice(1).join(':').trim();
+            const existing = acc.find(item => item.category === cat);
+            if (existing) {
+                existing.descriptions.push(desc);
+            } else {
+                acc.push({ category: cat, descriptions: [desc] });
+            }
+            }
+            return acc;
+        }, []);
+    }
+
+    console.log("strengths", strengths);
+
     useEffect(() => {
         const initialPrompts = Object.entries(parsedReflections).map(([key, reflection]) => ({
             title: reflection.report_title || key.charAt(0).toUpperCase() + key.slice(1),
@@ -106,54 +131,9 @@ export default function Report() {
         setPromptsData(initialPrompts);
     }, [the_session, coach]); 
 
-    // ✅ Extract Strengths from Reflections
-    // Assuming parsedThmReport is already parsed from the_session.thm_report
-    let strengths = [];
-    if (parsedThmReport && Array.isArray(parsedThmReport.positiveFeedback)) {
-    strengths = parsedThmReport.positiveFeedback.reduce((acc, feedbackStr) => {
-        const parts = feedbackStr.split(':');
-        if (parts.length >= 2) {
-        const cat = parts[0].trim();
-        const desc = parts.slice(1).join(':').trim();
-        const existing = acc.find(item => item.category === cat);
-        if (existing) {
-            existing.descriptions.push(desc);
-        } else {
-            acc.push({ category: cat, descriptions: [desc] });
-        }
-        }
-        return acc;
-    }, []);
-    }
-
-
     const toggleAnalysis = () => {
         setShowCaseSummary(!showCaseSummary);
-    };
-
-    if (!the_session) {
-        return <div>Please select a session to view the report.</div>;
-    }
-
-    const handleAIAnalysis = () => {
-        if (!selectedSession?.session_id || !coach?.record_id) {
-            console.warn("🚨 Missing session_id or coach_id.");
-            return;
-        }
-
-        const payload = {
-            session_id: selectedSession.session_id,
-            coach_id: coach.record_id
-        };
-
-        console.log("🛠️ Triggering AI Analysis with:", payload);
-
-        window.clinical_coach_jsmo_module.callAI(
-            JSON.stringify(payload),
-            (response) => console.log("✅ AI Analysis Triggered Successfully:", response),
-            (error) => console.error("🚨 AI Analysis Error:", error)
-        );
-    };
+    }; 
 
     const handleSingleReflection = (reflectionVar) => {
         if (!the_session?.session_id || !coach?.record_id) {
@@ -191,10 +171,6 @@ export default function Report() {
                 setLoadingReflection(null);
             }
         );
-    };
-    
-    const handleFullTranscript = () => {
-        navigate('/full-transcript');
     };
 
     const handleFeedback = (habit, promptIdx, type) => {
@@ -309,15 +285,11 @@ export default function Report() {
             behavior: "smooth",
         });
     };
-    
 
     return (
         <>
             <Header showBack={true} />
             <main id="report">
-                {/* <button onClick={handleAIAnalysis}>Trigger AI Analysis</button>
-                <br/><br/> */}
-
                 <section className="report-header">
                     <div className="profile-picture">
                         {profilePic ? (
@@ -360,20 +332,40 @@ export default function Report() {
                 </section>
 
                 {strengths.length > 0 && (
-                <section className="report-strengths">
-                    <h3>{studentName}’s Strengths</h3>
-                    <div className="strength-tags">
-                    {strengths.map((strength, index) => (
-                        <div key={index} className="strength-item">
-                        <span className="strength-category">{strength.category}</span>
-                        {strength.descriptions.map((desc, idx) => (
-                            <div key={idx} className="strength-description">{desc}</div>
-                        ))}
+                    <section className="report-strengths">
+                        <h3>{studentName}’s Strengths</h3>
+                        <div className="strengths-container">
+                            {strengths.map((strength, index) => (
+                                <div key={index} className="strength-block">
+                                    <div className={`strength-category ${strength.category.toLowerCase()}`}>
+                                        {strength.category}
+                                    </div>
+                                    <div 
+                                        className="strength-carousel" 
+                                        ref={(el) => { if (el) carouselRefs.current[strength.category] = el; }}
+                                    >
+                                        {strength.descriptions.map((desc, i) => (
+                                            <div key={i} className="strength-description">{desc}</div>
+                                        ))}
+                                    </div>
+
+                                    {strength.descriptions.length > 1 && (
+                                        <div className="carousel-dots">
+                                            {strength.descriptions.map((_, i) => (
+                                                <button 
+                                                    key={i} 
+                                                    className={`dot ${i === (activeIndices[strength.category] || 0) ? 'active' : ''}`}
+                                                    onClick={() => handleDotClick(strength.category, i)}
+                                                />
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
                         </div>
-                    ))}
-                    </div>
-                </section>
+                    </section>
                 )}
+
 
                 {/* Coaching Prompts Section */}
                 {promptsData.length > 0 && (
