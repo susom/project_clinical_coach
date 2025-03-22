@@ -17,6 +17,13 @@
     background:#fff;
 }
 
+.student-profile-header h3{
+    text-transform: uppercase;
+    color: #5f45c9;
+    font-weight: bold;
+    font-size: .9rem;
+}
+
 #student-profile .report-group{
     margin-top:1rem;
 }
@@ -67,7 +74,7 @@
 .session-card {
     background: #fff;
     color: #000;
-    padding: .2rem 1rem 0;
+    padding: .2rem 1rem;
     border-radius: 10px;
     box-shadow: 0px 1px 3px #85859E;
     margin: 1rem .5rem;
@@ -115,7 +122,7 @@
 }
 
 #student-profile .session-details {
-    padding: 0 0.5rem 0.5rem;
+    padding: 0 0.5rem ;
 }
 
 #student-profile .session-summary {
@@ -131,3 +138,29 @@
     font-size:120%;
 }
 
+.session-details .thinking-habits-overview{
+    padding:.5rem 2rem;
+}
+
+.review-insights-button {
+    width: 80%;
+    max-width: 300px;
+    padding: 0.3rem 1.5rem;
+    background: linear-gradient(120deg, #5a67d8, #5433ff);
+    color: white;
+    font-size: 1.2rem;
+    font-weight: bold;
+    text-align: center;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: background 0.3s ease, transform 0.2s ease;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    margin: 1rem auto;
+    display: block;
+}
+
+.review-insights-button:hover {
+    background: linear-gradient(120deg, #4a55c4, #4026e0);
+    transform: scale(1.05);
+}

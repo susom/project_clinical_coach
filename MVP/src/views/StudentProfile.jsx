@@ -126,6 +126,7 @@ export default function StudentProfile() {
                         </div>
                         <h1 className="student-name">{selectedStudent.name}</h1>
                     </div>
+                    <h3>Overall Thinking Habits Performance</h3>
                     <ThinkingHabitsOverview reflections={aggregateReflections(selectedStudent)} />
                     <ReflectionScoreChart sessions={selectedStudent.sessions} />
                 </header>
@@ -140,12 +141,6 @@ export default function StudentProfile() {
                                 <div 
                                     className={`session-card ${session.status ? 'pending' : ''}`} 
                                     key={idx}
-                                    onClick={() => {
-                                        if (!session.status) {
-                                            setSelectedSession(session.session_id);
-                                            navigate(`/report`);
-                                        }
-                                    }}
                                 >
                                     <div className="session-header">
                                         <p className="session-time">{session.session_date}</p>
@@ -163,7 +158,19 @@ export default function StudentProfile() {
                                         </p>
                                         <ThinkingHabitsOverview reflections={session.status ? undefined : session.reflections} />
                                     </div>
-
+                                    
+                                    {!session.status && (
+                                        <button
+                                            className="review-insights-button"
+                                            onClick={(e) => {
+                                                e.stopPropagation(); // Prevent triggering parent div click
+                                                setSelectedSession(session.session_id);
+                                                navigate(`/report`);
+                                            }}
+                                        >
+                                            Review Insights
+                                        </button>
+                                    )}
                                 </div>
                             ))}
                         </div>

@@ -96,9 +96,11 @@ export default function Report() {
             reflectionVar: `sess_reflect_${key.toLowerCase()}`,
             coach_id: coach?.record_id || null,  
             student_id: selectedStudent?.id || null,  
-            sess_id: the_session?.session_id || null
+            sess_id: the_session?.session_id || null,
+            thm_overall_score: reflection?.thm_overall_score || 0
         }));
     
+        console.log("prompts data", initialPrompts);
         setPromptsData(initialPrompts);
     }, [the_session, coach]); 
 
@@ -229,6 +231,16 @@ export default function Report() {
         );
     };
 
+    const getScoreClass = (score) => {
+        switch (score) {
+            case 1: return 'red';
+            case 2: return 'yellow';
+            case 3: return 'green';
+            default: return ''; // No extra class = default gray
+        }
+    };
+
+    
     const handleFullTranscript = () => {
         navigate('/full-transcript');
     };
@@ -250,7 +262,7 @@ export default function Report() {
                         )}
                     </div>
                     <div className="profile-details">
-                        <h2 className="student-name">{studentName}</h2>
+                        <div className="report-student-name clickable">{studentName}</div>
                         <p className="conversation-time">
                             Conversation @ {sessionDate}
                         </p>
@@ -273,6 +285,7 @@ export default function Report() {
 
                     <div className="report-summary">
                         <p className="summary-text">{thm_casefeedback}</p>
+
                         <div className="summary-buttons">
                             <button className="expandable-button" onClick={toggleAnalysis}>
                                 {showCaseSummary ? '- HIDE SUMMARY' : '+ IN-DEPTH CASE PRESENTATION SUMMARY'}
@@ -344,7 +357,7 @@ export default function Report() {
                                     </div>
 
                                     <div className="action-buttons">
-                                        <div className="action-left">
+                                        <div className={`action-left ${getScoreClass(habit.thm_overall_score)}`}>
                                             <span>{habit.title}</span>
                                         </div>
                                         <div className="action-right">
@@ -359,7 +372,7 @@ export default function Report() {
                                                 className="detailed-analysis-btn" 
                                                 onClick={() => navigate(`/detail-analysis/${habit.category.toLowerCase()}`)}
                                             >
-                                                + DETAILED ANALYSIS
+                                                + Detailed Analysis
                                             </button>
                                         </div>
                                     </div>

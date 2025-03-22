@@ -1,76 +1,101 @@
-/* Container is full-width, purple background, white text */
+/* Ensure full width for chart container */
 .chart-container {
-    width: 100%;
-    background-color: #4a56a6;
-    color: #fff;
-    padding: 1rem;
-    /* No border-radius if you want square corners */
-  }
-  
-  /* Each row is taller to accommodate the offset blocks */
-  .score-row {
-    position: relative; 
-    display: flex;
-    align-items: center;
-    width: 100%;
-    height: 32px; /* Enough space for the line + offset blocks */
-    margin-bottom: 1rem;
-  }
-  
-  /* Labels on the left in white text */
-  .reflection-label {
-    width: 100px; 
-    font-weight: bold;
-    text-transform: uppercase;
-    margin-right: 1rem;
-    text-align: right;
-  }
-  
-  /* The thin white line in the center of the row */
-  .score-line {
-    flex: 1;
-    position: relative;
-    height: 2px;
-    background-color: #fff;
-    /* We'll position blocks absolutely over this line */
-  }
-  
-  /* The container for blocks, absolutely positioned on the line */
-  .score-blocks {
-    display: flex;
-    gap: 6px; 
-    position: absolute;
-    left: 0;
-    top: 50%; 
-    transform: translateY(-50%); /* center the blocks vertically on the line */
-  }
-  
-  /* Each block is a small square */
-  .score-block {
-    width: 10px;
-    height: 10px;
-  }
-  
-  /* No score => empty/transparent */
-  .score-block.empty {
-    background: transparent;
-  }
-  
-  /* Score=1 => red block below the line */
-  .score-1 {
-    background-color: red;
-    transform: translateY(6px);
-  }
-  
-  /* Score=2 => yellow block centered on the line */
-  .score-2 {
-    background-color: gold;
-    /* already centered by parent transform */
-  }
-  
-  /* Score=3 => green block above the line */
-  .score-3 {
-    background-color: green;
-    transform: translateY(-6px);
-  }
-  
+  width: 100%;
+  background: #5F45C9;
+  color: #fff;
+  padding: 1rem;
+  display: flex;
+  justify-content: center;
+}
+
+/* Wrapper ensures labels and graph are properly aligned */
+.chart-wrapper {
+  display: flex;
+  align-items: stretch;
+  gap: 1rem;
+  width: 100%;
+}
+
+/* Left section for labels */
+.chart-header {
+  padding: 1rem .5rem;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Each label */
+.chart-label {
+  font-size:.7rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  text-align: right;
+  height: 32px;
+  line-height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+/* Right section for the graph */
+.chart-content {
+  background: white;
+  padding: 1rem .8rem;
+  border-radius: 8px;
+  flex-grow: 1; /* Make it expand */
+  min-width: 260px; /* Ensures it has enough space */
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+/* Ensure rows fill available space */
+.score-row {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 32px;
+}
+
+/* The thin line */
+.score-line {
+  flex: 1;
+  position: relative;
+  height: 2px;
+  background-color: #5F45C9;
+}
+
+/* Blocks must spread out */
+.score-blocks {
+  display: flex;
+  gap: 8px; /* Slightly larger gap for spacing */
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+/* Each block */
+.score-block {
+  width: 12px;
+  height: 12px;
+}
+
+/* Colors */
+.score-block.empty {
+  background: transparent;
+}
+
+.score-1 {
+  background-color: red;
+  transform: translateY(6px);
+}
+
+.score-2 {
+  background-color: gold;
+}
+
+.score-3 {
+  background-color: green;
+  transform: translateY(-6px);
+}
