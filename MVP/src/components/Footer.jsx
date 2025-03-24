@@ -1,10 +1,12 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Link, useLocation } from 'react-router-dom';
 import RecordingFooter from './RecordingFooter';
 import './Footer.css';
 import thmIcon from '../assets/images/thm_icon.png';
 
 function Footer({ stage = 1, setStage }) {
+    const navigate = useNavigate();
     const location = useLocation();
     const currentPath = location.pathname.toLowerCase();
 
@@ -12,6 +14,18 @@ function Footer({ stage = 1, setStage }) {
 
     return (
         <footer className={`footer-container ${isExpanded ? 'expanded' : ''}`}>
+            {stage === 1 && (
+                <div className="start-recording-container">
+                    <button className="start-recording-button" onClick={() => {
+                navigate('/home'); 
+                setStage(2);
+            }}>
+                        START RECORDING <i className="fas fa-microphone"></i>
+                    </button>
+                </div>
+            )}
+
+
             {isExpanded && (
                 <div className="expanded-content">
                     <RecordingFooter stage={stage} setStage={setStage} />
@@ -28,7 +42,10 @@ function Footer({ stage = 1, setStage }) {
                 </Link>
                 <Link
                     className={`footer-item ${currentPath === '/recording' ? 'active' : ''}`}
-                    onClick={() => setStage(2)} // Set stage to 2 for recording
+                    onClick={() => {
+                        navigate('/home'); 
+                        setStage(2);
+                    }}
                 >
                     <i className="fas fa-microphone footer-icon"></i>
                     <span>Recording</span>

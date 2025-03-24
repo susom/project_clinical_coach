@@ -88,3 +88,39 @@
 
 
 
+/* Start Recording Button Container */
+.start-recording-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 0.5rem; /* Adds spacing above nav */
+}
+
+/* Start Recording Button */
+.start-recording-button {
+    background: linear-gradient(120deg, #3CB371, #008B8B);
+    color: white;
+    font-size: 1rem;
+    font-weight: bold;
+    padding: 0.8rem 2.5rem;
+    border: none;
+    border-radius: 25px;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    transition: background 0.3s ease;
+
+    position:absolute;
+    margin-top:-65px;
+    box-shadow: 0px 2px 4px #85859E;
+}
+
+.start-recording-button:hover {
+    background: linear-gradient(120deg, #2E8B57, #006A6A);
+}
+
+/* Microphone Icon */
+.start-recording-button i {
+    font-size: 1.2rem;
+}
