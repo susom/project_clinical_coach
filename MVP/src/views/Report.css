@@ -273,6 +273,7 @@ main#report {
 .report-analysis {
     margin:0 ;
     background: #F0F3F5;
+    padding-bottom:5rem;
 }
 
 .habit {
@@ -549,7 +550,7 @@ main#report {
     max-height: 85vh;
     background: white;
     border-radius: 15px 15px 0 0;
-    padding: 3rem 1rem 5rem;
+    padding: 3rem 1rem 15rem;
     box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.2);
     overflow-y: auto;
     animation: slideUp 0.3s ease-out;
