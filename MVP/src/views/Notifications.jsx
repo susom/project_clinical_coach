@@ -33,7 +33,6 @@ export default function Notifications() {
                 fullSession: session // 🔥 Store full session for navigation
             })) || [];
     });
-    
 
     useEffect(() => {
         console.log("🚀 Auto-triggering AI analysis for pending notifications...");
@@ -70,8 +69,9 @@ export default function Notifications() {
 
     return (
         <>
-            <Header showBack={false} showFilter={true} />
+            <Header showBack={false}  />
             <main id="notifications">
+                <h1 className="center-title">Notifications</h1>
                 <div className="notifications-list">
                     {pendingNotifications.length === 0 ? (
                         <p className="empty-notifications">No new notifications</p>
@@ -82,28 +82,40 @@ export default function Notifications() {
                                 className={`notification ${completedSessions.has(notification.session_id) ? 'clickable' : ''}`}
                                 onClick={() => completedSessions.has(notification.session_id) && handleSessionClick(notification.student , notification.session_id)}
                             >
-                                <div className="profile-icon">
-                                    {notification.profilePicture ? (
-                                        <img src={notification.profilePicture} alt={notification.studentName} />
-                                    ) : (
-                                        <i className="fas fa-user-circle profile-icon"></i>
-                                    )}
-                                </div>
-                                <div className="notification-details">
-                                    <div className="notification-name">{notification.studentName}</div>
-                                    <div className="notification-time">{notification.sessionDate}</div>
-                                    <div className="notification-status">
-                                        {completedSessions.has(notification.session_id) ? (
-                                            <span className="status-badge complete">
-                                            Complete
-                                        </span>
+                                <div className="notification-top">
+                                    <div className="profile-icon">
+                                        {notification.profilePicture ? (
+                                            <img src={notification.profilePicture} alt={notification.studentName} />
                                         ) : (
-                                            <span className="status-badge pending">
-                                            <i className="fas fa-sync-alt fa-spin"></i> Pending
-                                        </span>
+                                            <i className="fas fa-user-circle profile-icon"></i>
                                         )}
-                                        <SummaryExpandable text={notification.transcript}/>
                                     </div>
+                                    <div className="notification-details">
+                                        <div className="notification-name">{notification.studentName}</div>
+                                        <div className="notification-time">{notification.sessionDate}</div>
+                                    </div>
+                                </div>
+                                <div className="notification-status">
+                                        {/* Show "Conversation is being processed..." if transcript isn't ready */}
+                                    {!notification.transcript ? (
+                                        <p>Conversation is being processed...</p>
+                                    ) : (
+                                        <SummaryExpandable text={notification.transcript} />
+                                    )}
+
+                                    {/* If session is fully processed, show "View Report" button */}
+                                    {completedSessions.has(notification.session_id) ? (
+                                        <button 
+                                            className="view-report-button"
+                                            onClick={() => handleSessionClick(notification.student, notification.session_id)}
+                                        >
+                                            View Report <i className="fas fa-check-circle"></i>
+                                        </button>
+                                    ) : (
+                                        <button className="processing-button">
+                                            <i className="fas fa-sync-alt fa-spin"></i> Processing...
+                                        </button>
+                                    )}
                                 </div>
                             </div>
                         ))

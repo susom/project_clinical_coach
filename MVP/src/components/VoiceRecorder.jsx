@@ -25,7 +25,7 @@ const VoiceRecorder = ({ navigate }) => {
     const [isUploading, setIsUploading] = useState(false); // Tracks the uploading state
     const { showConfirmModal } = useConfirmModal();
     const { selectedStudent, updateStudent, createNewSession } = useStudents();
-    const { coach } = useCoach();
+    const { coach , setStage } = useCoach();
 
     // Function to clear the timer and reset elapsed time
     const clearTimer = () => {
@@ -273,7 +273,9 @@ const VoiceRecorder = ({ navigate }) => {
               }
             });
         
+
             // Navigate immediately to notifications view
+            setStage(1);
             navigate('/notifications');
         
         } catch (error) {

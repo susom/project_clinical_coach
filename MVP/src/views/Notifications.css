@@ -5,9 +5,9 @@
     flex-direction: column; /* Stack items vertically */
     align-items: stretch; /* Ensure children take full width */
     justify-content: flex-start; /* Align items to the top */
-    padding: 1rem 0 0; /* Top padding to align directly below header */
+    padding: 0 0 5rem; /* Top padding to align directly below header */
     font-family: Arial, sans-serif;
-    background-color: transparent;
+    background: #F0F3F5;
     overflow-y: auto;
     height: calc(100vh - 3rem); /* Subtract header height */
 }
@@ -21,20 +21,74 @@
     padding-top: 1rem; /* Add spacing at the top */
 }
 
-/* Individual Notification */
+/* Notification Card */
 .notification {
     display: flex;
-    justify-content: space-between;
-    gap:.7rem;
-    align-items: flex-start; /* Align items to the top */
+    flex-direction: column; /* Stack elements */
+    gap: 0.5rem;
+    align-items: stretch;
     padding: 1rem;
-    border: 1px solid #ccc;
     border-radius: 8px;
-    background-color: #fff;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    background: #fff;
+    box-shadow: 0px 2px 4px 0px #85859E80;
     position: relative;
-    background:#E3E4ED;
-    margin:.5rem;
+    margin: 0 1rem 1rem;
+}
+
+.notification-top {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+}
+
+/* Profile Picture */
+.notification .profile-icon {
+    width: 5rem;
+    height: 5rem;
+    border-radius: 50%;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.notification .profile-icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Notification Details */
+.notification-details {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    text-align: left;
+}
+
+/* Student Name */
+.notification-name {
+    font-size: 1rem;
+    font-weight: bold;
+    color: #333;
+}
+
+/* Date and Time */
+.notification-time {
+    font-size: 0.85rem;
+    color: #666;
+    font-weight: 500;
+    margin-bottom: 0.3rem;
+}
+
+/* Processing Text */
+.notification-status {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Center buttons */
+    gap: 0.5rem;
+    padding-top: 0.5rem;
 }
 
 /* Red Dot for New Notifications */
@@ -59,45 +113,12 @@
     flex: 0 0 100px; /* Fixed width */
 }
 
-/* Profile Icon */
-.notification .profile-icon {
-    font-size: 4rem;
-    color: #666;
-    width: 6rem;
-    height: 6rem;
-    min-width: 6rem;
-    border-radius: 50%;
-    overflow: hidden;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+.notification .report-description {
+    width:100%;
+    text-align:left;
+    margin-top:0;
 }
 
-.notification .profile-icon img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-/* Notification Details */
-.notification-details {
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start; /* Align text to the top */
-    text-align: left;
-}
-
-.notification-name {
-    font-size: 1rem;
-    font-weight: bold;
-    color: #333;
-}
-
-.notification-time {
-    font-size: 0.8rem;
-    color: #333;
-}
 
 .notification-time-ago {
     position: absolute;
@@ -141,37 +162,44 @@
     margin-top: 0.5rem; /* Add space above */
 }
 
+
+/* Processing Button */
+
 /* Buttons */
 .processing-button,
 .view-report-button {
-    min-width:200px;
-    padding: .6rem 1.5rem;
+    width: 60%;
+    max-width: 300px;
+    padding: 0.3rem 1.5rem;
+    background: linear-gradient(120deg, #5a67d8, #5433ff);
+    color: white;
     font-size: 1.2rem;
-    border-radius: 10px;
-    border-bottom:5px solid #333;
+    font-weight: bold;
+    text-align: center;
+    border: none;
+    border-radius: 20px;
     cursor: pointer;
-    align-items: center; /* Align button text vertically */
-    vertical-align: middle;
-    text-align:center;
-    margin-top:0;
-    font-weight:bold;
+    transition: background 0.3s ease, transform 0.2s ease;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    margin: .5rem auto;
+    display: block;
 }
 
-/* Processing Button */
 .processing-button {
-    background-color: Yellow; /* Yellow background */
-    color: #333; /* Dark text for contrast */
+    background: #AFB4D1;
+    color: #fff;
     cursor: not-allowed;
-    border-color:#C1C700;
 }
 
 /* View Report Button */
 .view-report-button {
-    background-color: #5cb85c; /* Green background */
-    color: #fff;
-    border-color:#51763A;
+    background: linear-gradient(120deg, #6C4DE6, #4A30C3);
+    color: white;
 }
 
+.view-report-button i {
+    font-size: 1.2rem;
+}
 /* Icons */
 .spin-icon,
 .fa-check-circle {
