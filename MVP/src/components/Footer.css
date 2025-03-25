@@ -33,14 +33,32 @@
 }
 
 /* Highlight state for the active link */
-.footer-item.active .footer-icon {
-    color: #333; /* Solid color for active icon */
-    font-weight: bold;
+/* Active state - adds the pill background and changes text color */
+.footer-item.active {
+    color: #6C4DE6; /* Purple text */
+    position:relative;
 }
 
-.footer-item.active span {
-    color: #333; /* Solid color for active label */
+.footer-item.active i,
+.footer-item.active img{
+    position:relative;
+    z-index:1;
 }
+
+.footer-item.active::before {
+    content: "";
+    position: absolute;
+    top: -2px;
+    left: 50%;
+    width: 2.5rem;
+    height: 1.5rem;
+    background: #6C4DE6; /* Purple pill color */
+    border-radius: 999px;
+    transform: translateX(-50%);
+    z-index: 0;
+}
+
+
 
 .footer-item:hover {
     color: #333; /* Optional hover effect */
@@ -124,3 +142,5 @@
 .start-recording-button i {
     font-size: 1.2rem;
 }
+
+

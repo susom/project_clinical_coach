@@ -9,6 +9,7 @@ export const useCoach = () => useContext(CoachContext);
 // Provider component to wrap the app
 export const CoachProvider = ({ children }) => {
     const [coach, setCoach] = useState({});
+    const [stage, setStage] = useState(1);
 
     const updateCoachProfile = (updatedProfile) => {
         setCoach((prevCoach) => ({
@@ -21,7 +22,9 @@ export const CoachProvider = ({ children }) => {
         <CoachContext.Provider
             value={{
                 coach,
-                updateCoachProfile
+                updateCoachProfile,
+                stage, 
+                setStage
             }}
         >
             {children}

@@ -4,13 +4,14 @@ import Header from '../components/Header';
 import Footer from '../components/Footer';
 import ThinkingHabitsOverview from '../components/ThinkingHabitsOverview';
 import { useStudents } from '../contexts/Students';
+import { useCoach } from '../contexts/Coach';
 import SummaryExpandable from '../components/SummaryExpandable';
 import { format, parseISO, isToday, isYesterday } from 'date-fns';
 import './Home.css';
 
 export default function Home() {
   const navigate = useNavigate();
-  const [stage, setStage] = useState(1);
+  const { stage, setStage } = useCoach(); 
   const { students, setSelectedStudent, setSelectedSession } = useStudents();
 
   // Flatten and transform sessions for display
@@ -53,7 +54,7 @@ export default function Home() {
             </div>
           </section>
         </main>
-        <Footer stage={stage} setStage={setStage} />
+        <Footer/>
       </>
     );
   }
@@ -110,7 +111,7 @@ export default function Home() {
               </div>
             </section>
           </main>
-          <Footer stage={stage} setStage={setStage} />
+          <Footer  />
         </>
       );
   }
@@ -176,7 +177,7 @@ export default function Home() {
           </section>
         ))}
       </main>
-      <Footer stage={stage} setStage={setStage} />
+      <Footer  />
     </>
   );
 }
