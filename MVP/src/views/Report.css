@@ -13,6 +13,7 @@ main#report {
     flex-direction: column;
     overflow-y: auto; /* Enable vertical scrolling for content */
     box-sizing: border-box; /* Include padding in width/height calculations */
+    padding-bottom:5rem;
 }
 
 

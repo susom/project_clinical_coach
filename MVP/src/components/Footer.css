@@ -4,8 +4,13 @@
     flex-direction: column;
     justify-content: flex-end;
     height: 100%;
-    background-color: ##fff; 
+    background-color: #fff; 
     box-shadow:0 -2px 3px #85859E;
+    
+    padding-bottom: env(safe-area-inset-bottom); /* prevent overlap with browser UI */
+    position: sticky; /* or fixed, see below */
+    bottom: 80px;
+    z-index: 100;
 }
 
 /* Global navigation */
@@ -14,6 +19,8 @@
     justify-content: space-around;
     align-items: center;
     padding: 1.5rem 0;
+
+    padding-bottom: calc(1rem + env(safe-area-inset-bottom));
 }
 
 .footer-item {

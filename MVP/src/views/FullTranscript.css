@@ -3,6 +3,7 @@
     flex-direction: column;
     height: 100vh;
     overflow: hidden; /* Prevent body scroll */
+    padding-bottom:5rem;
 }
 
 .transcript-container {

@@ -50,7 +50,7 @@
     gap: 1rem;
     flex-grow: 1; /* Allow cards to grow and scroll */
     overflow-y: auto; /* Enable scrolling for cards */
-    padding: 1rem .75rem 5rem;
+    padding: 1rem .75rem 10rem;
     background: #F0F3F5;
 }
 

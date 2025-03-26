@@ -5,7 +5,7 @@
     flex-direction: column; /* Stack items vertically */
     align-items: stretch; /* Ensure children take full width */
     justify-content: flex-start; /* Align items to the top */
-    padding: 0 0 5rem; /* Top padding to align directly below header */
+    padding: 0 0 10rem; /* Top padding to align directly below header */
     font-family: Arial, sans-serif;
     background: #F0F3F5;
     overflow-y: auto;

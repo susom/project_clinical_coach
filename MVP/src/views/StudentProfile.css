@@ -3,7 +3,7 @@
     flex-direction: column;
     height: 100vh; /* Ensure full viewport height */
     overflow-y: auto; /* Allow scrolling */
-    padding-bottom: 5rem; /* Prevent footer overlap */
+    padding-bottom: 10rem; /* Prevent footer overlap */
     background: #EDF0F3;
 }
 
