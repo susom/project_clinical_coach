@@ -9,7 +9,7 @@
     
     padding-bottom: env(safe-area-inset-bottom); /* prevent overlap with browser UI */
     position: sticky; /* or fixed, see below */
-    bottom: 80px;
+    bottom: 90px;
     z-index: 100;
 }
 
@@ -18,7 +18,7 @@
     display: flex;
     justify-content: space-around;
     align-items: center;
-    padding: .5rem 0 1.5rem;
+    padding: .2rem 0 .2rem;
 }
 
 .footer-item {
