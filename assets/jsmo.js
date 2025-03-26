@@ -130,7 +130,7 @@
                     console.error("❌ Failed to update session in REDCap:", parsedRes.error);
                     errorCallback?.(parsedRes.error);
                 } else {
-                    console.log("✅ Session successfully updated in REDCap!", parsedRes);
+                    console.log("Session successfully updated in REDCap!", parsedRes);
                     callback?.(parsedRes);
                 }
             } catch (err) {
@@ -145,10 +145,10 @@
                 const parsedRes = JSON.parse(res);
 
                 if (parsedRes.error) {
-                    console.error("❌ Failed to update session in REDCap:", parsedRes.error);
+                    console.error("Failed to update session in REDCap:", parsedRes.error);
                     errorCallback?.(parsedRes.error);
                 } else {
-                    console.log("✅ Session successfully updated in REDCap!", parsedRes);
+                    console.log("Session successfully updated in REDCap!", parsedRes);
                     callback?.(parsedRes);
                 }
             } catch (err) {

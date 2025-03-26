@@ -28,7 +28,7 @@ export default function Report() {
     const the_session = selectedStudent.sessions.find(s => String(s.session_id) === String(selectedSession));
     // console.log("coach", coach);
     // console.log("selectedStudent", selectedStudent);
-    console.log("the_session", the_session);
+    // console.log("the_session", the_session);
 
     if (!the_session) {
         return <div className="error-message">⚠️ No session data found. Please go back and try again.</div>;
@@ -41,7 +41,7 @@ export default function Report() {
     const sessionDate = the_session?.session_date || "Unknown Time";
     const reflections = the_session?.reflections || [];
 
-    // ✅ Ensure summary and thinking habits report are objects, not strings
+    // Ensure summary and thinking habits report are objects, not strings
     const parsedSummary = cleanAndParseJSON(the_session.summary, {});
     const parsedThmReport = cleanAndParseJSON(the_session.thm_report, {});
 
@@ -85,7 +85,6 @@ export default function Report() {
     // Extract Strengths from Reflections
     let strengths = [];
     if (parsedThmReport && Array.isArray(parsedThmReport.positiveFeedback)) {
-        console.log("parsedThmReport", parsedThmReport);
         strengths = parsedThmReport.positiveFeedback.reduce((acc, feedbackStr) => {
             const parts = feedbackStr.split(':');
             if (parts.length >= 2) {
@@ -102,8 +101,6 @@ export default function Report() {
         }, []);
     }
 
-    console.log("strengths", strengths);
-
     useEffect(() => {
         const initialPrompts = Object.entries(parsedReflections).map(([key, reflection]) => ({
             title: reflection.report_title || key.charAt(0).toUpperCase() + key.slice(1),
@@ -113,7 +110,6 @@ export default function Report() {
                 ? [] 
                 : (reflection.coaching_insights?.coaching_questions || []).map((prompt) => {
                     const matchedRating = reflection.rating?.find(r => r.prompt === prompt);
-                    console.log("reflection rationg?", reflection.rating);
                     return {
                         text: prompt,
                         rating: matchedRating ? matchedRating.rating : null // ✅ Match by prompt text
@@ -127,7 +123,6 @@ export default function Report() {
             thm_overall_score: reflection?.thm_overall_score || 0
         }));
     
-        console.log("prompts data", initialPrompts);
         setPromptsData(initialPrompts);
     }, [the_session, coach]); 
 
@@ -174,44 +169,49 @@ export default function Report() {
     };
 
     const handleFeedback = (habit, promptIdx, type) => {
+        if (!habit || !habit.prompts?.[promptIdx]) {
+            console.error("Invalid habit or prompt index");
+            return;
+        }
+    
         const newRating = habit.prompts[promptIdx].rating === type ? null : type;
     
-        // 🔥 Update the matching rating object
-        const updatedRatings = habit.rating.map(r =>
-            r.prompt === habit.prompts[promptIdx].text ? { ...r, rating: newRating } : r
-        );
+        // Ensure habit.rating exists and correctly updates only the matched prompt
+        const updatedRatings = habit.rating?.map(r =>
+            r.prompt === habit.prompts[promptIdx].text ? { ...r, rating: newRating || "" } : r
+        ) || [];
     
         const updatedPrompts = habit.prompts.map((prompt, idx) =>
-            idx === promptIdx ? { ...prompt, rating: newRating } : prompt
+            idx === promptIdx ? { ...prompt, rating: newRating || "" } : prompt
         );
     
-        const updatedPromptsData = promptsData.map(h =>
+        const updatedPromptsData = promptsData?.map(h =>
             h.category === habit.category ? { ...h, prompts: updatedPrompts, rating: updatedRatings } : h
-        );
+        ) || [];
     
-        setPromptRatings(updatedPromptsData);
-    
-        // 🔥 Send the full updated ratings array to REDCap
+        // Payload with the exact rating string (no arrays)
         const payload = {
             coach_id: habit.coach_id,
             student_id: habit.student_id,
             sess_id: habit.sess_id,
             category: habit.category,
             prompt: habit.prompts[promptIdx].text,
-            rating: updatedRatings  // ✅ Now correctly updating the matching prompt
+            rating: newRating || ""  
         };
     
         window.clinical_coach_jsmo_module.savePromptRating(
             JSON.stringify(payload),
             (res) => {
                 console.log("RATING SAVED SUCCESSFULLY:", res);
+                setPromptsData(updatedPromptsData); 
             },
             (err) => {
                 console.error("SAVE PROMPT RATING ERROR:", err);
-                setPromptRatings(promptsData); // Revert on failure
             }
         );
     };
+    
+    
 
     const getScoreClass = (score) => {
         switch (score) {
