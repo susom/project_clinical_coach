@@ -18,9 +18,7 @@
     display: flex;
     justify-content: space-around;
     align-items: center;
-    padding: 1.5rem 0;
-
-    padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+    padding: .5rem 0 1.5rem;
 }
 
 .footer-item {
