@@ -36,61 +36,6 @@ const VoiceRecorder = ({ navigate }) => {
         setElapsedTime(0); // Resets the elapsed time to zero
     };
 
-    // Effect to handle audio element errors for the preview
-    useEffect(() => {
-        const audioElement = document.querySelector('audio'); // Selects the audio element in the DOM
-        if (audioElement) {
-            audioElement.onerror = () => {
-                console.error('Error loading audio preview.'); // Logs an error if the audio preview fails to load
-            };
-        }
-    }, [previewUrl]); // Runs whenever the `previewUrl` changes
-
-    // Effect to clean up Web Audio API resources and animations
-    useEffect(() => {
-        return () => {
-            if (audioContextRef.current) {
-                audioContextRef.current.close(); // Closes the AudioContext to release resources
-            }
-            if (animationFrameRef.current) {
-                cancelAnimationFrame(animationFrameRef.current); // Cancels any active animation frames for the waveform
-            }
-        };
-    }, []); // Runs once when the component unmounts
-
-    useEffect(() => {
-        console.log('my current state is', mediaRecorderRef.current)
-
-        if (state === 'recording' && !isResuming) {
-            console.log('Starting MediaRecorder and timer...');
-            if (mediaRecorderRef.current) {
-                mediaRecorderRef.current.start(); // Starts the MediaRecorder for audio recording
-                console.log('MediaRecorder started.');
-
-                // Starts a timer to track elapsed time
-                timerRef.current = setInterval(() => {
-                    setElapsedTime((prevElapsedTime) => {
-                        if (prevElapsedTime + 1 >= MAX_RECORDING_TIME) {
-                            stopRecording(); // Stops recording if the max time is reached
-                            return MAX_RECORDING_TIME; // Ensures the time doesn't exceed the max limit
-                        }
-                        return prevElapsedTime + 1; // Increments the elapsed time
-                    });
-                }, 1000);
-            }
-        }
-        // Temp fix to prevent crash
-        if(isResuming)
-            drawWaveform();
-
-    }, [state, isResuming]); // Adds `isResuming` to the dependency array
-
-    // Effect to clean up the timer interval when the component unmounts
-    useEffect(() => {
-        return () => clearInterval(timerRef.current); // Clears the interval to avoid memory leaks
-    }, []);
-
-
     // Calculates the remaining recording time
     const remainingTime = MAX_RECORDING_TIME - elapsedTime; // Subtracts elapsed time from the max recording time
     const minutesRemaining = Math.floor(remainingTime / 60); // Converts the remaining time to minutes
@@ -326,7 +271,13 @@ const VoiceRecorder = ({ navigate }) => {
             // Start the timer
             clearTimer(); // Ensure no previous timer is running
             timerRef.current = setInterval(() => {
-                setElapsedTime((prev) => prev + 1);
+                setElapsedTime((prevElapsedTime) => {
+                    if (prevElapsedTime + 1 >= MAX_RECORDING_TIME) {
+                        stopRecording(); // Stops recording if the max time is reached
+                        return MAX_RECORDING_TIME; // Ensures the time doesn't exceed the max limit
+                    }
+                    return prevElapsedTime + 1; // Increments the elapsed time
+                });
             }, 1000);
 
         } catch (error) {
@@ -384,7 +335,13 @@ const VoiceRecorder = ({ navigate }) => {
             setIsResuming(true); // Indicates that the state change to 'recording' is due to a resume action TEMP FIX
             setState('recording'); // Updates the state
             timerRef.current = setInterval(() => {
-                setElapsedTime((prevElapsedTime) => prevElapsedTime + 1); // Continues incrementing elapsed time
+                setElapsedTime((prevElapsedTime) => {
+                    if (prevElapsedTime + 1 >= MAX_RECORDING_TIME) {
+                        stopRecording(); // Stops recording if the max time is reached
+                        return MAX_RECORDING_TIME; // Ensures the time doesn't exceed the max limit
+                    }
+                    return prevElapsedTime + 1; // Increments the elapsed time
+                });
             }, 1000);
         }
     };
@@ -403,6 +360,48 @@ const VoiceRecorder = ({ navigate }) => {
         setPreviewUrl(''); // Clear preview URL
         setState('pre-record'); // Reset to stage 1
     };
+
+    // Effect to handle audio element errors for the preview
+    useEffect(() => {
+        const audioElement = document.querySelector('audio'); // Selects the audio element in the DOM
+        if (audioElement) {
+            audioElement.onerror = () => {
+                console.error('Error loading audio preview.'); // Logs an error if the audio preview fails to load
+            };
+        }
+    }, [previewUrl]); // Runs whenever the `previewUrl` changes
+
+    // Effect to clean up Web Audio API resources and animations
+    useEffect(() => {
+        return () => {
+            if (audioContextRef.current) {
+                audioContextRef.current.close(); // Closes the AudioContext to release resources
+            }
+            if (animationFrameRef.current) {
+                cancelAnimationFrame(animationFrameRef.current); // Cancels any active animation frames for the waveform
+            }
+        };
+    }, []); // Runs once when the component unmounts
+
+    useEffect(() => {
+        console.log('my current state is', mediaRecorderRef.current)
+
+        if (state === 'recording' && !isResuming) {
+            console.log('Starting MediaRecorder and timer...');
+            if (mediaRecorderRef.current) {
+                mediaRecorderRef.current.start(); // Starts the MediaRecorder for audio recording
+            }
+        }
+        // Temp fix to prevent crash
+        if(isResuming)
+            drawWaveform();
+
+    }, [state, isResuming]); // Adds `isResuming` to the dependency array
+
+    // Effect to clean up the timer interval when the component unmounts
+    useEffect(() => {
+        return () => clearInterval(timerRef.current); // Clears the interval to avoid memory leaks
+    }, []);
 
     return (
         <div className="vr_recording-controls">
