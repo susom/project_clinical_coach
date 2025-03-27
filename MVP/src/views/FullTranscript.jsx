@@ -19,7 +19,6 @@ export default function FullTranscript() {
 
     const the_session = selectedStudent.sessions.find(s => String(s.session_id) === String(category));
 
-
     if (!the_session || !the_session.transcript) {
         return (
             <>
@@ -46,18 +45,35 @@ export default function FullTranscript() {
 
                 <section className="transcript-container">
                     <p className="error-warning">*POSSIBLE TRANSCRIPT ERRORS ARE [BRACKETED]</p>
-                    <div className="transcript-entry">
-                        <span className="transcript-number">1</span>
-                        <div className="transcript-content">
-                            <p className="transcript-time">00:00:00</p>
-                            <p className="transcript-text">
-                                {the_session.transcript}
-                            </p>
+                    {parseSRT(the_session.transcript).map(entry => (
+                        <div key={entry.id} className="transcript-entry">
+                            <span className="transcript-number">{entry.id}</span>
+                            <div className="transcript-content">
+                                <p className="transcript-time">{entry.timeRange}</p>
+                                <p className="transcript-text">{entry.text}</p>
+                            </div>
                         </div>
-                    </div>
+                    ))}
                 </section>
             </main>
             <Footer />
         </>
     );
+}
+
+function parseSRT(srtText) {
+    const entries = srtText.trim().split(/\n\s*\n/); // split by blank lines
+    return entries.map((entry, idx) => {
+        const lines = entry.split('\n');
+        const number = lines[0];
+        const [startRaw, endRaw] = (lines[1] || '').split(' --> ') || [];
+        const start = startRaw?.split(',')[0] || '00:00:00';
+        const end = endRaw?.split(',')[0] || '';
+        const text = lines.slice(2).join(' ').trim();
+        return {
+            id: Number(number) || idx + 1,
+            timeRange: `${start} → ${end}`,
+            text
+        };
+    });
 }

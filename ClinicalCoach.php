@@ -488,7 +488,7 @@ class ClinicalCoach extends \ExternalModules\AbstractExternalModule {
                         'file' => $tempFilePath, // Pass WAV directly
                         'language' => 'en',
                         'temperature' => '0.0',
-                        'format' => 'json'
+                        'response_format' => 'srt'
                     ];
 
                     if ($this->getProjectSetting("whisper-language")) {
