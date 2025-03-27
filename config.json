@@ -74,6 +74,12 @@
 			"type": "checkbox"
 		},
         {
+            "key": "feedback-url",
+            "name": "URL for Feedback Submission",
+            "required": false,
+            "type": "text"
+        },
+        {
             "key": "system_context_summarize",
             "name": "Raw text to inject into system context for Overall summarization",
             "required": true,

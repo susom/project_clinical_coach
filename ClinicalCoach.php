@@ -796,7 +796,11 @@ class ClinicalCoach extends \ExternalModules\AbstractExternalModule {
     
         return $sessions;
     }
-    
+
+    public function getFeedbackURL(){
+        $url = $this->getProjectSetting("feedback-url");
+        return empty($url) ? null : $url;
+    }
 
     // In ClinicalCoach.php
     public function getCoaches($user_id=null): array

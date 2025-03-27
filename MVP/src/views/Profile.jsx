@@ -34,6 +34,12 @@ export default function Profile() {
         // Add functionality here
     };
 
+    const handleFeedback = () => {
+        if (window.feedbackURL) {
+            window.open(window.feedbackURL, '_blank');
+        }
+    };
+
     const handleLogout = async () => {
         const confirmed = await showConfirmModal({
             title: 'Logout Now?',
@@ -88,11 +94,13 @@ export default function Profile() {
                         <span>Help</span>
                         <i className="fas fa-chevron-right"></i>
                     </button>
-                    <button className="profile-option" onClick={handleAbout}>
+                    {window.feedbackURL && (
+                    <button className="profile-option" onClick={handleFeedback}>
                         <i className="fas fa-info-circle"></i>
-                        <span>About</span>
+                        <span>Submit Feedback</span>
                         <i className="fas fa-chevron-right"></i>
                     </button>
+                    )}
                     <button className="profile-option logout" onClick={handleLogout}>
                         <i className="fas fa-sign-out-alt"></i>
                         <span>Log Out</span>

@@ -25,7 +25,6 @@
 @supports (-webkit-touch-callout: none) and (not (translate: none)) {
   .global-nav {
     padding: .2rem 0 2rem; /* override for Chrome on iOS */
-    border:1px solid red;
   }
 }
 
@@ -37,11 +36,12 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0.3rem;
+    gap: 0rem;
 }
 
 .footer-item .footer-icon {
     font-size: 1.5rem;
+    display:block;
     color: #999;
 }
 

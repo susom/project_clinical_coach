@@ -52,6 +52,8 @@ $build_files = $module->generateAssetFiles();
     // $userInfo = \User::getUserInfo(USERID);
     $coaches = $module->getCoaches(USERID);
     $cmds[] = "window.coachesList = " . json_encode($coaches);
+
+    $cmds[] = "window.feedbackURL = '" . $module->getFeedbackURL() ."'";
     ?>
 
     <!-- Custom JS -->
