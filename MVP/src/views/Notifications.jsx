@@ -11,7 +11,6 @@ export default function Notifications() {
     const navigate = useNavigate();
     const { coach } = useCoach();
     const { students, callAIAnalysis, setSelectedStudent, setSelectedSession } = useStudents();
-
     const [processedSessions, setProcessedSessions] = useState(new Set());
     const [completedSessions, setCompletedSessions] = useState(new Set());
 
@@ -20,7 +19,7 @@ export default function Notifications() {
         console.log("sesssions, get example here and tell it ot make it same in callAI", student.sessions);
         
         return student.sessions
-            ?.filter(session => session.status) // ✅ Only include sessions with a status
+            ?.filter(session => session.status) // ✅ Only include sessions with a status 
             .map(session => ({
                 student: student, 
                 studentName: student.name,
@@ -35,10 +34,9 @@ export default function Notifications() {
     });
 
     useEffect(() => {
-        console.log("🚀 Auto-triggering AI analysis for pending notifications...");
-
         pendingNotifications.forEach(async (notification) => {
-            if (!processedSessions.has(notification.session_id)) {
+            if (!processedSessions.has(notification.session_id) && notification.status == "pending") {
+                console.log("Auto-triggering AI analysis for pending notifications...");
                 console.log(`⚡ Sending Session to AI Analysis...`);
 
                 try {
@@ -48,7 +46,7 @@ export default function Notifications() {
 
                     setProcessedSessions(prev => new Set([...prev, notification.session_id]));
                 } catch (error) {
-                    console.error(`❌ AI Analysis Failed:`, error);
+                    console.error(`AI Analysis Failed:`, error);
                 }
             }
         });
@@ -65,7 +63,6 @@ export default function Notifications() {
             console.warn("⚠️ No session found for ID:", session_id);
         }
     };
-
 
     return (
         <>
@@ -96,15 +93,13 @@ export default function Notifications() {
                                     </div>
                                 </div>
                                 <div className="notification-status">
-                                        {/* Show "Conversation is being processed..." if transcript isn't ready */}
                                     {!notification.transcript ? (
                                         <p>Conversation is being processed...</p>
                                     ) : (
                                         <SummaryExpandable text={notification.transcript} />
                                     )}
 
-                                    {/* If session is fully processed, show "View Report" button */}
-                                    {completedSessions.has(notification.session_id) ? (
+                                    {(notification.status == "complete") ? (
                                         <button 
                                             className="view-report-button"
                                             onClick={() => handleSessionClick(notification.student, notification.session_id)}

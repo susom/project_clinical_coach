@@ -24,7 +24,7 @@ const VoiceRecorder = ({ navigate }) => {
     const animationFrameRef = useRef(null); // To manage the animation frame
     const [isUploading, setIsUploading] = useState(false); // Tracks the uploading state
     const { showConfirmModal } = useConfirmModal();
-    const { selectedStudent, updateStudent, createNewSession } = useStudents();
+    const { selectedStudent, updateStudent, createNewSession, setIsProcessing, setHasNewNotifications } = useStudents();
     const { coach , setStage } = useCoach();
 
     // Function to clear the timer and reset elapsed time
@@ -192,6 +192,9 @@ const VoiceRecorder = ({ navigate }) => {
               return session;
             });
         
+            setIsProcessing(true);
+            setHasNewNotifications(false);
+
             // Fire off AJAX call in the background
             callAjax(formData, async (rawResponse) => {
               try {
