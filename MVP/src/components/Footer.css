@@ -18,7 +18,15 @@
     display: flex;
     justify-content: space-around;
     align-items: center;
-    padding: .2rem 0 1rem;
+    padding: .2rem 0;
+}
+
+/* Chrome on iOS only */
+@supports (-webkit-touch-callout: none) and (not (translate: none)) {
+  .global-nav {
+    padding: .2rem 0 2rem; /* override for Chrome on iOS */
+    border:1px solid red;
+  }
 }
 
 .footer-item {
