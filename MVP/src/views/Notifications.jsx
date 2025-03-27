@@ -104,7 +104,7 @@ export default function Notifications() {
                                             className="view-report-button"
                                             onClick={() => handleSessionClick(notification.student, notification.session_id)}
                                         >
-                                            View Report <i className="fas fa-check-circle"></i>
+                                            View Coaching Report <i className="fas fa-check-circle"></i>
                                         </button>
                                     ) : (
                                         <button className="processing-button">

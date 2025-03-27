@@ -168,7 +168,7 @@ export default function Home() {
                         navigate(`/report`);
                       }}
                     >
-                      <div className="report-status-text" title={session.session_id}>COMPLETE</div>
+                      <div className="report-status-text" title={session.session_id}>View Coaching Report</div>
                     </div>
                   </>
                 </div>
