@@ -63,7 +63,13 @@
     z-index: 0;
 }
 
-
+.footer-item span {
+    line-height: 1.2;
+    font-size: 0.8rem;
+    min-height: 1rem; /* force space for text */
+    display: block;
+  }
+  
 
 .footer-item:hover {
     color: #333; /* Optional hover effect */
