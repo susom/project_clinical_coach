@@ -21,11 +21,12 @@
     padding: .2rem 0 2rem;
 }
 
-/* Chrome on iOS only */
-@supports (-webkit-touch-callout: none) and (not (translate: none)) {
-  .global-nav {
-    padding: .2rem 0 2rem; /* override for Chrome on iOS */
-  }
+@media not all and (min-resolution: 0.001dpcm) {
+    @supports (-webkit-appearance: none) {
+        .global-nav {
+        padding: 0.2rem 0 !important; /* Safari-specific padding */
+        }
+    }
 }
 
 .footer-item {
@@ -54,7 +55,6 @@
 
 .footer-item.active i,
 .footer-item.active img{
-    position:relative;
     z-index:1;
 }
 
@@ -163,3 +163,37 @@
 }
 
 
+.notification-wrapper {
+    position: relative;
+    display: inline-block;
+  }
+  
+  .notification-dot {
+    position: absolute;
+    top: -2px;
+    right: -4px;
+    width: 0.5rem;
+    height: 0.5rem;
+    background-color: red;
+    border-radius: 50%;
+    z-index: 2;
+  }
+  
+  .overlay-icon {
+    position: absolute;
+    top: -4px;
+    right: -6px;
+    font-size: 0.6rem;
+    color: gold;
+    z-index: 2;
+  }
+  
+  .spinning {
+    animation: spin 1.2s linear infinite;
+  }
+  
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  

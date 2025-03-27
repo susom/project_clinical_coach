@@ -15,6 +15,9 @@ export const StudentsProvider = ({ children }) => {
     const [selectedSession, setSelectedSession] = useState();
     const [lastFetchedCoachId, setLastFetchedCoachId] = useState(null);
     const [notifications, setNotifications] = useState([]);
+    const [isProcessing, setIsProcessing] = useState(false);
+    const [hasNewNotifications, setHasNewNotifications] = useState(false);
+
 
     useEffect(() => {
         // If there's a valid coach AND we haven't fetched for this coach yet
@@ -99,6 +102,7 @@ export const StudentsProvider = ({ children }) => {
     const callAIAnalysis = async (session_id, coach_id, updateUI = () => {}) => {
         console.log(`🚀 Initiating AI Analysis for Session ${session_id}...`);
     
+        setIsProcessing(true);
         const payload = { session_id, coach_id };
     
         return new Promise((resolve) => {
@@ -108,20 +112,24 @@ export const StudentsProvider = ({ children }) => {
                     console.log(`✅ AI Response for Session ${session_id}:`, response);
     
                     try {
+                        setIsProcessing(false);
+                        setHasNewNotifications(true);
                         updateStudentFromAIResponse(session_id, response); // ✅ Use existing update function
     
                         updateUI(session_id); // ✅ Mark session complete in UI
     
                         resolve("✅ AI Analysis Completed");
                     } catch (error) {
-                        console.error(`❌ Failed to process AI response for Session ${session_id}:`, error);
+                        console.error(`Failed to process AI response for Session ${session_id}:`, error);
                         resolve("✅ UI updated, but AI data processing failed");
                     }
                 },
                 (error) => {
-                    console.error(`❌ AI Analysis Error for Session ${session_id}:`, error);
+                    console.error(`AI Analysis Error for Session ${session_id}:`, error);
+                    setIsProcessing(false);
+                    setHasNewNotifications(true);
                     updateUI(session_id); // ✅ Ensure UI still updates
-                    resolve("❌ AI Error - Session marked complete in UI");
+                    resolve("AI Error - Session marked complete in UI");
                 }
             );
         });
@@ -201,6 +209,10 @@ export const StudentsProvider = ({ children }) => {
                 selectedSession,
                 setSelectedSession,
                 notifications,
+                isProcessing,
+                hasNewNotifications,
+                setIsProcessing,
+                setHasNewNotifications
             }}
         >
             {children}

@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Link, useLocation } from 'react-router-dom';
 import { useCoach } from '../contexts/Coach';
+import { useStudents } from '../contexts/Students';
 import RecordingFooter from './RecordingFooter';
 import './Footer.css';
 import thmIcon from '../assets/images/thm_icon.png';
@@ -10,6 +11,7 @@ function Footer() {
     const navigate = useNavigate();
     const location = useLocation();
     const { stage, setStage } = useCoach(); 
+    const { setIsProcessing, isProcessing, setHasNewNotifications, hasNewNotifications } = useStudents();
     const currentPath = location.pathname.toLowerCase();
     const isExpanded = stage > 1; // Keep expanded state driven by `stage`
 
@@ -65,7 +67,11 @@ function Footer() {
                     className={`footer-item ${!isRecordingActive && currentPath === '/notifications' ? 'active' : ''}`}
                     onClick={() => setStage(1)}
                 >
-                    <i className="fas fa-bell footer-icon"></i>
+                    <div className="footer-icon notification-wrapper">
+                        <i className="fas fa-bell"></i>
+                        {isProcessing && <i className="fas fa-sync-alt spinning overlay-icon" />}
+                        {!isProcessing && hasNewNotifications && <b className="notification-dot"></b>}
+                    </div>
                     <span>Notifications</span>
                 </Link>
                 <Link
