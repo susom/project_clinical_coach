@@ -101,7 +101,8 @@ export const StudentsProvider = ({ children }) => {
 
     const callAIAnalysis = async (session_id, coach_id, updateUI = () => {}) => {
         console.log(`🚀 Initiating AI Analysis for Session ${session_id}...`);
-    
+        
+        setHasNewNotifications(false);
         setIsProcessing(true);
         const payload = { session_id, coach_id };
     

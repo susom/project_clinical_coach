@@ -84,7 +84,7 @@ class ClinicalCoach extends \ExternalModules\AbstractExternalModule {
                     $coach_id = $data['coach_id'];
                     $reflection_var = $data['reflection_var'] ?? null;
 
-                    // 🔍 Fetch transcription from REDCap repeating instrument
+                    // Fetch transcription from REDCap repeating instrument
                     $params = [
                         'project_id' => $this->getProjectId(),
                         'records'    => [$coach_id],
@@ -141,6 +141,7 @@ class ClinicalCoach extends \ExternalModules\AbstractExternalModule {
                         "format" => "json",
                     ];
 
+
                     $results = [
                         "summary" => [
                             "response" => null,
@@ -155,13 +156,14 @@ class ClinicalCoach extends \ExternalModules\AbstractExternalModule {
 
                     // Step 1: Process the main system context
                     if (!$reflection_var && !empty($main_system_context) ) {
-                        $this->emDebug("Processing main system context");
+                        $this->emDebug("Calling summary AI with main context", $main_system_context);
                         $summaryResult = $this->processAIResponse(
                             $model,
                             $main_system_context,
                             $transcription,
                             $defaultParams
                         );
+                        $this->emDebug("Summary response raw", $summaryResult);
 
                         if(!empty($summaryResult["response"]["response"])){
                             $results["summary"]["response"] = $summaryResult["response"]["response"];
@@ -169,12 +171,13 @@ class ClinicalCoach extends \ExternalModules\AbstractExternalModule {
 
                         if (!empty($summaryResult["content"])) {
                             // 🛠️ Sanitize and validate JSON
-                            $sanitizedJson = $this->sanitizeJson($summaryResult["content"]);
+                            $sanitizedJson = $this->sanitizeAndCleanJson($summaryResult["content"]);
 
                             // ✅ Save the result (whether valid JSON or an error message)
                             $updateResult = $this->updateRepeatingInstrument($coach_id, $session_id, 'session_logs', [
                                 'sess_main_summary' => $sanitizedJson
                             ]);
+                            $this->emDebug("Saved sess_main_summary", $updateResult);
 
                             // 📝 Log any errors from the update
                             if (!empty($updateResult['errors'])) {
@@ -188,7 +191,6 @@ class ClinicalCoach extends \ExternalModules\AbstractExternalModule {
                         $results["summary"]["content"] = "Main system context is missing.";
                     }
                     sleep(2);
-
 
                     //2. Process the reflections
                     $reflectionFieldMap = [
@@ -204,13 +206,14 @@ class ClinicalCoach extends \ExternalModules\AbstractExternalModule {
                         $fieldName = $reflectionFieldMap[$index];
                         if ($reflection_var && $reflection_var !== $fieldName) continue;
 
-                        $this->emDebug("Processing reflection context : " . $reflectionFieldMap[$index]);
+                        $this->emDebug("Calling reflection AI", $fieldName);
                         $reflectionResult = $this->processAIResponse(
                             $model,
                             $reflection_context,
                             $transcription,
                             $defaultParams
                         );
+                        $this->emDebug("Reflection response", $index, $reflectionResult);
 
                         if(!empty($reflectionResult["response"]["response"])){
                             $results["reflections"][$index]["response"] = $reflectionResult["response"]["response"];
@@ -218,13 +221,13 @@ class ClinicalCoach extends \ExternalModules\AbstractExternalModule {
 
                         if (!empty($reflectionResult["content"])) {
                             // 🛠️ Sanitize and validate JSON
-                            $sanitizedJson = $this->sanitizeJson($reflectionResult["content"]);
+                            $sanitizedJson = $this->sanitizeAndCleanJson($reflectionResult["content"]);
 
                             // ✅ Save the result (whether valid JSON or an error message)
                             $updateResult = $this->updateRepeatingInstrument($coach_id, $session_id, 'session_logs', [
                                 $reflectionFieldMap[$index] => $sanitizedJson
                             ]);
-
+                            
                             // 📝 Log any errors from the update
                             if (!empty($updateResult['errors'])) {
                                 $this->emDebug("❌ Error saving sess_main_summary:", $updateResult['errors']);
@@ -238,29 +241,61 @@ class ClinicalCoach extends \ExternalModules\AbstractExternalModule {
                                 $scoreUpdateResult = $this->updateRepeatingInstrument($coach_id, $session_id, 'session_logs', [
                                     $reflectionFieldMap[$index] . "_score" => $jsonResult["thm_overall_score"]
                                 ]);
+                                $this->emDebug("Score save result", $reflectionFieldMap[$index] . "_score", $scoreUpdateResult);
                             }
                         }
-                        sleep(3);
+                        sleep(1);
                     }
 
                     if (!$reflection_var && !empty($main_system_final)) {
-                        $this->emDebug("Processing final reflection summary");
-
                         // 📝 Prepare final messages (system + user input)
-                        $finalMessages = [
-                            ["role" => "system", "content" => $main_system_final],
-                            ["role" => "user", "content" => $transcription]
-                        ];
+                        $finalMessages = [];
 
-                        // 🔄 Append all reflection responses
-                        foreach ($results["reflections"] as $reflection) {
-                            if (!empty($reflection["content"])) {
-                                $finalMessages[] = [
-                                    "role" => "assistant",
-                                    "content" => json_encode($reflection["content"])
-                                ];
+                        if ($this->isGeminiModel($model)) {
+                            // 🔹 Gemini-style: Flatten all reflections into one user message
+                            $reflectionsConcat = '';
+                            foreach ($results["reflections"] as $i => $reflection) {
+                                if (!empty($reflection["content"])) {
+                                    $reflectionsConcat .= "\n\nReflection " . ($i+1) . ":\n";
+                                    $reflectionsConcat .= is_array($reflection["content"])
+                                        ? json_encode($reflection["content"], JSON_PRETTY_PRINT)
+                                        : $reflection["content"];
+                                }
                             }
+
+                            $finalMessages[] = [
+                                "role" => "system",
+                                "content" => $main_system_final
+                            ];
+
+                            $finalMessages[] = [
+                                "role" => "user",
+                                "content" => $transcription .
+                                    "\n\n---\n\nPrior Reflections:\n" . $reflectionsConcat .
+                                    "\n\nPlease generate a final self-reflection summary."
+                            ];
+
+                        } else {
+                            // 🔹 GPT-style: Native ChatML message array
+                            $finalMessages[] = ["role" => "system", "content" => $main_system_final];
+                            $finalMessages[] = ["role" => "user", "content" => $transcription];
+
+                            foreach ($results["reflections"] as $reflection) {
+                                if (!empty($reflection["content"])) {
+                                    $finalMessages[] = [
+                                        "role" => "assistant",
+                                        "content" => is_array($reflection["content"])
+                                            ? json_encode($reflection["content"], JSON_PRETTY_PRINT)
+                                            : $reflection["content"]
+                                    ];
+                                }
+                            }
+
+                            $finalMessages[] = ["role" => "user", "content" => "Please generate a final self-reflection summary."];
                         }
+
+
+                        $this->emDebug("Final message payload", $finalMessages);
 
                         // 🔥 Call AI for final summary
                         $finalResponse = $this->getSecureChatInstance()->callAI(
@@ -268,6 +303,7 @@ class ClinicalCoach extends \ExternalModules\AbstractExternalModule {
                             array_merge(["messages" => $finalMessages], $defaultParams),
                             PROJECT_ID
                         );
+                        $this->emDebug("Final AI response", $finalResponse);
 
                         if(!empty($finalResponse["response"]["response"])){
                             $results["final"]["response"] = $finalResponse["response"]["response"];
@@ -275,7 +311,7 @@ class ClinicalCoach extends \ExternalModules\AbstractExternalModule {
 
                         if (!empty($finalResponse["content"])) {
                             // 🛠️ Sanitize and validate JSON
-                            $sanitizedJson = $this->sanitizeJson($finalResponse["content"]);
+                            $sanitizedJson = $this->sanitizeAndCleanJson($finalResponse["content"]);
 
                             // ✅ Save the result (whether valid JSON or an error message)
                             $updateResult = $this->updateRepeatingInstrument($coach_id, $session_id, 'session_logs', [
@@ -508,11 +544,11 @@ class ClinicalCoach extends \ExternalModules\AbstractExternalModule {
                     $result = $this->formatResponse($response);
                     $this->emDebug("Formatted Whisper API result:", $result);
 
-                    // ✅ Step 1: Store WAV file first
+                    // Step 1: Store WAV file first
                     $docId = \REDCap::storeFile($tempFilePath, $this->getProjectId());
 
                     if (!$docId) {
-                        $this->emDebug("❌ Failed to store WAV file in REDCap.");
+                        $this->emDebug("Failed to store WAV file in REDCap.");
                         unlink($tempFilePath);
                         return json_encode(["error" => "Failed to store WAV file."]);
                     }
@@ -520,15 +556,15 @@ class ClinicalCoach extends \ExternalModules\AbstractExternalModule {
                     $newInstanceId = $this->getNextInstanceId($coachId);
                     $sessionId = "{$studentId}-{$newInstanceId}"; // Generate unique session ID
 
-                    // ✅ Save Transcription + Metadata to REDCap
+                    // Save Transcription + Metadata to REDCap
                     $recordData = [
-                        'record_id' => $coachId,  // ✅ Main REDCap record (coach)
-                        'redcap_repeat_instrument' => 'session_logs', // ✅ Replace with your instrument name
-                        'redcap_repeat_instance' => $newInstanceId, // ✅ REDCap will auto-assign the next available instance
-                        'session_learner_id' => $studentId, // ✅ Student associated with the session
+                        'record_id' => $coachId,  // Main REDCap record (coach)
+                        'redcap_repeat_instrument' => 'session_logs', // Replace with your instrument name
+                        'redcap_repeat_instance' => $newInstanceId, // REDCap will auto-assign the next available instance
+                        'session_learner_id' => $studentId, // Student associated with the session
                         'session_date' => $sessionDate,
                         'session_transcript_raw' => json_decode($result['response']['content'] ?? '{}', true)['text'] ?? '',
-                        'session_audio_raw_1' => $docId, // ✅ Store doc_id in the same request
+                        'session_audio_raw_1' => $docId, // Store doc_id in the same request
                         'session_id' => $sessionId,
                     ];
 
@@ -540,15 +576,15 @@ class ClinicalCoach extends \ExternalModules\AbstractExternalModule {
                         return json_encode(["error" => "Failed to save session."]);
                     }
 
-                    $this->emDebug("✅ Session + WAV file successfully saved to REDCap!", $saveResult);
+                    $this->emDebug("Session + WAV file successfully saved to REDCap!", $saveResult);
 
-                    // ✅ Cleanup temp file
+                    // Cleanup temp file
                     unlink($tempFilePath);
 
                     return json_encode([
-                        "session_id" => $sessionId, // ✅ Include session_id in response
+                        "session_id" => $sessionId, // Include session_id in response
                         "text" => json_decode($result['response']['content'] ?? '{}', true)['text'] ?? '',
-                        "status" => "incomplete" // ✅ Keep track of processing status
+                        "status" => "incomplete" // Keep track of processing status
                     ]);
 
                 
@@ -657,6 +693,11 @@ class ClinicalCoach extends \ExternalModules\AbstractExternalModule {
     }
 
 
+    private function isGeminiModel($model) {
+        return stripos($model, 'gemini') !== false;
+    }
+    
+
     public function formatResponse($response) {
         $content = $this->getSecureChatInstance()->extractResponseText($response);
         $role = $response['choices'][0]['message']['role'] ?? 'assistant';
@@ -694,24 +735,34 @@ class ClinicalCoach extends \ExternalModules\AbstractExternalModule {
                 ["role" => "user", "content" => $userInput]
             ];
 
-            // 🔥 Call AI securely
+            $this->emDebug("Calling SecureChatAI", [
+                "model" => $model,
+                "messages" => $messages,
+                "params" => $defaultParams
+            ]);
+            
+            // Call AI securely
             $response = $this->getSecureChatInstance()->callAI(
                 $model,
                 array_merge(["messages" => $messages], $defaultParams),
                 PROJECT_ID
             );
 
-            // 🎯 Process and clean response
+            // Process and clean response
             $result = $this->formatResponse($response);
-            $cleanedContent = $this->sanitizeJson($result['response']['content'] ?? '');
+            $cleanedContent = $this->sanitizeAndCleanJson($result['response']['content'] ?? '');
 
-            // ✅ Return structured result
+            $this->emDebug("processAIResponse", [
+                "response" => $result,
+                "content" => $cleanedContent
+            ]);
+            // Return structured result
             return [
                 "response" => $result,
                 "content" => $cleanedContent
             ];
         } catch (Exception $e) {
-            $this->emDebug("❌ AI Processing Error:", $e->getMessage());
+            $this->emDebug("AI Processing Error", $e->getMessage(), $e->getTraceAsString());
             return [
                 "response" => null,
                 "content" => "Error generating response: " . $e->getMessage()
@@ -793,6 +844,7 @@ class ClinicalCoach extends \ExternalModules\AbstractExternalModule {
                 }
             }
         }
+        $this->emDebug($sessions);
     
         return $sessions;
     }
@@ -845,56 +897,92 @@ class ClinicalCoach extends \ExternalModules\AbstractExternalModule {
      * @param string $jsonString The raw JSON string from AI.
      * @return array|null Returns a decoded array or null on failure.
      */
-    private function sanitizeJson($jsonString) {
-        // 🔹 Remove Markdown-style JSON wrappers (```json ... ```)
-        $cleanedJson = preg_replace('/^```json|```$/', '', trim($jsonString));
+    private function sanitizeAndCleanJson($jsonString) {
+        // STEP 1: REMOVE MARKDOWN + TRIM TO FIRST/FULL BRACE
+        $json = trim($jsonString);
+        $json = preg_replace('/^```(?:json)?\s*/', '', $json); // kill opening triple backticks
+        $json = preg_replace('/```$/', '', $json);             // kill closing triple backticks
+        $json = preg_replace('/^[^{]*(\{.*\})[^}]*$/s', '$1', $json); // extract outer JSON
     
-        // 🔧 Fix malformed key-value structures
+        // STEP 2: FLATTEN LINES, UNESCAPE, AND REDUCE GARBAGE
+        $json = str_replace(["\\n", "\\r", "\n", "\r"], ' ', $json);
+        $json = preg_replace('/\\\\+/', '\\', $json); // normalize backslashes
+        $json = preg_replace('/\\\\"/', '"', $json);  // remove escape slashes from quotes
+    
+        // STEP 3: FIX VARIABLES + BRACKET GOO
+        $json = preg_replace('/\$[a-zA-Z0-9_]+\$/', '"Unknown"', $json); // $var$
+        $json = preg_replace('/\{(\w+)\}:/', '"$1":', $json);            // {key}:
+        $json = preg_replace('/supporting_citations\s*"?:/', '"supporting_citations":', $json);
+    
+        // STEP 4: COMMON STRUCTURE PATCHES
         $patterns = [
-            '/(\w+)\s*:\s*([{\[])/',   // Ensure keys are quoted before arrays/objects
-            '/([{,])\s*(\w+)\s*:/',    // Fix missing quotes around keys
-            '/:\s*{/',                 // Ensure consistent formatting of key-value pairs with objects
-            '/"\s*(\w+)\s*"\s*:/',     // Normalize spacing between keys and colons
-            '/,\s*([}\]])/'            // Remove trailing commas before closing brackets
+            '/([{,])\s*(\w+)\s*:/',                                // unquoted keys
+            '/"([^"]+)"\s*:\s*,/',                                 // "key": ,
+            '/,\s*([}\]])/',                                       // trailing commas
+            '/"([^"]+)"\s+"([^"]+)"/',                             // "key" "value"
+            '/"([^"]+)"\s*:\s*"([^"]+)"\s*"([^"]+)"\s*:/',          // missing comma
+            '/""(\w+)"/',                                          // extra quotes before key
+            '/"(\w+)"\s*:[\s\n]*""/',                              // empty string values
         ];
-    
         $replacements = [
-            '"$1": $2',
             '$1"$2":',
-            ':{',
-            '"$1":',
-            '$1'
+            '',
+            '$1',
+            '"$1": "$2"',
+            '"$1": "$2", "$3":',
+            '"$1"',
+            '',
         ];
+        $json = preg_replace($patterns, $replacements, $json);
+
+        // FIX KEYS WITH EXTRA SPACES *BEFORE* PARSE
+        $json = preg_replace_callback('/"([^"]+)"\s*:/', function ($matches) {
+            $key = preg_replace('/\s+/', '_', trim($matches[1]));
+            return "\"$key\":";
+        }, $json);
+
+
+        // STEP 5: FIX BAD UNDERSCORES
+        $json = preg_replace('/_{2,}/', '_', $json);      // reduce double underscores
     
-        // 🔄 Apply regex fixes
-        $fixedJson = preg_replace($patterns, $replacements, $cleanedJson);
+        // STEP 6: FINAL HARD BRACE CLIP
+        $json = preg_replace('/}(?:(?!\}).)*$/s', '}', $json);
     
-        // 🔄 Remove single quotes around JSON keys (AI sometimes does this)
-        $fixedJson = preg_replace("/'(\w+)'\s*:/", '"$1":', $fixedJson);
-    
-        // 🔄 Remove incorrect double entries of keys (`"n":{ ... "n": {...}}`)
-        $fixedJson = preg_replace('/,\s*"n":/', '', $fixedJson);
-    
-        // 🔄 Attempt to decode JSON to validate structure
-        $decodedJson = json_decode($fixedJson, true);
-    
+        // STEP 7: VALIDATE
+        $decoded = json_decode($json, true);
         if (json_last_error() !== JSON_ERROR_NONE) {
-            // 🛑 Log bad JSON before returning error
             $this->emDebug("❌ Bad JSON Detected", [
-                "error" => json_last_error_msg(),
-                "broken_json" => $fixedJson
+                "error" => json_last_error_msg()
             ]);
-    
-            // Return error message instead of invalid JSON
             return json_encode([
                 "error" => "Invalid JSON detected: " . json_last_error_msg(),
-                "broken_json" => $fixedJson
+                "broken_json" => $json
             ]);
         }
+
+
+
+        // STEP 8: FINAL RECURSIVE CLEANING OF VALUES + KEYS
+        $cleaned = function ($data) use (&$cleaned) {
+            if (is_array($data)) {
+                $out = [];
+                foreach ($data as $k => $v) {
+                    $k = preg_replace('/[\s_]+/', '_', trim($k));
+                    $k = preg_replace('/_{2,}/', '_', $k);
+                    $out[$k] = $cleaned($v);
+                }
+                return $out;
+            } elseif (is_string($data)) {
+                return trim(str_replace(["\n", "\r"], ' ', $data));
+            }
+            return $data;
+        };
     
-        // ✅ JSON is valid, return the properly formatted version
-        return json_encode($decodedJson, JSON_PRETTY_PRINT);
+        return json_encode($cleaned($decoded), JSON_PRETTY_PRINT);
     }
+    
+    
+    
     
 
     /**
@@ -960,19 +1048,19 @@ class ClinicalCoach extends \ExternalModules\AbstractExternalModule {
 
     private function getNextInstanceId($coachId)
     {
-        $this->emDebug("🛠 Fetching highest session_log instance for coach: $coachId...");
+        $this->emDebug("getNextInstanceId() Fetching highest session_log instance for coach: $coachId...");
 
         $fetchParams = [
             'project_id' => $this->getProjectId(),
-            'records'    => [$coachId], // ✅ Filter by coach
+            'records'    => [$coachId], // Filter by coach
             'fields'     => ['record_id', 'session_learner_id', 'session_id'],
-            'forms'      => ['session_logs'], // ✅ Explicitly fetch session_logs
-            'exportRepeatingInstrumentsEvents' => true, // ✅ Required for repeating instances
+            'forms'      => ['session_logs'], // Explicitly fetch session_logs
+            'exportRepeatingInstrumentsEvents' => true, // Required for repeating instances
             'return_format' => 'array'
         ];
 
         $data = \REDCap::getData($fetchParams);
-        $this->emDebug("📌 FULL RAW DATA RETURNED FROM REDCap:", $data);
+        // $this->emDebug("📌 FULL RAW DATA RETURNED FROM REDCap:", $data);
 
         $highestInstance = 0; // Default to 0 if no sessions exist
 
@@ -988,11 +1076,11 @@ class ClinicalCoach extends \ExternalModules\AbstractExternalModule {
                 }
             }
         } else {
-            $this->emDebug("⚠️ No session logs found for coach: $coachId");
+            $this->emDebug("No session logs found for coach: $coachId");
         }
 
         $nextInstance = $highestInstance + 1;
-        $this->emDebug("✅ Highest found: $highestInstance → Returning new instance: $nextInstance");
+        $this->emDebug("Highest found: $highestInstance → Returning new instance: $nextInstance");
 
         return $nextInstance;
     }

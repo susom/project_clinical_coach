@@ -16,8 +16,6 @@ export default function Notifications() {
 
     // ✅ Extract only "incomplete" sessions
     const pendingNotifications = students.flatMap((student) => {
-        console.log("sesssions, get example here and tell it ot make it same in callAI", student.sessions);
-        
         return student.sessions
             ?.filter(session => session.status) // ✅ Only include sessions with a status 
             .map(session => ({
@@ -36,12 +34,9 @@ export default function Notifications() {
     useEffect(() => {
         pendingNotifications.forEach(async (notification) => {
             if (!processedSessions.has(notification.session_id) && notification.status == "pending") {
-                console.log("Auto-triggering AI analysis for pending notifications...");
-                console.log(`⚡ Sending Session to AI Analysis...`);
-
                 try {
                     await callAIAnalysis(notification.session_id, coach.record_id, (sessionId) => {
-                        setCompletedSessions(prev => new Set([...prev, sessionId])); // ✅ Flip UI to complete
+                        setCompletedSessions(prev => new Set([...prev, sessionId])); // Flip UI to complete
                     });
 
                     setProcessedSessions(prev => new Set([...prev, notification.session_id]));

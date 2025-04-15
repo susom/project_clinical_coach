@@ -28,7 +28,7 @@ export default function Report() {
     const the_session = selectedStudent.sessions.find(s => String(s.session_id) === String(selectedSession));
     // console.log("coach", coach);
     // console.log("selectedStudent", selectedStudent);
-    // console.log("the_session", the_session);
+    console.log("the_session", the_session);
 
     if (!the_session) {
         return <div className="error-message">⚠️ No session data found. Please go back and try again.</div>;
@@ -130,6 +130,37 @@ export default function Report() {
         setShowCaseSummary(!showCaseSummary);
     }; 
 
+    const handleFullReevaluation = () => {
+        if (!the_session?.session_id || !coach?.record_id) {
+          console.warn("🚨 Missing session_id or coach_id for full reevaluation.");
+          return;
+        }
+      
+        setLoadingReflection("all");
+      
+        const payload = {
+          session_id: the_session.session_id,
+          coach_id: coach.record_id,
+          reevaluate_all: true
+        };
+      
+        console.log("🔁 Full Re-evaluation Triggered:", payload);
+      
+        window.clinical_coach_jsmo_module.callAI(
+          JSON.stringify(payload),
+          (response) => {
+            console.log("✅ Full Re-evaluation Complete:", response);
+            updateStudentFromAIResponse(the_session.session_id, response);
+            setLoadingReflection(null);
+          },
+          (error) => {
+            console.error("❌ Full Re-evaluation Error:", error);
+            setLoadingReflection(null);
+          }
+        );
+    };
+      
+    
     const handleSingleReflection = (reflectionVar) => {
         if (!the_session?.session_id || !coach?.record_id) {
             console.warn("🚨 Missing session_id or coach_id.");
@@ -211,8 +242,6 @@ export default function Report() {
         );
     };
     
-    
-
     const getScoreClass = (score) => {
         switch (score) {
             case 1: return 'red';
@@ -312,10 +341,21 @@ export default function Report() {
                 <section className="thinking-habits-container">
                     <div className="thinking-habits-header">
                         <h3>Thinking Habits Report</h3>
-                        <button 
+                        <div className="thinking-habits-actions">
+                            <button 
+                                className={`re-evaluate-all-btn re-evaluate-btn highlighted ${loadingReflection === 'all' ? 'loading' : ''}`} 
+                                onClick={handleFullReevaluation}
+                                title="Re-Evaluate All"
+                                >
+                                <i className={`fas fa-sync-alt ${loadingReflection === 'all' ? 'fa-spin' : ''}`}></i>
+                            </button>
+                            <button 
                             className="full-transcript-btn" 
                             onClick={() => navigate(`/full-transcript/${selectedSession}`)}
-                        >+ Transcript</button>
+                            >
+                            + Transcript
+                            </button>
+                        </div>
                     </div>
 
                     <ThinkingHabitsOverview reflections={reflections} />

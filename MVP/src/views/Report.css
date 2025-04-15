@@ -458,6 +458,23 @@ main#report {
     cursor: pointer;
 }
 
+.thinking-habits-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem; /* Adds space between the two buttons */
+    margin-top: 0.3rem;
+}
+
+.re-evaluate-all-btn {
+    position:initial;
+    margin: .3rem .5rem .3rem 0;
+    font-size: .85rem;
+    font-weight: 700;
+    border-radius: 15px;
+    text-align: center;
+    cursor: pointer;
+}
+
 
 /* Feedback Section */
 .feedback-section {

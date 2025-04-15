@@ -387,7 +387,7 @@ const VoiceRecorder = ({ navigate }) => {
     }, []); // Runs once when the component unmounts
 
     useEffect(() => {
-        console.log('my current state is', mediaRecorderRef.current)
+        // console.log('my current state is', mediaRecorderRef.current)
 
         if (state === 'recording' && !isResuming) {
             console.log('Starting MediaRecorder and timer...');
