@@ -137,10 +137,12 @@ class ClinicalCoach extends \ExternalModules\AbstractExternalModule {
                         "top_p" => floatval($this->getProjectSetting("gpt-top-p", .9)),
                         "frequency_penalty" => floatval($this->getProjectSetting("gpt-frequency-penalty", 0.5)),
                         "presence_penalty" => floatval($this->getProjectSetting("presence_penalty", 0.0)),
-                        "max_tokens" => max(intval($this->getProjectSetting("gpt-max-tokens", 1500)), 800),
-                        "format" => "json",
+                        "max_tokens" => max(intval($this->getProjectSetting("gpt-max-tokens", 1500)), 800)
                     ];
 
+                    if (str_starts_with($model, "gpt-")) {
+                        $defaultParams["response_format"] = ["type" => "json_object"];
+                    }
 
                     $results = [
                         "summary" => [
@@ -734,12 +736,6 @@ class ClinicalCoach extends \ExternalModules\AbstractExternalModule {
                 ["role" => "system", "content" => $systemContext],
                 ["role" => "user", "content" => $userInput]
             ];
-
-            $this->emDebug("Calling SecureChatAI", [
-                "model" => $model,
-                "messages" => $messages,
-                "params" => $defaultParams
-            ]);
             
             // Call AI securely
             $response = $this->getSecureChatInstance()->callAI(
@@ -908,7 +904,7 @@ class ClinicalCoach extends \ExternalModules\AbstractExternalModule {
         $json = str_replace(["\\n", "\\r", "\n", "\r"], ' ', $json);
         $json = preg_replace('/\\\\+/', '\\', $json); // normalize backslashes
         $json = preg_replace('/\\\\"/', '"', $json);  // remove escape slashes from quotes
-    
+
         // STEP 3: FIX VARIABLES + BRACKET GOO
         $json = preg_replace('/\$[a-zA-Z0-9_]+\$/', '"Unknown"', $json); // $var$
         $json = preg_replace('/\{(\w+)\}:/', '"$1":', $json);            // {key}:
@@ -941,7 +937,6 @@ class ClinicalCoach extends \ExternalModules\AbstractExternalModule {
             return "\"$key\":";
         }, $json);
 
-
         // STEP 5: FIX BAD UNDERSCORES
         $json = preg_replace('/_{2,}/', '_', $json);      // reduce double underscores
     
@@ -960,8 +955,6 @@ class ClinicalCoach extends \ExternalModules\AbstractExternalModule {
             ]);
         }
 
-
-
         // STEP 8: FINAL RECURSIVE CLEANING OF VALUES + KEYS
         $cleaned = function ($data) use (&$cleaned) {
             if (is_array($data)) {
@@ -978,6 +971,8 @@ class ClinicalCoach extends \ExternalModules\AbstractExternalModule {
             return $data;
         };
     
+        $this->emDebug("cleaned JSON preencode", $cleaned($decoded));
+
         return json_encode($cleaned($decoded), JSON_PRETTY_PRINT);
     }
     
