@@ -21,9 +21,17 @@ export default function Report() {
     
     if (!selectedStudent || !selectedSession) {
         console.warn("MISSING STUDENT OR SESSION, REDIRECTING TO HOME");
-        navigate('/');
         return null; // Prevent render
     }
+    // 🧼 Prevent crashing when selectedStudent doesn't match selectedSession
+    const isValidSession = selectedStudent?.sessions?.some(s => String(s.session_id) === String(selectedSession));
+    if (!isValidSession) {
+        console.warn("🧹 Invalid session for selected student — clearing and redirecting");
+        setSelectedSession(null);
+        navigate('/home');
+        return null;
+    }
+
 
     const the_session = selectedStudent.sessions.find(s => String(s.session_id) === String(selectedSession));
     // console.log("coach", coach);

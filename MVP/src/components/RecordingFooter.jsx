@@ -9,7 +9,7 @@ import './RecordingFooter.css';
 function RecordingFooter({ stage, setStage }) {
     const navigate = useNavigate();
     const { showConfirmModal } = useConfirmModal();
-    const { students, selectedStudent, selectStudent } = useStudents();
+    const { students, selectedStudent, selectedSession,  selectStudent } = useStudents();
 
     const handleStudentChange = (event) => {
         const studentId = event.target.value; // Keep it as a string
@@ -19,7 +19,13 @@ function RecordingFooter({ stage, setStage }) {
         if (student) {
             console.log("✅ Found Student:", student);
             selectStudent(student.id); // Pass the string ID
-            setStage(3); // ✅ Immediately transition to Stage 3
+            
+            if (student) {
+                selectStudent(student.id);
+                setStage(3); // Let useEffect handle any needed redirects
+            } else {
+                console.warn("🚨 Student not found for ID:", studentId);
+            }
         } else {
             console.warn("🚨 Student not found for ID:", studentId);
         }
@@ -40,6 +46,18 @@ function RecordingFooter({ stage, setStage }) {
             setStage(3);
         }
     };
+
+    useEffect(() => {
+        if (
+            selectedSession &&
+            selectedStudent &&
+            !selectedStudent.sessions?.some(s => String(s.session_id) === String(selectedSession))
+        ) {
+            console.warn("🚨 selectedSession doesn't belong to selectedStudent — redirecting to home");
+            navigate('/');
+        }
+    }, [selectedStudent, selectedSession]);
+    
 
     const thmLabels = selectedStudent?.habitsData || [
         { label: 'Strategy', color: 'gray' },
