@@ -945,17 +945,57 @@ class ClinicalCoach extends \ExternalModules\AbstractExternalModule {
     
         // STEP 7: VALIDATE
         $decoded = json_decode($json, true);
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            $this->emDebug("❌ Bad JSON Detected", [
-                "error" => json_last_error_msg()
-            ]);
-            return json_encode([
-                "error" => "Invalid JSON detected: " . json_last_error_msg(),
-                "broken_json" => $json
-            ]);
+        if (json_last_error() === JSON_ERROR_NONE) {
+            return $this->finalCleanAndEncode($decoded);
         }
 
-        // STEP 8: FINAL RECURSIVE CLEANING OF VALUES + KEYS
+        $this->emDebug("Bad JSON Detected", ["error" => json_last_error_msg()]);
+
+        // Attempt single-shot AI repair
+        $repaired = $this->repairJsonWithAI($json);
+        if ($repaired) return $repaired;
+
+        // Still broken
+        return json_encode([
+            "error" => "Invalid JSON detected: " . json_last_error_msg(),
+            "broken_json" => $json
+        ]);
+    }
+    
+    private function repairJsonWithAI($brokenJson) {
+        $prompt = <<<EOT
+        You are a JSON repair assistant. Fix the following malformed JSON and return only the corrected JSON object. Do not include explanations.
+        
+        Broken JSON:
+        $brokenJson
+        EOT;
+    
+        try {
+            $response = $this->getSecureChatInstance()->callAI(
+                $this->getProjectSetting("llm-model"),
+                [
+                    "messages" => [
+                        ["role" => "system", "content" => "You fix broken JSON strings."],
+                        ["role" => "user", "content" => $prompt]
+                    ],
+                    "temperature" => 0,
+                    "max_tokens" => 1500
+                ],
+                PROJECT_ID
+            );
+    
+            if (!empty($response["content"])) {
+                $clean = $this->finalCleanAndEncode(json_decode($response["content"], true));
+                return $clean;
+            }
+        } catch (\Exception $e) {
+            $this->emDebug("JSON repair failed", $e->getMessage());
+        }
+    
+        return null;
+    }
+    
+    private function finalCleanAndEncode($decoded) {
         $cleaned = function ($data) use (&$cleaned) {
             if (is_array($data)) {
                 $out = [];
@@ -970,13 +1010,8 @@ class ClinicalCoach extends \ExternalModules\AbstractExternalModule {
             }
             return $data;
         };
-    
-        $this->emDebug("cleaned JSON preencode", $cleaned($decoded));
-
         return json_encode($cleaned($decoded), JSON_PRETTY_PRINT);
     }
-    
-    
     
     
 
