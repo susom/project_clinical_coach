@@ -19,6 +19,10 @@
     margin: 0 auto 1rem;
 }
 
+.thm-graphic.smaller {
+    max-width: 50%;
+}
+
 .thm-header h1 {
     text-transform: uppercase; /* Make title all caps */
     font-size: 1.6rem; /* 3/4 the original size */

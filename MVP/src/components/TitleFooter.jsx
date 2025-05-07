@@ -9,7 +9,7 @@ function TitleFooter() {
                 <a href="#settings">Settings</a>
             </nav>
             <p className="title-footer-copyright">
-                Clinical Coach © 2025
+                AI Clinical Coach © Stanford University, 2025
             </p>
         </footer>
     );
