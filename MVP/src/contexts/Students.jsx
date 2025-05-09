@@ -145,7 +145,7 @@ export const StudentsProvider = ({ children }) => {
             "problem": "Problem Definition & Assumptions Reflection Report",
             "strategy": "Reflection on Clinical Strategy Thinking Habits Report",
             "solution": "Reflection on Clinical Solution Thinking Habits Report",
-            "data": "Reflection on Data Thinking Habits Report"
+            "data": "Reflection on Interpretation Thinking Habits Report"
         };
 
         console.log("🔍 Updating session with AI data:", session_id, reflectionKeyFieldMap , aiResponse);

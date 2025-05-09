@@ -17,7 +17,7 @@ export default function ReflectionsScoreChart({ sessions = [] }) {
         <div className="chart-header">
           {REFLECTION_CATEGORIES.map((category) => (
             <div key={category} className="chart-label">
-              {category.toUpperCase()}
+              {category === 'data' ? 'INTERPRETATION' : category.toUpperCase()}
             </div>
           ))}
         </div>

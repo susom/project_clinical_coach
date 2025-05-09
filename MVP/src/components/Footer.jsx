@@ -5,7 +5,7 @@ import { useCoach } from '../contexts/Coach';
 import { useStudents } from '../contexts/Students';
 import RecordingFooter from './RecordingFooter';
 import './Footer.css';
-import thmIcon from '../assets/images/thm_icon.png';
+import thmIcon from '../assets/images/thm_icon_2.png';
 
 function Footer() {
     const navigate = useNavigate();

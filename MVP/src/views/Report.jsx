@@ -109,10 +109,11 @@ export default function Report() {
         }, []);
     }
 
+    const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1);
     useEffect(() => {
         const initialPrompts = Object.entries(parsedReflections).map(([key, reflection]) => ({
-            title: reflection.report_title || key.charAt(0).toUpperCase() + key.slice(1),
-            category: key.charAt(0).toUpperCase() + key.slice(1),
+            title: key === 'data' ? 'Interpretation' : (reflection.report_title || capitalize(key)),
+            category:capitalize(key),
             color: reflection.hasError ? 'red' : 'gray',
             prompts: reflection.hasError 
                 ? [] 
@@ -386,7 +387,7 @@ export default function Report() {
                             {strengths.map((strength, index) => (
                                 <div key={index} className="strength-block">
                                     <div className={`strength-category ${strength.category.toLowerCase()}`}>
-                                        {strength.category}
+                                        {strength.category.toLowerCase() === 'data' ? 'Interpretation' : strength.category}
                                     </div>
                                     <div 
                                         className="strength-carousel" 

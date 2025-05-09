@@ -9,7 +9,7 @@ function mapReflectionsToHabits(reflections, colorMap = { '1': 'red', '2': 'yell
     { label: 'Problem', color: colorMap[reflections?.problem?.score] || 'gray' },
     { label: 'Strategy', color: colorMap[reflections?.strategy?.score] || 'gray' },
     { label: 'Solution', color: colorMap[reflections?.solution?.score] || 'gray' },
-    { label: 'Data', color: colorMap[reflections?.data?.score] || 'gray' },
+    { label: 'Interpretation', color: colorMap[reflections?.data?.score] || 'gray' },
   ];
 }
 
