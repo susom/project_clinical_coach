@@ -64,10 +64,10 @@ export default function Report() {
     // Parse reflections safely
     function cleanAndParseJSON(jsonString, fallback = {}) {
         try {
-            return typeof jsonString === "string" ? JSON.parse(jsonString) : jsonString || fallback;
+            const parsed = typeof jsonString === "string" ? JSON.parse(jsonString) : jsonString;
+            return parsed && typeof parsed === "object" ? parsed : fallback;
         } catch (error) {
-            // console.error("🚨 JSON Parsing Failed:", error, "\n🔹 Original String:", jsonString);
-            return fallback; // Graceful fallback to prevent page crashes
+            return fallback;
         }
     }
 
@@ -79,7 +79,7 @@ export default function Report() {
                 key,
                 {
                     ...parsedContent,
-                    report_title: parsedContent.report_title
+                    report_title: parsedContent?.report_title
                         ? parsedContent.report_title.replace(/\b(report|thinking habits)\b/gi, '').trim()
                         : "Unknown",
                     hasError: Object.keys(parsedContent).length === 0 || parsedContent.error,
