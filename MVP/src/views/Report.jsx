@@ -19,6 +19,10 @@ export default function Report() {
     const [activeIndices, setActiveIndices] = useState({});
     const carouselRefs = useRef({});
     
+    console.log("🔍 Report View Startup what the fuck?");
+    console.log("Selected student:", selectedStudent);
+    console.log("Selected session ID:", selectedSession);
+
     if (!selectedStudent || !selectedSession) {
         console.warn("MISSING STUDENT OR SESSION, REDIRECTING TO HOME");
         return null; // Prevent render

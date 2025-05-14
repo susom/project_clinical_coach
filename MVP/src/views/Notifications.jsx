@@ -10,54 +10,46 @@ import SummaryExpandable from '../components/SummaryExpandable';
 export default function Notifications() {
     const navigate = useNavigate();
     const { coach } = useCoach();
-    const { students, callAIAnalysis, setSelectedStudent, setSelectedSession } = useStudents();
+    const { students, callAIAnalysis, setSelectedStudent, setSelectedSession, refetchStudents, notifications, updateNotificationStatus } = useStudents();
     const [processedSessions, setProcessedSessions] = useState(new Set());
     const [completedSessions, setCompletedSessions] = useState(new Set());
 
-    // ✅ Extract only "incomplete" sessions
-    const pendingNotifications = students.flatMap((student) => {
-        return student.sessions
-            ?.filter(session => session.status) // ✅ Only include sessions with a status 
-            .map(session => ({
-                student: student, 
-                studentName: student.name,
-                profilePicture: student.profilePicture || null,
-                sessionDate: session.session_date || "Unknown Date",
-                transcript: session.transcript || "No transcript available.",
-                session_id: session.session_id || "No ID",
-                status: session.status, // ✅ Keep status for debugging visibility
-                studentId: student.id, // 🔥 Needed for callAIAnalysis
-                fullSession: session // 🔥 Store full session for navigation
-            })) || [];
-    });
-
     useEffect(() => {
-        pendingNotifications.forEach(async (notification) => {
-            if (!processedSessions.has(notification.session_id) && notification.status == "pending") {
-                try {
-                    await callAIAnalysis(notification.session_id, coach.record_id, (sessionId) => {
-                        setCompletedSessions(prev => new Set([...prev, sessionId])); // Flip UI to complete
-                    });
-
-                    setProcessedSessions(prev => new Set([...prev, notification.session_id]));
-                } catch (error) {
-                    console.error(`AI Analysis Failed:`, error);
-                }
+        notifications.forEach(async (notification) => {
+          const isRealSessionId = !notification.session_id.startsWith("temp-");
+          const isPending = notification.status === "pending";
+      
+          if (isPending && isRealSessionId) {
+            try {
+              console.log("🚀 Initiating AI Analysis for Session", notification.session_id);
+              await callAIAnalysis(notification.session_id, coach.record_id);
+              await refetchStudents();
+              updateNotificationStatus(notification.session_id, "complete");
+            } catch (error) {
+              console.error(`AI Analysis Failed for ${notification.session_id}:`, error);
             }
+          }
         });
-    }, [pendingNotifications, processedSessions]);
+      }, [notifications]);
 
 
-    const handleSessionClick = (student, session_id) => {
+      const handleSessionClick = (staleStudent, session_id) => {
         if (session_id) {
-            setSelectedStudent(student);
+            const freshStudent = students.find(s => s.id === staleStudent.id);
+            if (!freshStudent) {
+                console.warn("⚠️ Could not find updated student. Redirecting.");
+                return;
+            }
+    
+            console.log("✅ Using fresh student:", freshStudent);
+            setSelectedStudent(freshStudent);
             setSelectedSession(session_id);
-
             navigate(`/report`);
         } else {
             console.warn("⚠️ No session found for ID:", session_id);
         }
     };
+    
 
     return (
         <>
@@ -65,10 +57,10 @@ export default function Notifications() {
             <main id="notifications">
                 <h1 className="center-title">Notifications</h1>
                 <div className="notifications-list">
-                    {pendingNotifications.length === 0 ? (
+                    {notifications.length === 0 ? (
                         <p className="empty-notifications">No new notifications</p>
                     ) : (
-                        pendingNotifications.map((notification) => (
+                        notifications.map((notification) => (
                             <div
                                 key={notification.session_id}
                                 className={`notification ${completedSessions.has(notification.session_id) ? 'clickable' : ''}`}
@@ -91,10 +83,12 @@ export default function Notifications() {
                                     {!notification.transcript ? (
                                         <p>Conversation is being processed...</p>
                                     ) : (
-                                        <SummaryExpandable text={notification.transcript} />
+                                        <pre className="srt-transcript">
+                                            <SummaryExpandable text={notification.transcript} />
+                                        </pre>
                                     )}
 
-                                    {(notification.status == "complete") ? (
+                                    {notification.status == "complete" ? (
                                         <button 
                                             className="view-report-button"
                                             onClick={() => handleSessionClick(notification.student, notification.session_id)}

@@ -41,6 +41,20 @@ export const StudentsProvider = ({ children }) => {
         }
     }, [coach?.record_id, lastFetchedCoachId]);
 
+
+    const refetchStudents = async () => {
+        try {
+            const studentList = await window.ExternalModules.Stanford.ClinicalCoach.fetchStudentsData(coach.record_id);
+            if (Array.isArray(studentList) && studentList.length > 0) {
+                setStudents(studentList);
+            } else {
+                console.warn("No students found for coach:", coach.record_id);
+            }
+        } catch (err) {
+            console.error("Failed to fetch students:", err);
+        }
+    };
+
     useEffect(() => {
         if (selectedStudent) {
             const updatedStudent = students.find((s) => s.id === selectedStudent.id);
@@ -48,6 +62,39 @@ export const StudentsProvider = ({ children }) => {
         }
     }, [students]);
 
+    const addNotification = (sessionData) => {
+        setNotifications((prev) => [...prev, sessionData]);
+    };
+      
+    const updateNotificationStatus = (session_id, newStatus) => {
+        setNotifications(prev =>
+            prev.map(n =>
+            n.session_id === session_id ? { ...n, status: newStatus } : n
+            )
+        );
+    };
+    
+    const updateNotificationSessionId = (oldId, newId) => {
+        setNotifications((prev) =>
+            prev.map((n) =>
+            n.session_id === oldId ? { ...n, session_id: newId } : n
+            )
+        );
+    };
+      
+    const updateNotificationTranscription = (sessionId, newTranscript) => {
+        setNotifications((prev) =>
+            prev.map((n) =>
+            n.session_id === sessionId ? { ...n, transcript: newTranscript } : n
+            )
+        );
+    };
+
+    
+    const clearNotifications = () => {
+        setNotifications([]);
+    };
+      
     const selectStudent = (studentId) => {
         const student = students.find((s) => s.id === studentId);
         setSelectedStudent({ ...student }); // Create a new object to avoid mutating state
@@ -85,11 +132,11 @@ export const StudentsProvider = ({ children }) => {
                             ...(student.sessions || []),
                             {
                                 session_id: tempSessionId, // Use the temporary ID
-                                session_date: new Date().toISOString().split('T')[0] + " 12:30 PM",
-                                transcript: "",
+                                session_date: new Date().toISOString().split('T')[0] ,
+                                transcript: "Transcription pending...",
                                 reflections: {},
                                 summary: "",
-                                status: "incomplete",
+                                status: "pending",
                             },
                         ],
                     }
@@ -116,7 +163,7 @@ export const StudentsProvider = ({ children }) => {
                         setIsProcessing(false);
                         setHasNewNotifications(true);
                         updateStudentFromAIResponse(session_id, response); // ✅ Use existing update function
-    
+                        
                         updateUI(session_id); // ✅ Mark session complete in UI
     
                         resolve("✅ AI Analysis Completed");
@@ -210,10 +257,16 @@ export const StudentsProvider = ({ children }) => {
                 selectedSession,
                 setSelectedSession,
                 notifications,
+                addNotification,
+                updateNotificationStatus,
+                updateNotificationTranscription,
+                updateNotificationSessionId,
+                clearNotifications,
                 isProcessing,
                 hasNewNotifications,
                 setIsProcessing,
-                setHasNewNotifications
+                setHasNewNotifications,
+                refetchStudents
             }}
         >
             {children}

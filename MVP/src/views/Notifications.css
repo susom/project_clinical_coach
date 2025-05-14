@@ -252,3 +252,15 @@
     border-radius: 5px;
     font-weight: bold;
 }
+
+.srt-transcript {
+    white-space: pre-wrap; /* PRESERVE FORMATTING */
+    font-family: monospace;
+    font-size: 0.9rem;
+    line-height: 1.4;
+    background-color: #f9f9f9;
+    padding: 1rem;
+    border-radius: 8px;
+    overflow-x: auto;
+  }
+  

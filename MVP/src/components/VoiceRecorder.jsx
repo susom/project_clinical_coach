@@ -24,7 +24,7 @@ const VoiceRecorder = ({ navigate }) => {
     const animationFrameRef = useRef(null); // To manage the animation frame
     const [isUploading, setIsUploading] = useState(false); // Tracks the uploading state
     const { showConfirmModal } = useConfirmModal();
-    const { selectedStudent, updateStudent, createNewSession, setIsProcessing, setHasNewNotifications } = useStudents();
+    const { selectedStudent, updateStudent, createNewSession, setIsProcessing, setHasNewNotifications, addNotification, updateNotificationSessionId, updateNotificationTranscription    } = useStudents();
     const { coach , setStage } = useCoach();
 
     // Function to clear the timer and reset elapsed time
@@ -179,21 +179,20 @@ const VoiceRecorder = ({ navigate }) => {
               session_date: new_session_time,
             }));
         
-            // Immediately update session to pending placeholder
-            updateStudent(selectedStudent.id, (session) => {
-              if (session.session_id === tempSessionId) {
-                return {
-                  ...session,
-                  session_id: tempSessionId,
-                  transcript: "Transcription pending...",
-                  status: "pending",
-                };
-              }
-              return session;
-            });
-        
             setIsProcessing(true);
             setHasNewNotifications(false);
+
+            addNotification({
+                student: selectedStudent,
+                studentName: selectedStudent.name,
+                profilePicture: selectedStudent.profilePicture || null,
+                sessionDate: new_session_time,
+                transcript: "Transcription pending...",
+                session_id: tempSessionId,
+                status: "pending",
+                studentId: selectedStudent.id,
+              });
+              
 
             // Fire off AJAX call in the background
             callAjax(formData, async (rawResponse) => {
@@ -202,6 +201,8 @@ const VoiceRecorder = ({ navigate }) => {
                 const transcription = parsedResponse?.text;
                 const sessionId = parsedResponse?.session_id;
                 if (transcription && sessionId) {
+                  updateNotificationSessionId(tempSessionId, sessionId);
+                  updateNotificationTranscription(sessionId, transcription);
                   updateStudent(selectedStudent.id, (session) => {
                     if (session.session_id === tempSessionId) {
                       return {
