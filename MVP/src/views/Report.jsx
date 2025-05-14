@@ -329,7 +329,7 @@ export default function Report() {
             <Header showBack={true} />
             <main id="report">
                 <section className="report-header">
-                    <div className="profile-picture">
+                    <div className="profile-picture" onClick={() => navigate('/students-profile')}>
                         {profilePic ? (
                             <img src={profilePic} alt={studentName}/>
                         ) : (
@@ -337,7 +337,7 @@ export default function Report() {
                         )}
                     </div>
                     <div className="profile-details">
-                        <div className="report-student-name clickable">{studentName}</div>
+                        <div className="report-student-name clickable" onClick={() => navigate('/students-profile')}>{studentName}</div>
                         <p className="conversation-time">
                             Conversation @ {sessionDate}
                         </p>
