@@ -595,14 +595,17 @@ main#report {
 
 /* Close Button */
 .case-summary-close {
-    background: none;
+    background: #5433ff;
+    border-radius:50px;
     border: none;
-    font-size: 1.5rem;
+    font-size: 1.2rem;
     position: absolute;
     top: 10px;
     right: 15px;
     cursor: pointer;
+    padding:0 8px;
 }
+
 
 /* Slide Up Animation */
 @keyframes slideUp {
