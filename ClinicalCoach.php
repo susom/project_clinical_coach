@@ -249,7 +249,7 @@ class ClinicalCoach extends \ExternalModules\AbstractExternalModule {
                         sleep(1);
                     }
 
-                    if (!$reflection_var && !empty($main_system_final)) {
+                    if (!$reflection_var && !empty($main_system_final) && 1==2) {
                         // 📝 Prepare final messages (system + user input)
                         $finalMessages = [];
 
@@ -953,47 +953,70 @@ class ClinicalCoach extends \ExternalModules\AbstractExternalModule {
 
         // Attempt single-shot AI repair
         $repaired = $this->repairJsonWithAI($json);
-        if ($repaired) return $repaired;
+        if ($repaired) {
+            $this->emDebug("✅ AI one-shot JSON repair succeeded.");
+            return json_encode([
+                "attempted_ai_repair" => true,
+                "repaired_json" => json_decode($repaired, true)
+            ], JSON_PRETTY_PRINT);
+        }
 
         // Still broken
-        return json_encode([
+        $fallback = json_encode([
             "error" => "Invalid JSON detected: " . json_last_error_msg(),
-            "broken_json" => $json
-        ]);
+            "broken_json" => substr($json, 0, 4000),
+            "attempted_ai_repair" => true,
+            "repair_status" => "failed",
+            "raw_attempted_repair" => $response["content"] ?? null
+        ], JSON_PRETTY_PRINT);
+        
+        $this->emDebug("❌ AI one-shot repair failed. Saving fallback JSON.", $fallback);
+        
+        return $fallback;
+        
     }
     
     private function repairJsonWithAI($brokenJson) {
         $prompt = <<<EOT
-        You are a JSON repair assistant. Fix the following malformed JSON and return only the corrected JSON object. Do not include explanations.
+        You are a JSON repair assistant. Fix the following malformed JSON and return only the corrected JSON object. Do not include explanations or markdown. Output must be raw JSON only.
         
         Broken JSON:
         $brokenJson
         EOT;
-    
-        try {
-            $response = $this->getSecureChatInstance()->callAI(
-                $this->getProjectSetting("llm-model"),
-                [
-                    "messages" => [
-                        ["role" => "system", "content" => "You fix broken JSON strings."],
-                        ["role" => "user", "content" => $prompt]
+        
+            try {
+                $response = $this->getSecureChatInstance()->callAI(
+                    $this->getProjectSetting("llm-model"),
+                    [
+                        "messages" => [
+                            ["role" => "system", "content" => "You fix broken JSON strings."],
+                            ["role" => "user", "content" => $prompt]
+                        ],
+                        "temperature" => 0,
+                        "max_tokens" => 1500
                     ],
-                    "temperature" => 0,
-                    "max_tokens" => 1500
-                ],
-                PROJECT_ID
-            );
-    
-            if (!empty($response["content"])) {
-                $clean = $this->finalCleanAndEncode(json_decode($response["content"], true));
-                return $clean;
+                    PROJECT_ID
+                );
+        
+                if (!empty($response["content"])) {
+                    // FIRST, CLEAN THE RESPONSE STRING — same pipeline as original sanitize
+                    $raw = $response["content"];
+                    $cleaned = $this->sanitizeAndCleanJson($raw);
+        
+                    $parsed = json_decode($cleaned, true);
+                    if (json_last_error() === JSON_ERROR_NONE) {
+                        return $this->finalCleanAndEncode($parsed);
+                    } else {
+                        $this->emDebug("⚠️ AI repair attempt returned invalid JSON", $raw);
+                    }
+                }
+            } catch (\Exception $e) {
+                $this->emDebug("🛑 JSON repair AI call failed", $e->getMessage());
             }
-        } catch (\Exception $e) {
-            $this->emDebug("JSON repair failed", $e->getMessage());
+        
+            return null;
         }
     
-        return null;
-    }
     
     private function finalCleanAndEncode($decoded) {
         $cleaned = function ($data) use (&$cleaned) {
