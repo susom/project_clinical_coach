@@ -72,6 +72,9 @@ export default function Profile() {
                     </div>
                     <h2 className="profile-name">{coach.name}</h2>
                     <p className="profile-role">{coach.role}</p>
+                    <p className="under-construction-banner">
+                        🚧 This page is under construction. Features may be limited. 🚧
+                    </p>
                 </section>
                 <section className="profile-options">
                     <button className="profile-option" onClick={handleManageProfile}>

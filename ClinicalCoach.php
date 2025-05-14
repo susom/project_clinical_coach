@@ -791,7 +791,6 @@ class ClinicalCoach extends \ExternalModules\AbstractExternalModule {
         ];
     
         $sessionData = \REDCap::getData($params);
-    
         $sessions = [];
     
         if (!empty($sessionData[$coachRecordId]['repeat_instances'])) {
@@ -799,55 +798,66 @@ class ClinicalCoach extends \ExternalModules\AbstractExternalModule {
                 if (!empty($instrumentData['session_logs'])) {
                     foreach ($instrumentData['session_logs'] as $instanceNum => $row) {
                         if (($row['session_learner_id'] ?? '') == $learnerId) {
+    
+                            // 🧼 Decode and normalize reflection content
+                            $normalize = function ($raw) {
+                                $parsed = json_decode($raw ?? '', true);
+                                if (isset($parsed['repaired_json'])) {
+                                    return $parsed['repaired_json']; // ✅ Serve only the repaired part
+                                }
+                                return $parsed;
+                            };
+    
                             $sessions[] = [
                                 'session_id' => $row['session_id'],
-                                'learner_id'   => $learnerId,
+                                'learner_id' => $learnerId,
                                 'session_date' => $row['session_date'] ?? '',
-                                'transcript'   => $row['session_transcript_raw'] ?? '',
-                                'reflections'  => [
+                                'transcript' => $row['session_transcript_raw'] ?? '',
+                                'reflections' => [
                                     'mind' => [
-                                        'content' => $row['sess_reflect_mind'] ?? '',
+                                        'content' => $normalize($row['sess_reflect_mind']),
                                         'score'   => $row['sess_reflect_mind_score'] ?? '',
-                                        'rating'  => json_decode($row['sess_reflect_mind_rating'] ?? '[]', true) // Ensure it's parsed as an array
+                                        'rating'  => json_decode($row['sess_reflect_mind_rating'] ?? '[]', true)
                                     ],
                                     'knowledge' => [
-                                        'content' => $row['sess_reflect_knowledge'] ?? '',
+                                        'content' => $normalize($row['sess_reflect_knowledge']),
                                         'score'   => $row['sess_reflect_knowledge_score'] ?? '',
                                         'rating'  => json_decode($row['sess_reflect_knowledge_rating'] ?? '[]', true)
                                     ],
                                     'problem' => [
-                                        'content' => $row['sess_reflect_problem'] ?? '',
+                                        'content' => $normalize($row['sess_reflect_problem']),
                                         'score'   => $row['sess_reflect_problem_score'] ?? '',
                                         'rating'  => json_decode($row['sess_reflect_problem_rating'] ?? '[]', true)
                                     ],
                                     'strategy' => [
-                                        'content' => $row['sess_reflect_strategy'] ?? '',
+                                        'content' => $normalize($row['sess_reflect_strategy']),
                                         'score'   => $row['sess_reflect_strategy_score'] ?? '',
                                         'rating'  => json_decode($row['sess_reflect_strategy_rating'] ?? '[]', true)
                                     ],
                                     'solution' => [
-                                        'content' => $row['sess_reflect_solution'] ?? '',
+                                        'content' => $normalize($row['sess_reflect_solution']),
                                         'score'   => $row['sess_reflect_solution_score'] ?? '',
                                         'rating'  => json_decode($row['sess_reflect_solution_rating'] ?? '[]', true)
                                     ],
                                     'data' => [
-                                        'content' => $row['sess_reflect_data'] ?? '',
+                                        'content' => $normalize($row['sess_reflect_data']),
                                         'score'   => $row['sess_reflect_data_score'] ?? '',
                                         'rating'  => json_decode($row['sess_reflect_data_rating'] ?? '[]', true)
                                     ]
                                 ],
-                                'summary' => $row['sess_main_summary'] ?? '',
-                                'thm_report' => $row['sess_reflect_summary'] ?? ''
+                                'summary' => $normalize($row['sess_main_summary']),
+                                'thm_report' => $normalize($row['sess_reflect_summary'])
                             ];
                         }
                     }
                 }
             }
         }
-        $this->emDebug($sessions);
     
+        $this->emDebug($sessions);
         return $sessions;
     }
+    
 
     public function getFeedbackURL(){
         $url = $this->getProjectSetting("feedback-url");
