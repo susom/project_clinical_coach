@@ -11,7 +11,7 @@ import './Report.css';
 export default function Report() {
     const navigate = useNavigate();
     const { coach } = useCoach();
-    const { students, selectedStudent, selectedSession, setSelectedSession, updateStudentFromAIResponse } = useStudents();
+    const { students, selectedStudent, selectedSession, setSelectedSession, updateStudentFromAIResponsem ,refetchStudents } = useStudents();
     const [showCaseSummary, setShowCaseSummary] = useState(false);
     const [loadingReflection, setLoadingReflection] = useState(null);
     const [promptsData, setPromptsData] = useState([]);
@@ -159,7 +159,7 @@ export default function Report() {
           JSON.stringify(payload),
           (response) => {
             console.log("✅ Full Re-evaluation Complete:", response);
-            updateStudentFromAIResponse(the_session.session_id, response);
+            refetchStudents()
             setLoadingReflection(null);
           },
           (error) => {

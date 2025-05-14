@@ -339,10 +339,8 @@ class ClinicalCoach extends \ExternalModules\AbstractExternalModule {
                     }
 
                     $this->emDebug($results);
-
-                    return $results;
-
-                    return json_encode($normalized_results);
+                    return json_encode($results);
+                    exit;
 
                 case "updateSession":
                     $sessionData = json_decode($payload, true);
