@@ -12,7 +12,7 @@ import ReflectionScoreChart from '../components/ReflectionScoreChart';
 export default function StudentProfile() {
     const navigate = useNavigate();
     const [stage, setStage] = useState(2);
-    const { selectedStudent, setSelectedSession } = useStudents();
+    const { selectedStudent, setSelectedSession, aggregateReflections } = useStudents();
 
     if (!selectedStudent) {
         return (
@@ -30,46 +30,6 @@ export default function StudentProfile() {
     }
 
     const sessions = selectedStudent.sessions?.filter(s => s.status === "complete" || !s.status) || [];
-
-    const aggregateReflections = (student) => {
-        if (!student || !student.sessions || student.sessions.length === 0) {
-            return {};
-        }
-    
-        const aggregatedScores = {};
-        let count = {};
-    
-        student.sessions.forEach(session => {
-            if (!session.reflections) return;
-    
-            Object.entries(session.reflections).forEach(([category, reflection]) => {
-                try {
-                    const content = typeof reflection.content === "string" ? JSON.parse(reflection.content) : reflection.content;
-                    const score = parseFloat(content?.thm_overall_score);
-    
-                    if (!isNaN(score)) {
-                        if (!aggregatedScores[category]) {
-                            aggregatedScores[category] = 0;
-                            count[category] = 0;
-                        }
-    
-                        aggregatedScores[category] += score;
-                        count[category] += 1;
-                    }
-                } catch (error) {
-                    // console.error(`🚨 Error parsing reflection for category ${category}:`, error);
-                }
-            });
-        });
-    
-        // Convert aggregated values into expected object format
-        const formattedResults = {};
-        Object.keys(aggregatedScores).forEach(category => {
-            formattedResults[category] = { score: Math.floor(aggregatedScores[category] / count[category]) };
-        });
-    
-        return formattedResults;
-    };
 
     const getParsedSummary = (summary) => {
         try {

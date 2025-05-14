@@ -9,7 +9,7 @@ import './RecordingFooter.css';
 function RecordingFooter({ stage, setStage }) {
     const navigate = useNavigate();
     const { showConfirmModal } = useConfirmModal();
-    const { students, selectedStudent, selectedSession,  selectStudent } = useStudents();
+    const { students, selectedStudent, selectedSession,  selectStudent , aggregateReflections} = useStudents();
 
     const handleStudentChange = (event) => {
         const studentId = event.target.value; // Keep it as a string
@@ -58,16 +58,6 @@ function RecordingFooter({ stage, setStage }) {
         }
     }, [selectedStudent, selectedSession]);
     
-
-    const thmLabels = selectedStudent?.habitsData || [
-        { label: 'Strategy', color: 'gray' },
-        { label: 'Solution', color: 'gray' },
-        { label: 'Knowledge', color: 'gray' },
-        { label: 'Problem', color: 'gray' },
-        { label: 'Data', color: 'gray' },
-        { label: 'Mind', color: 'gray' },
-    ];
-
     return (
         <div className={`recording-footer ${stage === 3 ? 'stage-3-layout' : 'stage-2-layout'}`}>
             {stage === 2 && (
@@ -92,7 +82,7 @@ function RecordingFooter({ stage, setStage }) {
                                         </option>
                                     ))}
                                 </select>
-                                <ThinkingHabitsOverview habits={thmLabels} disabled />
+                                <ThinkingHabitsOverview reflections={selectedStudent ? aggregateReflections(selectedStudent) : null}/>
                                 
                             </div>
                         </div>        

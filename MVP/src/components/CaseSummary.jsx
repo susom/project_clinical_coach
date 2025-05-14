@@ -16,10 +16,10 @@ export default function CaseSummary({ casePresentationSummary, onClose }) {
                     <p>{casePresentationSummary.long_summary}</p>
                 </div>
 
-                {/* <div className="case-summary-inner organization-assessment">
+                <div className="case-summary-inner organization-assessment">
                     <h2>Organizational Assessment:</h2>
                     <p>{casePresentationSummary.organization_review}</p>
-                </div> */}
+                </div>
             </div>
         </div>
     );

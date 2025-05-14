@@ -183,6 +183,48 @@ export const StudentsProvider = ({ children }) => {
         });
     };
 
+    const aggregateReflections = (student) => {
+        if (!student || !student.sessions || student.sessions.length === 0) return {};
+    
+        const aggregatedScores = {};
+        let count = {};
+    
+        student.sessions.forEach(session => {
+            if (!session.reflections) return;
+    
+            Object.entries(session.reflections).forEach(([category, reflection]) => {
+                try {
+                    const content = typeof reflection.content === "string"
+                        ? JSON.parse(reflection.content)
+                        : reflection.content;
+                    const score = parseFloat(content?.thm_overall_score);
+    
+                    // Normalize "data" to "interpretation"
+                    const catKey = category ;
+    
+                    if (!isNaN(score)) {
+                        if (!aggregatedScores[catKey]) {
+                            aggregatedScores[catKey] = 0;
+                            count[catKey] = 0;
+                        }
+                        aggregatedScores[catKey] += score;
+                        count[catKey] += 1;
+                    }
+                } catch (e) {
+                    // Silently skip broken reflections
+                }
+            });
+        });
+    
+        const result = {};
+        Object.keys(aggregatedScores).forEach(cat => {
+            result[cat] = { score: Math.floor(aggregatedScores[cat] / count[cat]) };
+        });
+    
+        return result;
+    };
+    
+
     const updateStudentFromAIResponse = (session_id, aiResponse, singleReflectionKey = null) => {
         // const reflectionKeyFieldMap = ["mind", "knowledge", "problem", "strategy", "solution", "data"];
         // TODO: Remove this once we have the new reflection key field map
@@ -266,7 +308,8 @@ export const StudentsProvider = ({ children }) => {
                 hasNewNotifications,
                 setIsProcessing,
                 setHasNewNotifications,
-                refetchStudents
+                refetchStudents,
+                aggregateReflections
             }}
         >
             {children}
