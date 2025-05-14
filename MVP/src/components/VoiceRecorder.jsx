@@ -135,7 +135,7 @@ const VoiceRecorder = ({ navigate }) => {
     const submitRecording = async () => {
         // 1. Ask if user wants to submit recording
         const confirmed = await showConfirmModal({
-            title: 'Submit Recording?',
+            title: '',
             message: 'Are you sure you want to submit this recording?',
             showConfirm: true,
             showCancel: true,
@@ -155,7 +155,7 @@ const VoiceRecorder = ({ navigate }) => {
 
         // 2. Show "Recording Submitted!" modal
         const postSubmitConfirm = await showConfirmModal({
-            title: 'Recording Submitted!',
+            title: '',
             message: "Your recording has been submitted for Clinical Coach analysis. Evaluations should come shortly.",
             showConfirm: true,
             confirmText: 'OK',
