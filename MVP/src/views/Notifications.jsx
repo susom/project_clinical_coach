@@ -60,7 +60,7 @@ export default function Notifications() {
                     {notifications.length === 0 ? (
                         <p className="empty-notifications">No new notifications</p>
                     ) : (
-                        notifications.map((notification) => (
+                        [...notifications].reverse().map((notification) => (
                             <div
                                 key={notification.session_id}
                                 className={`notification ${completedSessions.has(notification.session_id) ? 'clickable' : ''}`}
