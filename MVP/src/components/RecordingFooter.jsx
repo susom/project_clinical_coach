@@ -120,7 +120,7 @@ function RecordingFooter({ stage, setStage }) {
                                     </option>
                                 ))}
                             </select>
-                            <ThinkingHabitsOverview habits={thmLabels} />
+                            <ThinkingHabitsOverview reflections={selectedStudent ? aggregateReflections(selectedStudent) : null}/>
                             <p className="recording-current-time">{new Date().toLocaleString('en-US', {
                                 weekday: 'long',
                                 hour: 'numeric',
