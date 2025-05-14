@@ -255,7 +255,7 @@ class ClinicalCoach extends \ExternalModules\AbstractExternalModule {
                         sleep(1);
                     }
 
-                    if (!$reflection_var && !empty($main_system_final) && 1==2) {
+                    if (!$reflection_var && !empty($main_system_final) ) {
                         // 📝 Prepare final messages (system + user input)
                         $finalMessages = [];
 
@@ -958,7 +958,7 @@ class ClinicalCoach extends \ExternalModules\AbstractExternalModule {
         $this->emDebug("Bad JSON Detected", ["error" => json_last_error_msg()]);
 
         // Attempt single-shot AI repair
-        $enableOneShotRepair = false;
+        $enableOneShotRepair = true;
 
         if ($enableOneShotRepair) {
             $repaired = $this->repairJsonWithAI($json);
