@@ -239,11 +239,17 @@ class ClinicalCoach extends \ExternalModules\AbstractExternalModule {
                             $results["reflections"][$index]["content"] = $jsonResult;
 
                             // ✅ If valid JSON (not an error), save thm_overall_score
-                            if (!isset($jsonResult["error"]) && isset($jsonResult["thm_overall_score"])) {
+                            if (
+                                isset($jsonResult["thm_overall_score"]) &&
+                                !isset($jsonResult["error"]) &&
+                                count($jsonResult) > 1 // Make sure it’s not just the score
+                            ) {
                                 $scoreUpdateResult = $this->updateRepeatingInstrument($coach_id, $session_id, 'session_logs', [
                                     $reflectionFieldMap[$index] . "_score" => $jsonResult["thm_overall_score"]
                                 ]);
                                 $this->emDebug("Score save result", $reflectionFieldMap[$index] . "_score", $scoreUpdateResult);
+                            }else {
+                                $this->emDebug("⚠️ Skipping score save — JSON invalid or too shallow:", $jsonResult);
                             }
                         }
                         sleep(1);
@@ -952,13 +958,17 @@ class ClinicalCoach extends \ExternalModules\AbstractExternalModule {
         $this->emDebug("Bad JSON Detected", ["error" => json_last_error_msg()]);
 
         // Attempt single-shot AI repair
-        $repaired = $this->repairJsonWithAI($json);
-        if ($repaired) {
-            $this->emDebug("✅ AI one-shot JSON repair succeeded.");
-            return json_encode([
-                "attempted_ai_repair" => true,
-                "repaired_json" => json_decode($repaired, true)
-            ], JSON_PRETTY_PRINT);
+        $enableOneShotRepair = false;
+
+        if ($enableOneShotRepair) {
+            $repaired = $this->repairJsonWithAI($json);
+            if ($repaired) {
+                $this->emDebug("✅ AI one-shot JSON repair succeeded.");
+                return json_encode([
+                    "attempted_ai_repair" => true,
+                    "repaired_json" => json_decode($repaired, true)
+                ], JSON_PRETTY_PRINT);
+            }
         }
 
         // Still broken
