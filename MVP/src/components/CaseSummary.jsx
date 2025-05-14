@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 
-export default function CaseSummary({ casePresentationSummary, organizationFeedback, onClose }) {
+export default function CaseSummary({ casePresentationSummary, onClose }) {
     useEffect(() => {
         document.body.style.overflow = "hidden"; // Prevent scrolling
         return () => { document.body.style.overflow = "auto"; };
@@ -16,11 +16,10 @@ export default function CaseSummary({ casePresentationSummary, organizationFeedb
                     <p>{casePresentationSummary.long_summary}</p>
                 </div>
 
-                <div className="case-summary-inner organization-assessment">
+                {/* <div className="case-summary-inner organization-assessment">
                     <h2>Organizational Assessment:</h2>
                     <p>{casePresentationSummary.organization_review}</p>
-                    <p>{organizationFeedback}</p>
-                </div>
+                </div> */}
             </div>
         </div>
     );

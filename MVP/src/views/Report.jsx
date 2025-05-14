@@ -370,7 +370,7 @@ export default function Report() {
                     <ThinkingHabitsOverview reflections={reflections} />
 
                     <div className="report-summary">
-                        <p className="summary-text">{thm_casefeedback}</p>
+                        <p className="summary-text">{parsedSummary.organization_review}</p>
 
                         <div className="summary-buttons">
                             <button className="expandable-button" onClick={toggleAnalysis}>
@@ -503,7 +503,7 @@ export default function Report() {
                 )}
             </main>
             {/* Insert CaseSummary Component */}
-            {showCaseSummary && <CaseSummary casePresentationSummary={parsedSummary} organizationFeedback={parsedThmReport.caseOrganizationFeedback} onClose={() => setShowCaseSummary(false)} />}
+            {showCaseSummary && <CaseSummary casePresentationSummary={parsedSummary}  onClose={() => setShowCaseSummary(false)} />}
             <Footer/>
         </>
     );
