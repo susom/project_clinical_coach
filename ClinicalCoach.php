@@ -239,17 +239,17 @@ class ClinicalCoach extends \ExternalModules\AbstractExternalModule {
                             $results["reflections"][$index]["content"] = $jsonResult;
 
                             // ✅ If valid JSON (not an error), save thm_overall_score
-                            if (
-                                isset($jsonResult["thm_overall_score"]) &&
-                                !isset($jsonResult["error"]) &&
-                                count($jsonResult) > 1 // Make sure it’s not just the score
-                            ) {
+                            $score = $jsonResult["thm_overall_score"] 
+                                ?? $jsonResult["repaired_json"]["thm_overall_score"] 
+                                ?? null;
+
+                            if ($score !== null) {
                                 $scoreUpdateResult = $this->updateRepeatingInstrument($coach_id, $session_id, 'session_logs', [
-                                    $reflectionFieldMap[$index] . "_score" => $jsonResult["thm_overall_score"]
+                                    $reflectionFieldMap[$index] . "_score" => $score
                                 ]);
                                 $this->emDebug("Score save result", $reflectionFieldMap[$index] . "_score", $scoreUpdateResult);
-                            }else {
-                                $this->emDebug("⚠️ Skipping score save — JSON invalid or too shallow:", $jsonResult);
+                            } else {
+                                $this->emDebug("⚠️ Skipping score save — no usable score found:", $jsonResult);
                             }
                         }
                         sleep(1);
@@ -907,32 +907,28 @@ class ClinicalCoach extends \ExternalModules\AbstractExternalModule {
      * @param string $jsonString The raw JSON string from AI.
      * @return array|null Returns a decoded array or null on failure.
      */
-    private function sanitizeAndCleanJson($jsonString) {
-        // STEP 1: REMOVE MARKDOWN + TRIM TO FIRST/FULL BRACE
+    private function sanitizeAndCleanJson($jsonString, $allowRepair = true) {
         $json = trim($jsonString);
-        $json = preg_replace('/^```(?:json)?\s*/', '', $json); // kill opening triple backticks
-        $json = preg_replace('/```$/', '', $json);             // kill closing triple backticks
-        $json = preg_replace('/^[^{]*(\{.*\})[^}]*$/s', '$1', $json); // extract outer JSON
+        $json = preg_replace('/^```(?:json)?\s*/', '', $json);
+        $json = preg_replace('/```$/', '', $json);
+        $json = preg_replace('/^[^{]*(\{.*\})[^}]*$/s', '$1', $json);
     
-        // STEP 2: FLATTEN LINES, UNESCAPE, AND REDUCE GARBAGE
         $json = str_replace(["\\n", "\\r", "\n", "\r"], ' ', $json);
-        $json = preg_replace('/\\\\+/', '\\', $json); // normalize backslashes
-        $json = preg_replace('/\\\\"/', '"', $json);  // remove escape slashes from quotes
-
-        // STEP 3: FIX VARIABLES + BRACKET GOO
-        $json = preg_replace('/\$[a-zA-Z0-9_]+\$/', '"Unknown"', $json); // $var$
-        $json = preg_replace('/\{(\w+)\}:/', '"$1":', $json);            // {key}:
+        $json = preg_replace('/\\\\+/', '\\', $json);
+        $json = preg_replace('/\\\\"/', '"', $json);
+    
+        $json = preg_replace('/\$[a-zA-Z0-9_]+\$/', '"Unknown"', $json);
+        $json = preg_replace('/\{(\w+)\}:/', '"$1":', $json);
         $json = preg_replace('/supporting_citations\s*"?:/', '"supporting_citations":', $json);
     
-        // STEP 4: COMMON STRUCTURE PATCHES
         $patterns = [
-            '/([{,])\s*(\w+)\s*:/',                                // unquoted keys
-            '/"([^"]+)"\s*:\s*,/',                                 // "key": ,
-            '/,\s*([}\]])/',                                       // trailing commas
-            '/"([^"]+)"\s+"([^"]+)"/',                             // "key" "value"
-            '/"([^"]+)"\s*:\s*"([^"]+)"\s*"([^"]+)"\s*:/',          // missing comma
-            '/""(\w+)"/',                                          // extra quotes before key
-            '/"(\w+)"\s*:[\s\n]*""/',                              // empty string values
+            '/([{,])\s*(\w+)\s*:/',
+            '/"([^"]+)"\s*:\s*,/',
+            '/,\s*([}\]])/',
+            '/"([^"]+)"\s+"([^"]+)"/',
+            '/"([^"]+)"\s*:\s*"([^"]+)"\s*"([^"]+)"\s*:/',
+            '/""(\w+)"/',
+            '/"(\w+)"\s*:[\s\n]*""/',
         ];
         $replacements = [
             '$1"$2":',
@@ -944,55 +940,55 @@ class ClinicalCoach extends \ExternalModules\AbstractExternalModule {
             '',
         ];
         $json = preg_replace($patterns, $replacements, $json);
-
-        // FIX KEYS WITH EXTRA SPACES *BEFORE* PARSE
+    
         $json = preg_replace_callback('/"([^"]+)"\s*:/', function ($matches) {
             $key = preg_replace('/\s+/', '_', trim($matches[1]));
             return "\"$key\":";
         }, $json);
-
-        // STEP 5: FIX BAD UNDERSCORES
-        $json = preg_replace('/_{2,}/', '_', $json);      // reduce double underscores
     
-        // STEP 6: FINAL HARD BRACE CLIP
+        $json = preg_replace('/_{2,}/', '_', $json);
         $json = preg_replace('/}(?:(?!\}).)*$/s', '}', $json);
     
-        // STEP 7: VALIDATE
         $decoded = json_decode($json, true);
         if (json_last_error() === JSON_ERROR_NONE) {
             return $this->finalCleanAndEncode($decoded);
         }
-
+    
         $this->emDebug("Bad JSON Detected", ["error" => json_last_error_msg()]);
-
-        // Attempt single-shot AI repair
-        $enableOneShotRepair = true;
-
-        if ($enableOneShotRepair) {
-            $repaired = $this->repairJsonWithAI($json);
-            if ($repaired) {
-                $this->emDebug("✅ AI one-shot JSON repair succeeded.");
-                return json_encode([
-                    "attempted_ai_repair" => true,
-                    "repaired_json" => json_decode($repaired, true)
-                ], JSON_PRETTY_PRINT);
-            }
+    
+        if ($allowRepair === false) {
+            // 🚫 STOP! This was called from repairJsonWithAI. Don't try to repair again.
+            $fallback = json_encode([
+                "error" => "Invalid JSON detected: " . json_last_error_msg(),
+                "broken_json" => substr($json, 0, 4000),
+                "attempted_ai_repair" => true,
+                "repair_status" => "failed"
+            ], JSON_PRETTY_PRINT);
+    
+            $this->emDebug("❌ Recursive repair blocked. Returning fallback.", $fallback);
+            return $fallback;
         }
-
-        // Still broken
+    
+        $repaired = $this->repairJsonWithAI($json);
+        if ($repaired) {
+            $this->emDebug("✅ AI one-shot JSON repair succeeded.");
+            return json_encode([
+                "attempted_ai_repair" => true,
+                "repaired_json" => json_decode($repaired, true)
+            ], JSON_PRETTY_PRINT);
+        }
+    
         $fallback = json_encode([
             "error" => "Invalid JSON detected: " . json_last_error_msg(),
             "broken_json" => substr($json, 0, 4000),
             "attempted_ai_repair" => true,
-            "repair_status" => "failed",
-            "raw_attempted_repair" => $response["content"] ?? null
+            "repair_status" => "failed"
         ], JSON_PRETTY_PRINT);
-        
+    
         $this->emDebug("❌ AI one-shot repair failed. Saving fallback JSON.", $fallback);
-        
         return $fallback;
-        
     }
+    
     
     private function repairJsonWithAI($brokenJson) {
         $prompt = <<<EOT
@@ -1002,6 +998,9 @@ class ClinicalCoach extends \ExternalModules\AbstractExternalModule {
         $brokenJson
         EOT;
         
+        $maxAttempts = 3;
+
+        for ($i = 1; $i <= $maxAttempts; $i++) {
             try {
                 $response = $this->getSecureChatInstance()->callAI(
                     $this->getProjectSetting("llm-model"),
@@ -1015,25 +1014,26 @@ class ClinicalCoach extends \ExternalModules\AbstractExternalModule {
                     ],
                     PROJECT_ID
                 );
-        
+    
                 if (!empty($response["content"])) {
-                    // FIRST, CLEAN THE RESPONSE STRING — same pipeline as original sanitize
                     $raw = $response["content"];
-                    $cleaned = $this->sanitizeAndCleanJson($raw);
-        
+                    $cleaned = $this->sanitizeAndCleanJson($raw, false); 
                     $parsed = json_decode($cleaned, true);
+    
                     if (json_last_error() === JSON_ERROR_NONE) {
+                        $this->emDebug("✅ JSON repair succeeded on attempt $i.");
                         return $this->finalCleanAndEncode($parsed);
                     } else {
-                        $this->emDebug("⚠️ AI repair attempt returned invalid JSON", $raw);
+                        $this->emDebug("❌ Attempt $i: AI repair returned invalid JSON.", $raw);
                     }
                 }
             } catch (\Exception $e) {
-                $this->emDebug("🛑 JSON repair AI call failed", $e->getMessage());
+                $this->emDebug("🛑 Attempt $i: AI repair failed:", $e->getMessage());
             }
-        
-            return null;
         }
+        
+        return null;
+    }
     
     
     private function finalCleanAndEncode($decoded) {
