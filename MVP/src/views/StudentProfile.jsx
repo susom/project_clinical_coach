@@ -32,14 +32,21 @@ export default function StudentProfile() {
     const sessions = selectedStudent.sessions?.filter(s => s.status === "complete" || !s.status) || [];
 
     const getParsedSummary = (summary) => {
+        if (!summary) return "Summary unavailable";
+    
+        if (typeof summary === "object") {
+            return summary.one_sentence_summary || "No summary available";
+        }
+    
         try {
-            let parsedSumm = JSON.parse(summary);
-            return parsedSumm?.one_sentence_summary || "No summary available";
+            const parsed = JSON.parse(summary);
+            return parsed?.one_sentence_summary || "No summary available";
         } catch (error) {
-            console.error("🚨 Error parsing session summary:", error);
-            return "Summary unavailable"; // Fallback if JSON is invalid
+            console.error("🚨 Error parsing session summary:", summary, error);
+            return "Summary unavailable";
         }
     };
+    
     
 
     // Group sessions by date

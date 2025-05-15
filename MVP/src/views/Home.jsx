@@ -18,14 +18,19 @@ export default function Home() {
   const allSessions = students.flatMap(student => {
       const sessions = student.sessions?.filter(s => s.status === "complete" || !s.status) || [];
       return sessions.map(sesh => {
+
         let parsedSummary = null;
-        if (sesh.summary && typeof sesh.summary === "string" && sesh.summary.trim() !== "") {
+        if (sesh.summary) {
+          if (typeof sesh.summary === "string") {
             try {
-                parsedSummary = JSON.parse(sesh.summary);
+              parsedSummary = JSON.parse(sesh.summary);
             } catch (error) {
-                console.error("❌ Invalid JSON in session summary:", sesh.summary, error);
-                parsedSummary = { one_sentence_summary: "Summary unavailable." }; // Graceful fallback
+              console.error("❌ Invalid JSON in session summary:", sesh.summary, error);
+              parsedSummary = { one_sentence_summary: "Summary unavailable." };
             }
+          } else if (typeof sesh.summary === "object") {
+            parsedSummary = sesh.summary;
+          }
         }
       
       return {
