@@ -77,6 +77,13 @@ export default function Profile() {
                     </p>
                 </section>
                 <section className="profile-options">
+                    {window.feedbackURL && (
+                    <button className="profile-option" onClick={handleFeedback}>
+                        <i className="fas fa-info-circle"></i>
+                        <span>Surveys</span>
+                        <i className="fas fa-chevron-right"></i>
+                    </button>
+                    )}
                     <button className="profile-option" onClick={handleManageProfile}>
                         <i className="fas fa-pencil-alt"></i>
                         <span>Manage Profile</span>
@@ -92,18 +99,6 @@ export default function Profile() {
                         <span>Account</span>
                         <i className="fas fa-chevron-right"></i>
                     </button>
-                    <button className="profile-option" onClick={handleHelp}>
-                        <i className="fas fa-question-circle"></i>
-                        <span>Help</span>
-                        <i className="fas fa-chevron-right"></i>
-                    </button>
-                    {window.feedbackURL && (
-                    <button className="profile-option" onClick={handleFeedback}>
-                        <i className="fas fa-info-circle"></i>
-                        <span>Submit Feedback</span>
-                        <i className="fas fa-chevron-right"></i>
-                    </button>
-                    )}
                     <button className="profile-option logout" onClick={handleLogout}>
                         <i className="fas fa-sign-out-alt"></i>
                         <span>Log Out</span>
