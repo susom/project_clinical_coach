@@ -96,8 +96,12 @@ export const StudentsProvider = ({ children }) => {
     };
       
     const selectStudent = (studentId) => {
-        const student = students.find((s) => s.id === studentId);
-        setSelectedStudent({ ...student }); // Create a new object to avoid mutating state
+        const student = students.find((s) => String(s.id) === String(studentId));
+        if (student) {
+            setSelectedStudent({ ...student });
+        } else {
+            console.warn("🚨 No matching student for ID:", studentId);
+        }
     };
 
     const updateStudent = (studentId, updateFn) => {
