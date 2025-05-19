@@ -83,6 +83,7 @@ class ClinicalCoach extends \ExternalModules\AbstractExternalModule {
                     $session_id = $data['session_id'];
                     $coach_id = $data['coach_id'];
                     $reflection_var = $data['reflection_var'] ?? null;
+                    $re_eval_main_and_final = $data['re_eval_main_and_final'] ?? false;
 
                     // Fetch transcription from REDCap repeating instrument
                     $params = [
@@ -157,7 +158,7 @@ class ClinicalCoach extends \ExternalModules\AbstractExternalModule {
                     ];
 
                     // Step 1: Process the main system context
-                    if (!$reflection_var && !empty($main_system_context) ) {
+                    if ((!$reflection_var || $re_eval_main_and_final) && !empty($main_system_context) ) {
                         $this->emDebug("Calling summary AI with main context", $main_system_context);
                         $summaryResult = $this->processAIResponse(
                             $model,
@@ -195,69 +196,106 @@ class ClinicalCoach extends \ExternalModules\AbstractExternalModule {
                     sleep(2);
 
                     //2. Process the reflections
-                    $reflectionFieldMap = [
-                        0 => 'sess_reflect_mind',
-                        1 => 'sess_reflect_knowledge',
-                        2 => 'sess_reflect_problem',
-                        3 => 'sess_reflect_strategy',
-                        4 => 'sess_reflect_solution',
-                        5 => 'sess_reflect_data'
-                    ];
-                    foreach ($reflection_contexts as $index => $reflection_context) {
+                    if (!$re_eval_main_and_final) {
+                        $reflectionFieldMap = [
+                            0 => 'sess_reflect_mind',
+                            1 => 'sess_reflect_knowledge',
+                            2 => 'sess_reflect_problem',
+                            3 => 'sess_reflect_strategy',
+                            4 => 'sess_reflect_solution',
+                            5 => 'sess_reflect_data'
+                        ];
+                        foreach ($reflection_contexts as $index => $reflection_context) {
 
-                        $fieldName = $reflectionFieldMap[$index];
-                        if ($reflection_var && $reflection_var !== $fieldName) continue;
+                            $fieldName = $reflectionFieldMap[$index];
+                            if ($reflection_var && $reflection_var !== $fieldName) continue;
 
-                        $this->emDebug("Calling reflection AI", $fieldName);
-                        $reflectionResult = $this->processAIResponse(
-                            $model,
-                            $reflection_context,
-                            $transcription,
-                            $defaultParams
-                        );
-                        $this->emDebug("Reflection response", $index, $reflectionResult);
+                            $this->emDebug("Calling reflection AI", $fieldName);
+                            $reflectionResult = $this->processAIResponse(
+                                $model,
+                                $reflection_context,
+                                $transcription,
+                                $defaultParams
+                            );
+                            $this->emDebug("Reflection response", $index, $reflectionResult);
 
-                        if(!empty($reflectionResult["response"]["response"])){
-                            $results["reflections"][$index]["response"] = $reflectionResult["response"]["response"];
-                        }
-
-                        if (!empty($reflectionResult["content"])) {
-                            // 🛠️ Sanitize and validate JSON
-                            $sanitizedJson = $this->sanitizeAndCleanJson($reflectionResult["content"]);
-
-                            // ✅ Save the result (whether valid JSON or an error message)
-                            $updateResult = $this->updateRepeatingInstrument($coach_id, $session_id, 'session_logs', [
-                                $reflectionFieldMap[$index] => $sanitizedJson
-                            ]);
-                            
-                            // 📝 Log any errors from the update
-                            if (!empty($updateResult['errors'])) {
-                                $this->emDebug("❌ Error saving sess_main_summary:", $updateResult['errors']);
+                            if(!empty($reflectionResult["response"]["response"])){
+                                $results["reflections"][$index]["response"] = $reflectionResult["response"]["response"];
                             }
 
-                            $jsonResult = json_decode($sanitizedJson, true);
-                            $results["reflections"][$index]["content"] = $jsonResult;
+                            if (!empty($reflectionResult["content"])) {
+                                // 🛠️ Sanitize and validate JSON
+                                $sanitizedJson = $this->sanitizeAndCleanJson($reflectionResult["content"]);
 
-                            // ✅ If valid JSON (not an error), save thm_overall_score
-                            $score = $jsonResult["thm_overall_score"] 
-                                ?? $jsonResult["repaired_json"]["thm_overall_score"] 
-                                ?? null;
-
-                            if ($score !== null) {
-                                $scoreUpdateResult = $this->updateRepeatingInstrument($coach_id, $session_id, 'session_logs', [
-                                    $reflectionFieldMap[$index] . "_score" => $score
+                                // ✅ Save the result (whether valid JSON or an error message)
+                                $updateResult = $this->updateRepeatingInstrument($coach_id, $session_id, 'session_logs', [
+                                    $reflectionFieldMap[$index] => $sanitizedJson
                                 ]);
-                                $this->emDebug("Score save result", $reflectionFieldMap[$index] . "_score", $scoreUpdateResult);
-                            } else {
-                                $this->emDebug("⚠️ Skipping score save — no usable score found:", $jsonResult);
+                                
+                                // 📝 Log any errors from the update
+                                if (!empty($updateResult['errors'])) {
+                                    $this->emDebug("❌ Error saving sess_main_summary:", $updateResult['errors']);
+                                }
+
+                                $jsonResult = json_decode($sanitizedJson, true);
+                                $results["reflections"][$index]["content"] = $jsonResult;
+
+                                // ✅ If valid JSON (not an error), save thm_overall_score
+                                $score = $jsonResult["thm_overall_score"] 
+                                    ?? $jsonResult["repaired_json"]["thm_overall_score"] 
+                                    ?? null;
+
+                                if ($score !== null) {
+                                    $scoreUpdateResult = $this->updateRepeatingInstrument($coach_id, $session_id, 'session_logs', [
+                                        $reflectionFieldMap[$index] . "_score" => $score
+                                    ]);
+                                    $this->emDebug("Score save result", $reflectionFieldMap[$index] . "_score", $scoreUpdateResult);
+                                } else {
+                                    $this->emDebug("⚠️ Skipping score save — no usable score found:", $jsonResult);
+                                }
                             }
+                            sleep(1);
                         }
-                        sleep(1);
                     }
 
-                    if (!$reflection_var && !empty($main_system_final) ) {
+                    if ((!$reflection_var || $re_eval_main_and_final) && !empty($main_system_final) ) {
                         // 📝 Prepare final messages (system + user input)
                         $finalMessages = [];
+
+                        if ($re_eval_main_and_final) {
+                            $reflectionFieldMap = [
+                                0 => 'sess_reflect_mind',
+                                1 => 'sess_reflect_knowledge',
+                                2 => 'sess_reflect_problem',
+                                3 => 'sess_reflect_strategy',
+                                4 => 'sess_reflect_solution',
+                                5 => 'sess_reflect_data'
+                            ];
+                        
+                            $session_data = \REDCap::getData([
+                                'project_id' => $this->getProjectId(),
+                                'records' => [$coach_id],
+                                'fields' => array_values($reflectionFieldMap),
+                                'forms' => ['session_logs'],
+                                'exportRepeatingInstrumentsEvents' => true,
+                                'return_format' => 'array',
+                                'filterLogic' => "[session_id] = '$session_id'"
+                            ]);
+                        
+                            foreach ($session_data[$coach_id]['repeat_instances'] as $event_data) {
+                                foreach ($event_data['session_logs'] as $session) {
+                                    if ($session['session_id'] === $session_id) {
+                                        foreach ($reflectionFieldMap as $i => $fieldName) {
+                                            if (!empty($session[$fieldName])) {
+                                                $parsed = json_decode($session[$fieldName], true);
+                                                $results["reflections"][$i]["content"] = $parsed ?: $session[$fieldName];
+                                            }
+                                        }
+                                        break 2;
+                                    }
+                                }
+                            }
+                        }
 
                         if ($this->isGeminiModel($model)) {
                             // 🔹 Gemini-style: Flatten all reflections into one user message
@@ -702,7 +740,7 @@ class ClinicalCoach extends \ExternalModules\AbstractExternalModule {
     private function isGeminiModel($model) {
         return stripos($model, 'gemini') !== false;
     }
-    
+
 
     public function formatResponse($response) {
         $content = $this->getSecureChatInstance()->extractResponseText($response);
@@ -858,7 +896,6 @@ class ClinicalCoach extends \ExternalModules\AbstractExternalModule {
         return $sessions;
     }
     
-
     public function getFeedbackURL(){
         $url = $this->getProjectSetting("feedback-url");
         return empty($url) ? null : $url;
@@ -899,7 +936,6 @@ class ClinicalCoach extends \ExternalModules\AbstractExternalModule {
 
         return $coachesList;
     }
-
 
     /**
      * Cleans and safely decodes JSON content from AI responses.
@@ -989,7 +1025,6 @@ class ClinicalCoach extends \ExternalModules\AbstractExternalModule {
         return $fallback;
     }
     
-    
     private function repairJsonWithAI($brokenJson) {
         $prompt = <<<EOT
         You are a JSON repair assistant. Fix the following malformed JSON and return only the corrected JSON object. Do not include explanations or markdown. Output must be raw JSON only.
@@ -1035,7 +1070,6 @@ class ClinicalCoach extends \ExternalModules\AbstractExternalModule {
         return null;
     }
     
-    
     private function finalCleanAndEncode($decoded) {
         $cleaned = function ($data) use (&$cleaned) {
             if (is_array($data)) {
@@ -1054,8 +1088,6 @@ class ClinicalCoach extends \ExternalModules\AbstractExternalModule {
         return json_encode($cleaned($decoded), JSON_PRETTY_PRINT);
     }
     
-    
-
     /**
      * Updates a specific repeating instrument instance in REDCap
      *
@@ -1155,7 +1187,6 @@ class ClinicalCoach extends \ExternalModules\AbstractExternalModule {
 
         return $nextInstance;
     }
-
 
     /**
      * @return \Stanford\SecureChatAI\SecureChatAI

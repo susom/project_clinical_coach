@@ -150,15 +150,15 @@ export default function Report() {
         const payload = {
           session_id: the_session.session_id,
           coach_id: coach.record_id,
-          reevaluate_all: true
+          re_eval_main_and_final: true
         };
       
-        console.log("🔁 Full Re-evaluation Triggered:", payload);
+        console.log("🔁 Main + Final Re-evaluation Triggered:", payload);
       
         window.clinical_coach_jsmo_module.callAI(
           JSON.stringify(payload),
           (response) => {
-            console.log("✅ Full Re-evaluation Complete:", response);
+            console.log("✅ Main + Final Re-evaluation Complete:", response);
             refetchStudents()
             setLoadingReflection(null);
           },
