@@ -63,7 +63,106 @@ class ClinicalCoach extends \ExternalModules\AbstractExternalModule {
 
         return $chatMlArray;
     }
+    
+    private function getJsonSchemaFor($type) {
+        switch ($type) {
+            case "summary": 
+                return [
+                    "type" => "object",
+                    "properties" => [
+                        "summary_title" => ["type" => "string"],
+                        "one_sentence_summary" => ["type" => "string"],
+                        "long_summary" => ["type" => "string"],
+                        "organization_review" => ["type" => "string"],
+                        "certainty_score" => ["type" => "string"]
+                    ],
+                    "required" => [
+                        "summary_title",
+                        "one_sentence_summary",
+                        "long_summary",
+                        "organization_review",
+                        "certainty_score"
+                    ]
+                ]; // JSON schema array
 
+            case "final": 
+                return [
+                    "type" => "object",
+                    "properties" => [
+                        "reportTitle" => ["type" => "string"],
+                        "version" => ["type" => "string"],
+                        "positiveFeedback" => [
+                            "type" => "array",
+                            "items" => ["type" => "string"]
+                        ]
+                    ],
+                    "required" => ["reportTitle", "version", "positiveFeedback"]
+                ];
+
+            case "reflection": 
+                    return [
+                    "type" => "object",
+                    "properties" => [
+                        "report_title" => ["type" => "string"],
+                        "overall_assessment" => ["type" => "string"],
+                        "thm_overall_score" => ["type" => "integer"],
+                        "coaching_insights" => [
+                            "type" => "object",
+                            "properties" => [
+                                "positive_feedback" => [
+                                    "type" => "array",
+                                    "items" => ["type" => "string"]
+                                ],
+                                "coaching_questions" => [
+                                    "type" => "array",
+                                    "items" => ["type" => "string"]
+                                ]
+                            ],
+                            "required" => ["positive_feedback", "coaching_questions"]
+                        ],
+                        "detailed_analysis" => [
+                            "type" => "array",
+                            "items" => [
+                                "type" => "object",
+                                "properties" => [
+                                    "question" => ["type" => "string"],
+                                    "emoji" => ["type" => "string"],
+                                    "analysis" => ["type" => "string"],
+                                    "ai_certainty_score" => ["type" => "string"],
+                                    "supporting_citations" => [
+                                        "type" => "object",
+                                        "properties" => [
+                                            "primary" => [
+                                                "type" => "array",
+                                                "items" => ["type" => "string"]
+                                            ]
+                                        ],
+                                        "required" => ["primary"]
+                                    ]
+                                ],
+                                "required" => [
+                                    "question",
+                                    "emoji",
+                                    "analysis",
+                                    "ai_certainty_score",
+                                    "supporting_citations"
+                                ]
+                            ]
+                        ]
+                    ],
+                    "required" => [
+                        "report_title",
+                        "overall_assessment",
+                        "thm_overall_score",
+                        "coaching_insights",
+                        "detailed_analysis"
+                    ]
+                ];
+
+            default: 
+                return null;
+        }
+    }
 
     public function redcap_module_ajax($action, $payload, $project_id, $record, $instrument, $event_id, $repeat_instance,
                                        $survey_hash, $response_id, $survey_queue_hash, $page, $page_full, $user_id, $group_id) {
@@ -133,6 +232,7 @@ class ClinicalCoach extends \ExternalModules\AbstractExternalModule {
                     ]);
 
                     $model = $this->getProjectSetting("llm-model");
+                    $isGPT41 = $model === "gpt-4.1";
                     $defaultParams = [
                         "temperature" => floatval($this->getProjectSetting("gpt-temperature", .7)),
                         "top_p" => floatval($this->getProjectSetting("gpt-top-p", .9)),
@@ -160,11 +260,15 @@ class ClinicalCoach extends \ExternalModules\AbstractExternalModule {
                     // Step 1: Process the main system context
                     if ((!$reflection_var || $re_eval_main_and_final) && !empty($main_system_context) ) {
                         $this->emDebug("Calling summary AI with main context", $main_system_context);
+                        $customParams = $defaultParams;
+                        if ($isGPT41) {
+                            $customParams["json_schema"] = $this->getJsonSchemaFor("summary"); 
+                        }
                         $summaryResult = $this->processAIResponse(
                             $model,
                             $main_system_context,
                             $transcription,
-                            $defaultParams
+                            $customParams
                         );
                         $this->emDebug("Summary response raw", $summaryResult);
 
@@ -211,11 +315,14 @@ class ClinicalCoach extends \ExternalModules\AbstractExternalModule {
                             if ($reflection_var && $reflection_var !== $fieldName) continue;
 
                             $this->emDebug("Calling reflection AI", $fieldName);
+                            if ($isGPT41) {
+                                $customParams["json_schema"] = $this->getJsonSchemaFor("reflection"); 
+                            }
                             $reflectionResult = $this->processAIResponse(
                                 $model,
                                 $reflection_context,
                                 $transcription,
-                                $defaultParams
+                                $customParams
                             );
                             $this->emDebug("Reflection response", $index, $reflectionResult);
 
@@ -340,13 +447,16 @@ class ClinicalCoach extends \ExternalModules\AbstractExternalModule {
                             $finalMessages[] = ["role" => "user", "content" => "Please generate a final self-reflection summary."];
                         }
 
-
                         $this->emDebug("Final message payload", $finalMessages);
 
                         // 🔥 Call AI for final summary
+                        $customParams = $defaultParams;
+                        if ($isGPT41) {
+                            $customParams["json_schema"] = $this->getJsonSchemaFor("final"); 
+                        }
                         $finalResponse = $this->getSecureChatInstance()->callAI(
                             $model,
-                            array_merge(["messages" => $finalMessages], $defaultParams),
+                            array_merge(["messages" => $finalMessages], $customParams),
                             PROJECT_ID
                         );
                         $this->emDebug("Final AI response", $finalResponse);
