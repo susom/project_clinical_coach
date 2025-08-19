@@ -71,10 +71,22 @@ export default function Report() {
         }
     }
 
+    const AI_FAILURE_PHRASES = [
+        "insufficient or unclear data",
+        "unable to generate reflection",
+        "analysis could not be completed"
+    ];
+
     // Safely parse reflections
     let parsedReflections = Object.fromEntries(
         Object.entries(the_session.reflections || {}).map(([key, reflection]) => {
             const parsedContent = cleanAndParseJSON(reflection.content, {});
+
+            // New logic to check for failure phrases
+            const hasFailurePhrase = Object.values(parsedContent).some(value =>
+                typeof value === 'string' && AI_FAILURE_PHRASES.some(phrase => value.toLowerCase().includes(phrase))
+            );
+
             return [
                 key,
                 {
@@ -82,7 +94,13 @@ export default function Report() {
                     report_title: parsedContent?.report_title
                         ? parsedContent.report_title.replace(/\b(report|thinking habits)\b/gi, '').trim()
                         : "Unknown",
-                    hasError: Object.keys(parsedContent).length === 0 || parsedContent.error,
+                    
+                    // Updated hasError logic
+                    hasError:
+                        Object.keys(parsedContent).length === 0 || // Is the object empty?
+                        !!parsedContent.error ||                  // Does it have a formal .error key?
+                        hasFailurePhrase,                         // Does it contain a known failure phrase?
+
                     rating: reflection.rating || [],
                     category: key
                 }

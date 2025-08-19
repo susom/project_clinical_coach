@@ -7,6 +7,40 @@ import { useCoach } from '../contexts/Coach';
 
 const MAX_RECORDING_TIME = 15 * 60; // 15 minutes in seconds
 
+function useWakeLock(shouldEnable) {
+  const wakeLockRef = useRef(null);
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    async function requestLock() {
+      if (shouldEnable && 'wakeLock' in navigator) {
+        try {
+          wakeLockRef.current = await navigator.wakeLock.request('screen');
+
+          // Optional: handle lock release event (if needed)
+          wakeLockRef.current.addEventListener('release', () => {
+            if (!shouldEnable && wakeLockRef.current) {
+              wakeLockRef.current = null;
+            }
+          });
+        } catch (err) {
+          // Handle errors here if needed (e.g., unsupported browser)
+        }
+      }
+    }
+
+    requestLock();
+
+    return () => {
+      if (wakeLockRef.current) {
+        wakeLockRef.current.release();
+        wakeLockRef.current = null;
+      }
+    };
+  }, [shouldEnable]);
+}
+
 const VoiceRecorder = ({ navigate }) => {
     const [state, setState] = useState('pre-record'); // pre-record, recording, paused, finalized
     const [elapsedTime, setElapsedTime] = useState(0);
@@ -26,6 +60,9 @@ const VoiceRecorder = ({ navigate }) => {
     const { showConfirmModal } = useConfirmModal();
     const { selectedStudent, updateStudent, createNewSession, setIsProcessing, setHasNewNotifications, addNotification, updateNotificationSessionId, updateNotificationTranscription    } = useStudents();
     const { coach , setStage } = useCoach();
+
+    //keep awake during recording
+    useWakeLock(state === 'recording');
 
     // Function to clear the timer and reset elapsed time
     const clearTimer = () => {
