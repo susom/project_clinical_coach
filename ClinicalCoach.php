@@ -288,7 +288,7 @@ class ClinicalCoach extends \ExternalModules\AbstractExternalModule {
 
                             // 📝 Log any errors from the update
                             if (!empty($updateResult['errors'])) {
-                                $this->emDebug("❌ Error saving sess_main_summary:", $updateResult['errors']);
+                                $this->emDebug("Error saving sess_main_summary:", $updateResult['errors']);
                             }
 
                             $jsonResult = json_decode($sanitizedJson, true);
@@ -1103,7 +1103,7 @@ class ClinicalCoach extends \ExternalModules\AbstractExternalModule {
         $this->emDebug("Bad JSON Detected", ["error" => json_last_error_msg()]);
     
         if ($allowRepair === false) {
-            // 🚫 STOP! This was called from repairJsonWithAI. Don't try to repair again.
+            // STOP! This was called from repairJsonWithAI. Don't try to repair again.
             $fallback = json_encode([
                 "error" => "Invalid JSON detected: " . json_last_error_msg(),
                 "broken_json" => substr($json, 0, 4000),
@@ -1117,7 +1117,7 @@ class ClinicalCoach extends \ExternalModules\AbstractExternalModule {
     
         $repaired = $this->repairJsonWithAI($json);
         if ($repaired) {
-            $this->emDebug("✅ AI one-shot JSON repair succeeded.");
+            $this->emDebug("AI one-shot JSON repair succeeded.");
             return json_encode([
                 "attempted_ai_repair" => true,
                 "repaired_json" => json_decode($repaired, true)
@@ -1136,22 +1136,29 @@ class ClinicalCoach extends \ExternalModules\AbstractExternalModule {
     }
     
     private function repairJsonWithAI($brokenJson) {
+        // Try to extract the most JSON-like inner payload first (balanced braces).
+        $candidate = $this->extractFirstBalancedJsonObject($brokenJson);
+        if ($candidate !== null) {
+            $brokenJson = $candidate;
+        }
+
         $prompt = <<<EOT
-        You are a JSON repair assistant. Fix the following malformed JSON and return only the corrected JSON object. Do not include explanations or markdown. Output must be raw JSON only.
-        
-        Broken JSON:
-        $brokenJson
-        EOT;
-        
+    You are a JSON repair assistant. Return ONLY a corrected JSON value (object or array). 
+    No markdown, no code fences, no text. Output must begin with '{' or '[' and end with the matching '}' or ']'.
+
+    Broken JSON:
+    $brokenJson
+    EOT;
+
         $maxAttempts = 3;
 
         for ($i = 1; $i <= $maxAttempts; $i++) {
             try {
-                $response = $this->getSecureChatInstance()->callAI(
+                $resp = $this->getSecureChatInstance()->callAI(
                     $this->getProjectSetting("llm-model"),
                     [
                         "messages" => [
-                            ["role" => "system", "content" => "You fix broken JSON strings."],
+                            ["role" => "system", "content" => "Fix malformed JSON. Output raw JSON only."],
                             ["role" => "user", "content" => $prompt]
                         ],
                         "temperature" => 0,
@@ -1159,26 +1166,38 @@ class ClinicalCoach extends \ExternalModules\AbstractExternalModule {
                     ],
                     PROJECT_ID
                 );
-    
-                if (!empty($response["content"])) {
-                    $raw = $response["content"];
-                    $cleaned = $this->sanitizeAndCleanJson($raw, false); 
-                    $parsed = json_decode($cleaned, true);
-    
-                    if (json_last_error() === JSON_ERROR_NONE) {
-                        $this->emDebug("✅ JSON repair succeeded on attempt $i.");
-                        return $this->finalCleanAndEncode($parsed);
-                    } else {
-                        $this->emDebug("❌ Attempt $i: AI repair returned invalid JSON.", $raw);
-                    }
+
+                if (empty($resp["content"])) {
+                    $this->emDebug("Attempt $i: empty AI content");
+                    continue;
+                }
+
+                $raw = trim($resp["content"]);
+
+                // Hard guard: reject non-JSON wrappers/fences
+                $startsOk = (strlen($raw) > 0 && ($raw[0] === '{' || $raw[0] === '['));
+                $endsOk   = (substr($raw, -1) === '}' || substr($raw, -1) === ']');
+                if (!($startsOk && $endsOk)) {
+                    $this->emDebug("Attempt $i: AI output not raw JSON start/end", mb_substr($raw, 0, 200));
+                    continue;
+                }
+
+                // Deep decode: handle JSON-of-JSON
+                $try = $this->deepJsonDecode($raw);
+                if ($try['ok']) {
+                    // Return pretty JSON string; caller won’t re-sanitize.
+                    return json_encode($try['value'], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+                } else {
+                    $this->emDebug("Attempt $i: decode error", $try['error'], mb_substr($raw, 0, 200));
                 }
             } catch (\Exception $e) {
-                $this->emDebug("🛑 Attempt $i: AI repair failed:", $e->getMessage());
+                $this->emDebug("Attempt $i: AI repair exception", $e->getMessage());
             }
         }
-        
+
         return null;
     }
+
     
     private function finalCleanAndEncode($decoded) {
         $cleaned = function ($data) use (&$cleaned) {
