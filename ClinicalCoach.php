@@ -318,6 +318,9 @@ class ClinicalCoach extends \ExternalModules\AbstractExternalModule {
                             if ($isGPT41) {
                                 $customParams["json_schema"] = $this->getJsonSchemaFor("reflection"); 
                             }
+                            if (!is_array($customParams)) {
+                                $customParams = [];
+                            }
                             $reflectionResult = $this->processAIResponse(
                                 $model,
                                 $reflection_context,
@@ -1055,6 +1058,12 @@ class ClinicalCoach extends \ExternalModules\AbstractExternalModule {
      */
     private function sanitizeAndCleanJson($jsonString, $allowRepair = true) {
         $json = trim($jsonString);
+
+        $json = preg_replace('/```(json)?/i', '', $json);
+        $json = preg_replace('/```/', '', $json);
+        $json = preg_replace('/"\s+([a-zA-Z0-9_]+)"\s*:/', '"$1":', $json);
+        $json = preg_replace('/^\s+|\s+$/m', '', $json);
+
         $json = preg_replace('/^```(?:json)?\s*/', '', $json);
         $json = preg_replace('/```$/', '', $json);
         $json = preg_replace('/^[^{]*(\{.*\})[^}]*$/s', '$1', $json);
@@ -1135,6 +1144,58 @@ class ClinicalCoach extends \ExternalModules\AbstractExternalModule {
         return $fallback;
     }
     
+    private function deepJsonDecode($raw) {
+        $out = ['ok' => false, 'value' => null, 'error' => null];
+        try {
+            // Try normal decode first
+            $val = json_decode($raw, true);
+            if (json_last_error() === JSON_ERROR_NONE) {
+                $out['ok'] = true;
+                $out['value'] = $val;
+                return $out;
+            }
+
+            // Try decode of nested JSON strings
+            $val = json_decode(stripslashes($raw), true);
+            if (json_last_error() === JSON_ERROR_NONE) {
+                $out['ok'] = true;
+                $out['value'] = $val;
+                return $out;
+            }
+
+            // Try to unwrap double-encoded JSON
+            if (preg_match('/\{.*\}/s', $raw, $m)) {
+                $inner = json_decode($m[0], true);
+                if (json_last_error() === JSON_ERROR_NONE) {
+                    $out['ok'] = true;
+                    $out['value'] = $inner;
+                    return $out;
+                }
+            }
+
+            $out['error'] = json_last_error_msg();
+        } catch (Exception $e) {
+            $out['error'] = $e->getMessage();
+        }
+        return $out;
+    }
+
+    private function extractFirstBalancedJsonObject($text) {
+        $start = strpos($text, '{');
+        if ($start === false) return null;
+
+        $depth = 0;
+        $len = strlen($text);
+        for ($i = $start; $i < $len; $i++) {
+            if ($text[$i] === '{') $depth++;
+            elseif ($text[$i] === '}') $depth--;
+            if ($depth === 0 && $i > $start) {
+                return substr($text, $start, $i - $start + 1);
+            }
+        }
+        return null;
+    }
+
     private function repairJsonWithAI($brokenJson) {
         // Try to extract the most JSON-like inner payload first (balanced braces).
         $candidate = $this->extractFirstBalancedJsonObject($brokenJson);
@@ -1143,12 +1204,12 @@ class ClinicalCoach extends \ExternalModules\AbstractExternalModule {
         }
 
         $prompt = <<<EOT
-    You are a JSON repair assistant. Return ONLY a corrected JSON value (object or array). 
-    No markdown, no code fences, no text. Output must begin with '{' or '[' and end with the matching '}' or ']'.
+        You are a JSON repair assistant. Return ONLY a corrected JSON value (object or array). 
+        No markdown, no code fences, no text. Output must begin with '{' or '[' and end with the matching '}' or ']'.
 
-    Broken JSON:
-    $brokenJson
-    EOT;
+        Broken JSON:
+        $brokenJson
+        EOT;
 
         $maxAttempts = 3;
 
