@@ -385,7 +385,7 @@ export default function Report() {
                         </div>
                     </div>
 
-                    <ThinkingHabitsOverview reflections={reflections} />
+                    {/* <ThinkingHabitsOverview reflections={reflections} /> */}
 
                     <div className="report-summary">
                         <p className="summary-text">{parsedSummary.organization_review}</p>
@@ -398,7 +398,7 @@ export default function Report() {
                     </div>
                 </section>
 
-                {strengths.length > 0 && (
+                {strengths.length > 0 && 1==2 && (
                     <section className="report-strengths">
                         <h3>{studentName}’s Strengths</h3>
                         <div className="strengths-container">
