@@ -86,7 +86,7 @@ export default function DetailAnalysis() {
                 </div>
 
                 {/* Positive Feedback */}
-                {positive_feedback.length > 0 && 1==2 && (
+                {positive_feedback.length > 0 && (
                     <section className="analysis-section">
                         <h3>Positive Feedback</h3>
                         <ul>
@@ -119,7 +119,7 @@ export default function DetailAnalysis() {
                                     {analysisItem.emoji} {analysisItem.question}
                                 </h5>
                                 <p>{analysisItem.analysis}</p>
-                                {/* <p className="certainty-score">{analysisItem.ai_certainty_score}</p> */}
+                                <p className="certainty-score">{analysisItem.ai_certainty_score}</p>
 
                                 {/* Supporting Citations */}
                                 {analysisItem.supporting_citations?.primary?.length > 0 && (

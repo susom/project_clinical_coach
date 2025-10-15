@@ -11,10 +11,10 @@ export default function CaseSummary({ casePresentationSummary, onClose }) {
         <div className="case-summary-overlay" onClick={onClose}>
             <div className="case-summary-modal" onClick={(e) => e.stopPropagation()}>
                 <button className="case-summary-close" onClick={onClose}>✕</button>
-                {/* <div className="case-summary-inner">
+                <div className="case-summary-inner">
                     <h2>Case Presentation Summary:</h2>
                     <p>{casePresentationSummary.long_summary}</p>
-                </div> */}
+                </div>
 
                 <div className="case-summary-inner organization-assessment">
                     <h2>Organizational Assessment:</h2>

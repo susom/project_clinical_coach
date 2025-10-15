@@ -287,7 +287,7 @@ export const StudentsProvider = ({ children }) => {
             });
         });
     };
-    window.updateStudentFromAIResponse = updateStudentFromAIResponse;
+
 
     return (
         <StudentsContext.Provider
