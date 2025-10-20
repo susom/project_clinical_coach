@@ -201,12 +201,12 @@ const VoiceRecorder = ({ navigate }) => {
             console.log('User did not confirm submission modal.');
             return;
         }
-        
+
         // 3. Submit the recording to the backend
         try {
             const new_session_time = new Date().toISOString().split('T')[0] + " " + new Date().toLocaleTimeString();
             const tempSessionId = createNewSession(selectedStudent.id);
-        
+
             // Prepare FormData for backend submission
             const formData = new FormData();
             formData.append("file", recordedBlob, "recording.wav");
@@ -215,7 +215,7 @@ const VoiceRecorder = ({ navigate }) => {
               coachId: coach.record_id,
               session_date: new_session_time,
             }));
-        
+
             setIsProcessing(true);
             setHasNewNotifications(false);
 
@@ -229,7 +229,7 @@ const VoiceRecorder = ({ navigate }) => {
                 status: "pending",
                 studentId: selectedStudent.id,
               });
-              
+
 
             // Fire off AJAX call in the background
             callAjax(formData, async (rawResponse) => {
@@ -258,12 +258,12 @@ const VoiceRecorder = ({ navigate }) => {
                 console.error("[ERROR HANDLING TRANSCRIPTION RESPONSE]:", error);
               }
             });
-        
+
 
             // Navigate immediately to notifications view
             setStage(1);
             navigate('/notifications');
-        
+
         } catch (error) {
             console.error("Error submitting recording:", error);
         }
@@ -301,7 +301,7 @@ const VoiceRecorder = ({ navigate }) => {
             drawWaveform();
 
             // Initialize MediaRecorder
-            mediaRecorderRef.current = new MediaRecorder(stream);
+            mediaRecorderRef.current = new MediaRecorder(stream, { mimeType: 'audio/mp4' });
             mediaRecorderRef.current.ondataavailable = (event) => {
                 if (event.data.size > 0) {
                     audioChunks.current.push(event.data);
@@ -327,9 +327,19 @@ const VoiceRecorder = ({ navigate }) => {
         }
     };
 
+    // Fix for stopRecording in VoiceRecorder.jsx
     const stopRecording = () => {
-        if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-            mediaRecorderRef.current.stop();
+        if (mediaRecorderRef.current) {
+            // Set onstop handler BEFORE calling stop()
+            mediaRecorderRef.current.onstop = () => {
+                const blob = new Blob(audioChunks.current, { type: 'audio/mp4' });
+                setRecordedBlob(blob);
+                setPreviewUrl(URL.createObjectURL(blob));
+                audioChunks.current = [];
+            };
+            if (mediaRecorderRef.current.state !== 'inactive') {
+                mediaRecorderRef.current.stop();
+            }
         }
 
         // Stop waveform animation
@@ -342,16 +352,6 @@ const VoiceRecorder = ({ navigate }) => {
         clearTimer();
 
         setState('finalized');
-
-        // Package the recorded audio
-        if (mediaRecorderRef.current) {
-            mediaRecorderRef.current.onstop = () => {
-                const blob = new Blob(audioChunks.current, { type: 'audio/wav' });
-                setRecordedBlob(blob);
-                setPreviewUrl(URL.createObjectURL(blob));
-                audioChunks.current = [];
-            };
-        }
     };
 
     const pauseRecording = () => {
@@ -486,7 +486,7 @@ const VoiceRecorder = ({ navigate }) => {
                         {previewUrl && (
                             <div className="vr_audio-container">
                                 <audio controls key={previewUrl} className="vr_audio-preview">
-                                    <source src={previewUrl} type="audio/wav"/>
+                                    <source src={previewUrl} type="audio/mp4"/>
                                     Your browser does not support the audio element.
                                 </audio>
                                 <button
