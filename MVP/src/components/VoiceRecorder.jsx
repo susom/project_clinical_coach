@@ -269,63 +269,6 @@ const VoiceRecorder = ({ navigate }) => {
         }
     };
 
-    // const startRecording = async () => {
-    //     try {
-    //         setElapsedTime(0);
-    //         audioChunks.current = [];
-    //         setRecordedBlob(null);
-    //         setPreviewUrl('');
-    //
-    //         // Set state to 'recording' and wait for rendering
-    //         setState('recording');
-    //         await new Promise((resolve) => setTimeout(resolve, 100));
-    //
-    //         // Request microphone access
-    //         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    //         console.log('Microphone stream received:', stream);
-    //
-    //         // Initialize Web Audio API
-    //         audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
-    //         analyserRef.current = audioContextRef.current.createAnalyser();
-    //         const source = audioContextRef.current.createMediaStreamSource(stream);
-    //
-    //         // Connect the analyser to the audio stream
-    //         source.connect(analyserRef.current);
-    //
-    //         // Prepare waveform data array
-    //         analyserRef.current.fftSize = 2048;
-    //         const bufferLength = analyserRef.current.frequencyBinCount;
-    //         dataArrayRef.current = new Uint8Array(bufferLength);
-    //
-    //         // Start drawing the waveform
-    //         drawWaveform();
-    //
-    //         // Initialize MediaRecorder
-    //         mediaRecorderRef.current = new MediaRecorder(stream, { mimeType: 'audio/mp4' });
-    //         mediaRecorderRef.current.ondataavailable = (event) => {
-    //             if (event.data.size > 0) {
-    //                 audioChunks.current.push(event.data);
-    //             }
-    //         };
-    //         mediaRecorderRef.current.start();
-    //
-    //         // Start the timer
-    //         clearTimer(); // Ensure no previous timer is running
-    //         timerRef.current = setInterval(() => {
-    //             setElapsedTime((prevElapsedTime) => {
-    //                 if (prevElapsedTime + 1 >= MAX_RECORDING_TIME) {
-    //                     stopRecording(); // Stops recording if the max time is reached
-    //                     return MAX_RECORDING_TIME; // Ensures the time doesn't exceed the max limit
-    //                 }
-    //                 return prevElapsedTime + 1; // Increments the elapsed time
-    //             });
-    //         }, 1000);
-    //
-    //     } catch (error) {
-    //         console.error('Error accessing microphone:', error);
-    //         alert('Unable to access your microphone. Please check your permissions.');
-    //     }
-    // };
     const startRecording = async () => {
         try {
             setElapsedTime(0);
@@ -359,7 +302,7 @@ const VoiceRecorder = ({ navigate }) => {
             dataArrayRef.current = new Uint8Array(analyserRef.current.frequencyBinCount);
             drawWaveform();
 
-            // ⏱ Timer
+            // Stop Timer
             clearTimer();
             timerRef.current = setInterval(() => {
                 setElapsedTime((prev) => {
@@ -376,51 +319,10 @@ const VoiceRecorder = ({ navigate }) => {
         }
     };
 
-    // Fix for stopRecording in VoiceRecorder.jsx
-    // const stopRecording = () => {
-    //     if (mediaRecorderRef.current) {
-    //         const recorder = mediaRecorderRef.current;
-    //
-    //         recorder.ondataavailable = (event) => {
-    //             if (event.data && event.data.size > 0) {
-    //                 audioChunks.current.push(event.data);
-    //             }
-    //         };
-    //
-    //         recorder.onstop = () => {
-    //             // Safari fix: wait briefly to ensure all chunks have flushed
-    //             setTimeout(() => {
-    //                 if (audioChunks.current.length === 0) {
-    //                     console.warn("No audio chunks available — Safari may have dropped data.");
-    //                     return;
-    //                 }
-    //                 const blob = new Blob(audioChunks.current, { type: 'audio/mp4' });
-    //                 setRecordedBlob(blob);
-    //                 setPreviewUrl(URL.createObjectURL(blob));
-    //                 audioChunks.current = [];
-    //             }, 200); // small delay helps Safari flush final data
-    //         };
-    //
-    //         if (recorder.state !== 'inactive') {
-    //             recorder.stop();
-    //         }
-    //     }
-    //
-    //     // Stop waveform animation
-    //     if (animationFrameRef.current) {
-    //         cancelAnimationFrame(animationFrameRef.current);
-    //         animationFrameRef.current = null;
-    //     }
-    //
-    //     // Clear timer and reset elapsed time
-    //     clearTimer();
-    //     setState('finalized');
-    // };
     const stopRecording = () => {
         const recorder = mediaRecorderRef.current;
         if (!recorder) return;
 
-        // ✅ Stop waveform and timer
         if (animationFrameRef.current) {
             cancelAnimationFrame(animationFrameRef.current);
             animationFrameRef.current = null;
