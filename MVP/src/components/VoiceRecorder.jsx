@@ -336,6 +336,7 @@ const VoiceRecorder = ({ navigate }) => {
             console.log('blob', blob)
             console.log('url', url)
             setRecordedBlob(blob);
+            setPreviewUrl(url);
             setState('finalized');
             audioChunks.current = [];
         };
