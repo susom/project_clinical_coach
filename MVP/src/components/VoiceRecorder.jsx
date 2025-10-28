@@ -269,89 +269,176 @@ const VoiceRecorder = ({ navigate }) => {
         }
     };
 
+    // const startRecording = async () => {
+    //     try {
+    //         setElapsedTime(0);
+    //         audioChunks.current = [];
+    //         setRecordedBlob(null);
+    //         setPreviewUrl('');
+    //
+    //         // Set state to 'recording' and wait for rendering
+    //         setState('recording');
+    //         await new Promise((resolve) => setTimeout(resolve, 100));
+    //
+    //         // Request microphone access
+    //         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    //         console.log('Microphone stream received:', stream);
+    //
+    //         // Initialize Web Audio API
+    //         audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
+    //         analyserRef.current = audioContextRef.current.createAnalyser();
+    //         const source = audioContextRef.current.createMediaStreamSource(stream);
+    //
+    //         // Connect the analyser to the audio stream
+    //         source.connect(analyserRef.current);
+    //
+    //         // Prepare waveform data array
+    //         analyserRef.current.fftSize = 2048;
+    //         const bufferLength = analyserRef.current.frequencyBinCount;
+    //         dataArrayRef.current = new Uint8Array(bufferLength);
+    //
+    //         // Start drawing the waveform
+    //         drawWaveform();
+    //
+    //         // Initialize MediaRecorder
+    //         mediaRecorderRef.current = new MediaRecorder(stream, { mimeType: 'audio/mp4' });
+    //         mediaRecorderRef.current.ondataavailable = (event) => {
+    //             if (event.data.size > 0) {
+    //                 audioChunks.current.push(event.data);
+    //             }
+    //         };
+    //         mediaRecorderRef.current.start();
+    //
+    //         // Start the timer
+    //         clearTimer(); // Ensure no previous timer is running
+    //         timerRef.current = setInterval(() => {
+    //             setElapsedTime((prevElapsedTime) => {
+    //                 if (prevElapsedTime + 1 >= MAX_RECORDING_TIME) {
+    //                     stopRecording(); // Stops recording if the max time is reached
+    //                     return MAX_RECORDING_TIME; // Ensures the time doesn't exceed the max limit
+    //                 }
+    //                 return prevElapsedTime + 1; // Increments the elapsed time
+    //             });
+    //         }, 1000);
+    //
+    //     } catch (error) {
+    //         console.error('Error accessing microphone:', error);
+    //         alert('Unable to access your microphone. Please check your permissions.');
+    //     }
+    // };
     const startRecording = async () => {
         try {
             setElapsedTime(0);
             audioChunks.current = [];
             setRecordedBlob(null);
             setPreviewUrl('');
-
-            // Set state to 'recording' and wait for rendering
             setState('recording');
-            await new Promise((resolve) => setTimeout(resolve, 100));
 
             // Request microphone access
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            console.log('Microphone stream received:', stream);
+            const options = { mimeType: 'audio/mp4' }
+            const recorder = new MediaRecorder(stream, options);
+            mediaRecorderRef.current = recorder;
 
-            // Initialize Web Audio API
-            audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
-            analyserRef.current = audioContextRef.current.createAnalyser();
-            const source = audioContextRef.current.createMediaStreamSource(stream);
-
-            // Connect the analyser to the audio stream
-            source.connect(analyserRef.current);
-
-            // Prepare waveform data array
-            analyserRef.current.fftSize = 2048;
-            const bufferLength = analyserRef.current.frequencyBinCount;
-            dataArrayRef.current = new Uint8Array(bufferLength);
-
-            // Start drawing the waveform
-            drawWaveform();
-
-            // Initialize MediaRecorder
-            mediaRecorderRef.current = new MediaRecorder(stream, { mimeType: 'audio/mp4' });
-            mediaRecorderRef.current.ondataavailable = (event) => {
-                if (event.data.size > 0) {
+            // Called when data is available every 500 ms
+            recorder.ondataavailable = (event) => {
+                if (event.data && event.data.size > 0) { // Event.data is a blob, collect them in a ref array
                     audioChunks.current.push(event.data);
                 }
             };
-            mediaRecorderRef.current.start();
 
-            // Start the timer
-            clearTimer(); // Ensure no previous timer is running
+            // Safari requires periodic flushing of buffer. set timeslice to 500ms to chunk data (chrome too to prevent memory issues)
+            recorder.start(500);
+
+            // Web Audio setup for waveform
+            audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
+            analyserRef.current = audioContextRef.current.createAnalyser();
+            const source = audioContextRef.current.createMediaStreamSource(stream);
+            source.connect(analyserRef.current);
+            analyserRef.current.fftSize = 2048;
+            dataArrayRef.current = new Uint8Array(analyserRef.current.frequencyBinCount);
+            drawWaveform();
+
+            // ⏱ Timer
+            clearTimer();
             timerRef.current = setInterval(() => {
-                setElapsedTime((prevElapsedTime) => {
-                    if (prevElapsedTime + 1 >= MAX_RECORDING_TIME) {
-                        stopRecording(); // Stops recording if the max time is reached
-                        return MAX_RECORDING_TIME; // Ensures the time doesn't exceed the max limit
+                setElapsedTime((prev) => {
+                    if (prev + 1 >= MAX_RECORDING_TIME) {
+                        stopRecording();
+                        return MAX_RECORDING_TIME;
                     }
-                    return prevElapsedTime + 1; // Increments the elapsed time
+                    return prev + 1;
                 });
             }, 1000);
-
-        } catch (error) {
-            console.error('Error accessing microphone:', error);
+        } catch (err) {
+            console.error('Error accessing microphone:', err);
             alert('Unable to access your microphone. Please check your permissions.');
         }
     };
 
     // Fix for stopRecording in VoiceRecorder.jsx
+    // const stopRecording = () => {
+    //     if (mediaRecorderRef.current) {
+    //         const recorder = mediaRecorderRef.current;
+    //
+    //         recorder.ondataavailable = (event) => {
+    //             if (event.data && event.data.size > 0) {
+    //                 audioChunks.current.push(event.data);
+    //             }
+    //         };
+    //
+    //         recorder.onstop = () => {
+    //             // Safari fix: wait briefly to ensure all chunks have flushed
+    //             setTimeout(() => {
+    //                 if (audioChunks.current.length === 0) {
+    //                     console.warn("No audio chunks available — Safari may have dropped data.");
+    //                     return;
+    //                 }
+    //                 const blob = new Blob(audioChunks.current, { type: 'audio/mp4' });
+    //                 setRecordedBlob(blob);
+    //                 setPreviewUrl(URL.createObjectURL(blob));
+    //                 audioChunks.current = [];
+    //             }, 200); // small delay helps Safari flush final data
+    //         };
+    //
+    //         if (recorder.state !== 'inactive') {
+    //             recorder.stop();
+    //         }
+    //     }
+    //
+    //     // Stop waveform animation
+    //     if (animationFrameRef.current) {
+    //         cancelAnimationFrame(animationFrameRef.current);
+    //         animationFrameRef.current = null;
+    //     }
+    //
+    //     // Clear timer and reset elapsed time
+    //     clearTimer();
+    //     setState('finalized');
+    // };
     const stopRecording = () => {
-        if (mediaRecorderRef.current) {
-            // Set onstop handler BEFORE calling stop()
-            mediaRecorderRef.current.onstop = () => {
-                const blob = new Blob(audioChunks.current, { type: 'audio/mp4' });
-                setRecordedBlob(blob);
-                setPreviewUrl(URL.createObjectURL(blob));
-                audioChunks.current = [];
-            };
-            if (mediaRecorderRef.current.state !== 'inactive') {
-                mediaRecorderRef.current.stop();
-            }
-        }
+        const recorder = mediaRecorderRef.current;
+        if (!recorder) return;
 
-        // Stop waveform animation
+        // ✅ Stop waveform and timer
         if (animationFrameRef.current) {
             cancelAnimationFrame(animationFrameRef.current);
             animationFrameRef.current = null;
         }
-
-        // Clear timer and reset elapsed time
         clearTimer();
+        recorder.onstop = () => {
+            const mime ='audio/mp4';
+            const blob = new Blob(audioChunks.current, { type: mime });
+            const url = URL.createObjectURL(blob);
+            console.log('audioChunks', audioChunks.current)
+            console.log('blob', blob)
+            console.log('url', url)
+            setRecordedBlob(blob);
+            setState('finalized');
+            audioChunks.current = [];
+        };
 
-        setState('finalized');
+        if (recorder.state !== 'inactive') recorder.stop();
     };
 
     const pauseRecording = () => {
@@ -486,7 +573,10 @@ const VoiceRecorder = ({ navigate }) => {
                         {previewUrl && (
                             <div className="vr_audio-container">
                                 <audio controls key={previewUrl} className="vr_audio-preview">
-                                    <source src={previewUrl} type="audio/mp4"/>
+                                    <source
+                                        src={previewUrl}
+                                        type={'audio/mp4'}
+                                    />
                                     Your browser does not support the audio element.
                                 </audio>
                                 <button
