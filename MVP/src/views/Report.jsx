@@ -94,7 +94,7 @@ export default function Report() {
                     report_title: parsedContent?.report_title
                         ? parsedContent.report_title.replace(/\b(report|thinking habits)\b/gi, '').trim()
                         : "Unknown",
-                    
+
                     // Updated hasError logic
                     hasError:
                         Object.keys(parsedContent).length === 0 || // Is the object empty?
@@ -107,7 +107,7 @@ export default function Report() {
             ];
         })
     );
-    
+
     // Extract Strengths from Reflections
     let strengths = [];
     if (parsedThmReport && Array.isArray(parsedThmReport.positiveFeedback)) {
@@ -133,8 +133,8 @@ export default function Report() {
             title: key === 'data' ? 'Interpretation' : (reflection.report_title || capitalize(key)),
             category:capitalize(key),
             color: reflection.hasError ? 'red' : 'gray',
-            prompts: reflection.hasError 
-                ? [] 
+            prompts: reflection.hasError
+                ? []
                 : (reflection.coaching_insights?.coaching_questions || []).map((prompt) => {
                     const matchedRating = reflection.rating?.find(r => r.prompt === prompt);
                     return {
@@ -144,35 +144,35 @@ export default function Report() {
                 }),
             hasError: reflection.hasError,
             reflectionVar: `sess_reflect_${key.toLowerCase()}`,
-            coach_id: coach?.record_id || null,  
-            student_id: selectedStudent?.id || null,  
+            coach_id: coach?.record_id || null,
+            student_id: selectedStudent?.id || null,
             sess_id: the_session?.session_id || null,
             thm_overall_score: reflection?.thm_overall_score || 0
         }));
-    
+
         setPromptsData(initialPrompts);
-    }, [the_session, coach]); 
+    }, [the_session, coach]);
 
     const toggleAnalysis = () => {
         setShowCaseSummary(!showCaseSummary);
-    }; 
+    };
 
     const handleFullReevaluation = () => {
         if (!the_session?.session_id || !coach?.record_id) {
           console.warn("🚨 Missing session_id or coach_id for full reevaluation.");
           return;
         }
-      
+
         setLoadingReflection("all");
-      
+
         const payload = {
           session_id: the_session.session_id,
           coach_id: coach.record_id,
           re_eval_main_and_final: true
         };
-      
+
         console.log("🔁 Main + Final Re-evaluation Triggered:", payload);
-      
+
         window.clinical_coach_jsmo_module.callAI(
           JSON.stringify(payload),
           (response) => {
@@ -186,14 +186,14 @@ export default function Report() {
           }
         );
     };
-      
-    
+
+
     const handleSingleReflection = (reflectionVar) => {
         if (!the_session?.session_id || !coach?.record_id) {
             console.warn("🚨 Missing session_id or coach_id.");
             return;
         }
-        
+
         setLoadingReflection(reflectionVar);
 
         const payload = {
@@ -201,20 +201,20 @@ export default function Report() {
             coach_id: coach.record_id,
             reflection_var: reflectionVar
         };
-    
+
         console.log("🔄 Re-evaluating Single Reflection:", reflectionVar, "with payload:", payload);
-    
+
         window.clinical_coach_jsmo_module.callAI(
             JSON.stringify(payload),
             (response) => {
                 console.log("✅ Reflection Re-evaluated Successfully:", response);
-    
+
                 if (!response?.reflections) {
                     console.error("🚨 No reflections returned in response.");
                     setLoadingReflection(null);
                     return;
                 }
-    
+
                 // 🔥 Use the function to update session data
                 updateStudentFromAIResponse(the_session.session_id, response, reflectionVar);
                 setLoadingReflection(null);
@@ -231,22 +231,22 @@ export default function Report() {
             console.error("Invalid habit or prompt index");
             return;
         }
-    
+
         const newRating = habit.prompts[promptIdx].rating === type ? null : type;
-    
+
         // Ensure habit.rating exists and correctly updates only the matched prompt
         const updatedRatings = habit.rating?.map(r =>
             r.prompt === habit.prompts[promptIdx].text ? { ...r, rating: newRating || "" } : r
         ) || [];
-    
+
         const updatedPrompts = habit.prompts.map((prompt, idx) =>
             idx === promptIdx ? { ...prompt, rating: newRating || "" } : prompt
         );
-    
+
         const updatedPromptsData = promptsData?.map(h =>
             h.category === habit.category ? { ...h, prompts: updatedPrompts, rating: updatedRatings } : h
         ) || [];
-    
+
         // Payload with the exact rating string (no arrays)
         const payload = {
             coach_id: habit.coach_id,
@@ -254,21 +254,21 @@ export default function Report() {
             sess_id: habit.sess_id,
             category: habit.category,
             prompt: habit.prompts[promptIdx].text,
-            rating: newRating || ""  
+            rating: newRating || ""
         };
-    
+
         window.clinical_coach_jsmo_module.savePromptRating(
             JSON.stringify(payload),
             (res) => {
                 console.log("RATING SAVED SUCCESSFULLY:", res);
-                setPromptsData(updatedPromptsData); 
+                setPromptsData(updatedPromptsData);
             },
             (err) => {
                 console.error("SAVE PROMPT RATING ERROR:", err);
             }
         );
     };
-    
+
     const getScoreClass = (score) => {
         switch (score) {
             case 1: return 'red';
@@ -280,40 +280,40 @@ export default function Report() {
 
     useEffect(() => {
         if (!carouselRefs.current) return;
-    
+
         Object.keys(carouselRefs.current).forEach((habitKey) => {
             const carousel = carouselRefs.current[habitKey];
-    
+
             if (!carousel) {
                 console.warn(`🚨 No carousel found for habitKey: ${habitKey}`);
                 return;
             }
-    
+
             const handleScroll = () => {
                 const items = carousel.children;
                 if (!items.length) {
                     console.warn(`🚨 No items in carousel for habit: ${habitKey}`);
                     return;
                 }
-    
+
                 let closestIndex = 0;
                 let minDiff = Infinity;
-    
+
                 for (let i = 0; i < items.length; i++) {
                     const rect = items[i].getBoundingClientRect();
                     const diff = Math.abs(rect.left - carousel.getBoundingClientRect().left);
-                    
+
                     if (diff < minDiff) {
                         minDiff = diff;
                         closestIndex = i;
                     }
                 }
-    
+
                 setActiveIndices((prev) => ({ ...prev, [habitKey]: closestIndex }));
             };
-    
+
             carousel.addEventListener("scroll", handleScroll, { passive: true });
-    
+
             return () => {
                 carousel.removeEventListener("scroll", handleScroll);
             };
@@ -322,20 +322,20 @@ export default function Report() {
 
     const handleDotClick = (habitKey, index) => {
         setActiveIndices((prev) => ({ ...prev, [habitKey]: index }));
-    
+
         const carousel = carouselRefs.current[habitKey];
-    
+
         if (!carousel) {
             console.warn(`🚨 No carousel found for habitKey: ${habitKey}`);
             return;
         }
-    
+
         const items = carousel.children;
         if (!items || !items[index]) {
             console.warn(`🚨 No carousel items found for habitKey: ${habitKey} at index: ${index}`);
             return;
         }
-    
+
         carousel.scrollTo({
             left: items[index].offsetLeft - carousel.offsetLeft,
             behavior: "smooth",
@@ -369,20 +369,23 @@ export default function Report() {
                     <div className="thinking-habits-header">
                         <h3>Thinking Habits Report</h3>
                         <div className="thinking-habits-actions">
-                            <button 
-                                className={`re-evaluate-all-btn re-evaluate-btn highlighted ${loadingReflection === 'all' ? 'loading' : ''}`} 
+                            <button
+                                className={`re-evaluate-all-btn re-evaluate-btn highlighted ${loadingReflection === 'all' ? 'loading' : ''}`}
                                 onClick={handleFullReevaluation}
                                 title="Re-Evaluate All"
                                 >
                                 <i className={`fas fa-sync-alt ${loadingReflection === 'all' ? 'fa-spin' : ''}`}></i>
                             </button>
-                            <button 
-                            className="full-transcript-btn" 
+                            <button
+                            className="full-transcript-btn"
                             onClick={() => navigate(`/full-transcript/${selectedSession}`)}
                             >
                             + Transcript
                             </button>
                         </div>
+                    </div>
+                    <div style={{'width': '100%'}}>
+                        <h3 className="analysis-title" style={{'textAlign': 'center'}}>Organizational Assessment</h3>
                     </div>
 
                     {/* <ThinkingHabitsOverview reflections={reflections} /> */}
@@ -390,11 +393,12 @@ export default function Report() {
                     <div className="report-summary">
                         <p className="summary-text">{parsedSummary.organization_review}</p>
 
-                        <div className="summary-buttons">
-                            <button className="expandable-button" onClick={toggleAnalysis}>
-                                {showCaseSummary ? '- HIDE SUMMARY' : '+ IN-DEPTH CASE PRESENTATION SUMMARY'}
-                            </button>
-                        </div>
+                        {/*Redundant button display info, commenting out for now*/}
+                        {/*<div className="summary-buttons">*/}
+                        {/*    <button className="expandable-button" onClick={toggleAnalysis}>*/}
+                        {/*        {showCaseSummary ? '- HIDE SUMMARY' : '+ IN-DEPTH CASE PRESENTATION SUMMARY'}*/}
+                        {/*    </button>*/}
+                        {/*</div>*/}
                     </div>
                 </section>
 
@@ -407,8 +411,8 @@ export default function Report() {
                                     <div className={`strength-category ${strength.category.toLowerCase()}`}>
                                         {strength.category.toLowerCase() === 'data' ? 'Interpretation' : strength.category}
                                     </div>
-                                    <div 
-                                        className="strength-carousel" 
+                                    <div
+                                        className="strength-carousel"
                                         ref={(el) => { if (el) carouselRefs.current[strength.category] = el; }}
                                     >
                                         {strength.descriptions.map((desc, i) => (
@@ -419,8 +423,8 @@ export default function Report() {
                                     {strength.descriptions.length > 1 && (
                                         <div className="carousel-dots">
                                             {strength.descriptions.map((_, i) => (
-                                                <button 
-                                                    key={i} 
+                                                <button
+                                                    key={i}
                                                     className={`dot ${i === (activeIndices[strength.category] || 0) ? 'active' : ''}`}
                                                     onClick={() => handleDotClick(strength.category, i)}
                                                 />
@@ -442,10 +446,10 @@ export default function Report() {
                             const hasError = habit.hasError;  // Only trust the real error flag
                             return (
                                 <div key={index} className="habit">
-                                    <div 
-                                    ref={(el) => { 
+                                    <div
+                                    ref={(el) => {
                                         if (el) carouselRefs.current[habit.category] = el;
-                                    }} 
+                                    }}
                                     className="report-carousel">
                                         {hasError ? (
                                             <div className="report-carousel-item error-message">
@@ -460,14 +464,14 @@ export default function Report() {
                                                             <em>Provide feedback on this coaching prompt:</em>
                                                         </p>
                                                         <div className="feedback-buttons">
-                                                            <button 
-                                                                className="thumb-btn" 
+                                                            <button
+                                                                className="thumb-btn"
                                                                 onClick={() => handleFeedback(habit, idx, 'up')}
                                                             >
                                                                 <i className={`fas fa-thumbs-up ${habit.prompts[idx].rating === 'up' ? 'active-up' : ''}`}></i>
                                                             </button>
-                                                            <button 
-                                                                className="thumb-btn" 
+                                                            <button
+                                                                className="thumb-btn"
                                                                 onClick={() => handleFeedback(habit, idx, 'down')}
                                                             >
                                                                 <i className={`fas fa-thumbs-down ${habit.prompts[idx].rating === 'down' ? 'active-down' : ''}`}></i>
@@ -486,9 +490,9 @@ export default function Report() {
 
                                     <div className="carousel-dots">
                                         {habit.prompts.map((_, idx) => (
-                                            <button 
-                                                key={idx} 
-                                                className={`dot ${idx === (activeIndices[habit.category] || 0) ? 'active' : ''}`} 
+                                            <button
+                                                key={idx}
+                                                className={`dot ${idx === (activeIndices[habit.category] || 0) ? 'active' : ''}`}
                                                 onClick={() => handleDotClick(habit.category, idx)}
                                             />
                                         ))}
@@ -499,15 +503,15 @@ export default function Report() {
                                             <span>{habit.title}</span>
                                         </div>
                                         <div className="action-right">
-                                            <button 
-                                                className={`re-evaluate-btn ${hasError ? 'highlighted' : 'disabled'}`} 
+                                            <button
+                                                className={`re-evaluate-btn ${hasError ? 'highlighted' : 'disabled'}`}
                                                 onClick={() => handleSingleReflection(habit.reflectionVar)}
                                                 title="Re-Evaluate"
                                             >
                                                 <i className={`fas fa-sync-alt ${loadingReflection === habit.reflectionVar ? 'fa-spin' : ''}`}></i>
                                             </button>
-                                            <button 
-                                                className="detailed-analysis-btn" 
+                                            <button
+                                                className="detailed-analysis-btn"
                                                 onClick={() => navigate(`/detail-analysis/${habit.category.toLowerCase()}`)}
                                             >
                                                 + Detailed Analysis
